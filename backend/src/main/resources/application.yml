@@ -1,0 +1,41 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: edupay-backend
+
+  # ─── Active Profile ────────────────────────────────────────────────────────
+  # Cách 1 – Biến môi trường:   export SPRING_PROFILES_ACTIVE=prod
+  # Cách 2 – Lệnh Maven:        ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+  # Cách 3 – Trong IDE:         Run Configuration → Active profiles: dev
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+# ─── Cấu hình chung (dùng cho cả dev và prod) ─────────────────────────────
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}           # Mặc định 24 giờ
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:2592000000}  # Mặc định 30 ngày
+
+  vietqr:
+    api-url: https://api.vietqr.io/v2
+    image-url: https://img.vietqr.io/image
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}

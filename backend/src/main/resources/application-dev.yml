@@ -1,0 +1,44 @@
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  application-dev.yml — Môi trường DEV (Local Development)       ║
+# ║  Áp dụng khi: SPRING_PROFILES_ACTIVE=dev                        ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+spring:
+  # ─── Database: PostgreSQL LOCAL (Docker Compose hoặc cài máy) ───
+  datasource:
+    url: jdbc:postgresql://localhost:5432/edupay_dev_db
+    username: postgres
+    password: postgres123
+    driver-class-name: org.postgresql.Driver
+    # Connection Pool (HikariCP) - Nhỏ gọn cho môi trường dev
+    hikari:
+      pool-name: EduPay-DEV-Pool
+      minimum-idle: 2
+      maximum-pool-size: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate         # Flyway kiểm soát schema, JPA chỉ validate
+    show-sql: true               # In SQL ra console để debug dễ dàng
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# ─── Logging: Chi tiết để debug ───────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.edupay: DEBUG            # Log chi tiết code nghiệp vụ
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG     # Hiện câu SQL gửi xuống DB
+    org.hibernate.orm.jdbc.bind: TRACE  # Hiện binding parameters
+
+# ─── CORS: Cho phép FE Angular chạy local ─────────────────────────
+app:
+  jwt:
+    secret: dev-secret-key-minimum-32-characters-long-for-hs256-algo-edupay
+  cors:
+    allowed-origins: http://localhost:4200,http://localhost:3000

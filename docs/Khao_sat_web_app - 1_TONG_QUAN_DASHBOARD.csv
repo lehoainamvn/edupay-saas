@@ -1,0 +1,35 @@
+BẢNG ĐIỀU HÀNH KHẢO SÁT & NGHIÊN CỨU NGÁCH WEB APP VIỆT NAM (2026),,,,,,,,
+Dữ liệu thực chứng 22/10/2026 · Định hướng Solo Builder ngân sách < 2 triệu đồng · 100% không dữ liệu giả,,,,,,,,
+,,,,,,,,
+"40
+TỔNG SỐ NGÁCH KHẢO SÁT
+(B2B SME & Vi mô)",,"10
+NGÁCH TIỀM NĂNG CAO
+(Đã đối chiếu đối thủ)",,"3
+NGÁCH ƯU TIÊN LÀM NGAY
+(Điểm đánh giá >= 90/100)",,"< 2.000.000 đ
+NGÂN SÁCH MVP KHỞI TẠO
+(Vercel + Supabase 0đ)",,"99.000 đ / tháng
+MỨC THU THUÊ BAO CHUẨN
+(Tỷ suất lợi nhuận > 90%)"
+,,,,,,,,
+,,,,,,,,
+TOP 3 NGÁCH ĐƯỢC CHỌN ĐỂ TRIỂN KHAI NGAY,,,,,,,,
+Hạng,Tên ngách Web App,Khách hàng mục tiêu,Nỗi đau cốt lõi hiện tại,Giải pháp Web App khác biệt,Giá bán đề xuất,Điểm số,Thời gian MVP,
+TOP 1,Theo dõi báo giá tương tác & Nhắc chốt đơn,"Xưởng thi công nội thất, nhôm kính, in ấn, biển quảng cáo, cơ khí nhỏ (2-8 thợ)",Gửi file PDF qua Zalo rồi khách im lặng; chủ xưởng bận quên chăm sóc -> mất đơn 20-50 triệu.,Link web báo giá điện thoại; khách mở xem báo ngay về Zalo chủ xưởng; nút 'Xác nhận'; tự động gợi ý tin nhắn chăm sóc sau 48h.,"99.000 đ / tháng
+(hoặc 890.000 đ / năm)","92,0",10 - 14 ngày,
+TOP 2,Quản lý nhà trọ siêu nhỏ & Phiếu thu Zalo,Chủ nhà trọ gia đình (quy mô 3 - 15 phòng),"KiotViet giá 2,6M/năm quá đắt cho trọ 6 phòng; tính điện nước hay nhầm; khách chuyển khoản không ghi nội dung.",Giao diện mobile chữ to cho cô chú lớn tuổi; nhập số cũ/mới -> xuất ảnh phiếu thu kèm VIETQR ĐỘNG ĐÚNG SỐ TIỀN gửi thẳng Zalo.,"49.000 đ / tháng
+(hoặc 399.000 đ / năm)","91,0",7 - 10 ngày,
+TOP 3,Quản lý học viên & Đối soát học phí VietQR,"Giáo viên dạy thêm tại nhà, gia sư độc lập (1-4 lớp, 10-50 học sinh)",Ngại nhắn tin đòi tiền; phụ huynh chuyển khoản ghi biệt danh ở nhà không biết ai; file Excel hay bị nhảy công thức trên điện thoại.,Điểm danh 1 chạm; cuối tháng tự tính học phí theo buổi học; xuất link/ảnh phiếu nộp tiền kèm mã QR đúng cú pháp.,"59.000 đ / tháng
+(hoặc 499.000 đ / năm)","91,0",10 - 14 ngày,
+,,,,,,,,
+KẾ HOẠCH PHÂN BỔ VỐN MVP THỰC TẾ (< 2.000.000 VNĐ),,,,,,,,
+Hạng mục chi phí,Nhà cung cấp / Nền tảng đề xuất,Chi phí tháng 1 (VNĐ),Chi phí duy trì/tháng,Mục đích sử dụng & Cách tối ưu chi phí,,,,
+Tên miền thương hiệu (.com hoặc .vn),Tenten / iNET / Namecheap,299.000 đ,0 đ,Tạo uy tín khi gửi link web cho khách qua Zalo; gia hạn 300k/năm.,,,,
+Máy chủ Hosting & Băng thông Web,Vercel / Cloudflare Pages,0 đ,0 đ,"Gói Free phục vụ tốt 50.000 truy cập/tháng, HTTPS miễn phí, CDN toàn cầu.",,,,
+Cơ sở dữ liệu đám mây (Database),Supabase / Neon PostgreSQL,0 đ,0 đ,"Gói Free 500MB, đủ lưu 100.000 đơn hàng/báo giá cho 500 khách hàng đầu.",,,,
+Lưu trữ ảnh & file PDF (Storage),Cloudflare R2,0 đ,0 đ,"Miễn phí 10GB lưu trữ, không mất phí băng thông tải về (Zero Egress Fee).",,,,
+Tạo mã thanh toán VietQR động,VietQR API (vietqr.io),0 đ,0 đ,API công khai miễn phí tạo mã QR chuẩn NAPAS 247 cho tất cả ngân hàng VN.,,,,
+Tài khoản Zalo ZNS / Webhook thông báo,Zalo Cloud Account / Webhook,300.000 đ,50.000 đ,Nạp số dư gửi tin nhắn tự động khi chốt đơn hoặc thông báo tiền trọ/học phí.,,,,
+Dự phòng & Thử nghiệm thanh toán,Thẻ thanh toán / In ấn mẫu demo,401.000 đ,0 đ,In một số mẫu tem QR hoặc card giới thiệu trực tiếp cho chủ xưởng/chủ trọ.,,,,
+TỔNG CỘNG KHỞI TẠO MVP,Chi phí 1-3 tháng đầu,1.000.000 đ,50.000 đ,Dư 1.000.000 VNĐ trong ngân sách 2 triệu để dự phòng hoặc bù đắp.,,,,

@@ -1,0 +1,37 @@
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Backend (Java & Maven)
+backend/target/
+*.class
+*.jar
+*.war
+.mvn/
+
+# Frontend (Angular & Node)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/.cache/
+
+# IDE & Editors
+.idea/
+*.iml
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Environment Variables & Secrets (KHÔNG BAO GIỜ commit file này!)
+*.log
+.env
+.env.dev
+.env.prod
+.env.local
+.env.*.local
+# File .example là template an toàn - được phép commit
+!.env.prod.example
+
+# Python Scratch
+__pycache__/
+*.pyc
