@@ -18,8 +18,12 @@ Tài liệu này là **tập luật tối cao (Ground Truth)** dành riêng cho 
 * **Service**: Chứa 100% nghiệp vụ. Đánh dấu `@Transactional` cho các hàm ghi và `@Transactional(readOnly = true)` cho các hàm đọc.
 * **DTO & Entity**: Cấm trả Entity JPA trực tiếp ra ngoài API. Luôn ánh xạ qua `ResponseDTO` bằng MapStruct.
 
-### 3. Luật Giao Diện Mobile-First (Mobile-First Touch Law)
-* Mọi component Angular phải được thiết kế cho **màn hình cảm ứng điện thoại** trước tiên.
+### 3. Luật Giao Diện Mobile-First & Design System
+* Mọi component Angular và bản vẽ Figma **BẮT BUỘC** tuân thủ tài liệu chuẩn [DESIGN_SYSTEM_GUIDELINES.md](file:///Users/buiuyenthu/Documents/LeHoaiNam/GitHub/DuAn_tienti/edupay-saas/docs/DESIGN_SYSTEM_GUIDELINES.md):
+  * Phông chữ: `Inter` hoặc `Be Vietnam Pro` (số tiền dùng `tabular-nums`).
+  * Bảng màu chuẩn: Nền `--canvas: #FAF8F9`, Chữ `--ink: #0F172A`, Nút `--blue: #2563EB`.
+  * Màu điểm danh: Xanh (`#DCFCE7`), Vàng (`#FEF9C3`), Đỏ (`#FEE2E2`).
+  * Icon: Phong cách Outline Stroke `2px` (Mũ cử nhân, Checkmark `✓`, Cross `✕`, Arrow `→`).
 * Chiều cao nút bấm (Touch Target) tối thiểu **44px**, kích thước chuẩn **48px**.
 * Không sử dụng Table tràn ngang trên màn hình `< 640px`. Phải hiển thị dạng Card xếp dọc.
 * Mọi form phải hiển thị thông báo lỗi bằng chữ đỏ trực tiếp dưới ô nhập liệu tương ứng.

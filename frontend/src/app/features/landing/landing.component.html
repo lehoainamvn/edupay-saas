@@ -1,0 +1,417 @@
+<!-- Navigation -->
+<nav class="nav">
+  <div class="navInner">
+    <div class="brandWrap">
+      <div class="logo" aria-label="EduPay">
+        <span class="logoMark">
+          <svg viewBox="0 0 28 28" aria-hidden="true">
+            <path d="m3 10 11-6 11 6-11 6L3 10Z" />
+            <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
+          </svg>
+        </span>
+        <strong>EduPay</strong>
+      </div>
+      <span class="version">SaaS v1.0</span>
+    </div>
+
+    <div class="navLinks" [class.open]="menuOpen()">
+      <a href="#features">Tính năng</a>
+      <a href="#process">Cách hoạt động</a>
+      <a href="#pricing">Bảng giá</a>
+      <a href="#parents">Cổng Phụ Huynh</a>
+      <a href="#faq">Câu hỏi thường gặp</a>
+    </div>
+
+    <div class="navActions">
+      <a routerLink="/auth/login" class="login">Đăng nhập</a>
+      <a routerLink="/auth/register" class="button small">
+        Dùng thử miễn phí 14 ngày <span aria-hidden="true">→</span>
+      </a>
+    </div>
+
+    <button class="menuButton" (click)="toggleMenu()" aria-label="Mở menu">
+      {{ menuOpen() ? '×' : '☰' }}
+    </button>
+  </div>
+</nav>
+
+<main>
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container heroCopy">
+      <div class="category">
+        <i></i> Giải pháp đối soát học phí số 1 cho giáo viên dạy kèm
+      </div>
+      <h1>Chấm dứt cảnh ngại mở lời <span>nhắc nợ học phí</span> cuối tháng.</h1>
+      <p>
+        Điểm danh 1 chạm trên điện thoại, tự động tính tiền theo số buổi thực tế, sinh link phiếu thu kèm mã VietQR Napas247 định danh gửi thẳng qua Zalo phụ huynh.
+      </p>
+
+      <div class="heroActions">
+        <a routerLink="/auth/register" class="button">
+          Tạo tài khoản dạy học ngay <span>Miễn phí 14 ngày</span> <span aria-hidden="true">→</span>
+        </a>
+        <a routerLink="/dashboard" class="button secondary">
+          <span class="play">▶</span> Xem video demo 2 phút
+        </a>
+      </div>
+
+      <div class="proof">
+        <div class="avatars">
+          @for (x of people; track x; let i = $index) {
+            <span class="av av{{ i }}">{{ x }}</span>
+          }
+        </div>
+        <div>
+          <div class="stars">★★★★★ <b>4.9/5</b></div>
+          <p>Tin dùng bởi hơn <strong>1.200+</strong> giáo viên & gia sư</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Preview Shell -->
+    <div class="container">
+      <div class="previewShell">
+        <div class="previewTop">
+          <div class="browserDots"><i></i><i></i><i></i></div>
+          <span>app.edupay.vn</span>
+          <span class="secure">Dữ liệu bảo mật</span>
+        </div>
+
+        <div class="previewGrid">
+          <!-- Mobile Attendance Frame -->
+          <div class="phone">
+            <div class="phoneBar">
+              <span>9:41</span>
+              <span>● ●</span>
+            </div>
+            <div class="phoneHead">
+              <small>LỚP TOÁN 8A · 18:00</small>
+              <h3>Điểm danh hôm nay</h3>
+              <p>Thứ Ba, 12 tháng 05</p>
+            </div>
+
+            @for (s of students; track s.name) {
+              <div class="student">
+                <span class="studentAvatar">{{ s.avatar }}</span>
+                <strong>{{ s.name }}</strong>
+                <button [class]="s.cls">{{ s.status }}</button>
+              </div>
+            }
+
+            <button class="saveAttendance">Lưu điểm danh · 12/14</button>
+          </div>
+
+          <!-- Digital Receipt Card with VietQR -->
+          <div class="receipt">
+            <div class="receiptHead">
+              <div class="logo">
+                <span class="logoMark">
+                  <svg viewBox="0 0 28 28" aria-hidden="true">
+                    <path d="m3 10 11-6 11 6-11 6L3 10Z" />
+                    <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
+                  </svg>
+                </span>
+                <strong>EduPay</strong>
+              </div>
+              <span class="verified">✓ Đã xác thực</span>
+            </div>
+
+            <p class="eyebrow">PHIẾU THU HỌC PHÍ · THÁNG 05/2026</p>
+            <h3>Trần Minh Quân <span>(Bé Tít)</span></h3>
+
+            <div class="receiptRow">
+              <span>Lớp học</span>
+              <strong>Toán nâng cao 8</strong>
+            </div>
+            <div class="receiptRow">
+              <span>Số buổi thực tế</span>
+              <strong>8 buổi × 150.000đ</strong>
+            </div>
+            <div class="total">
+              <span>Tổng học phí</span>
+              <strong>1.200.000đ</strong>
+            </div>
+
+            <div class="payment">
+              <div class="qr" aria-label="Mã VietQR">
+                @for (cell of qrGrid; track cell) {
+                  <i [class.on]="isQrActive(cell)"></i>
+                }
+              </div>
+              <div>
+                <b>VIETQR</b> <small>NAPAS 247</small>
+                <p>Quét bằng ứng dụng ngân hàng</p>
+                <strong>NGUYEN THI LAN</strong>
+              </div>
+            </div>
+
+            <button class="zalo">
+              Mở Zalo gửi phụ huynh <span aria-hidden="true">→</span>
+            </button>
+            <p class="receiptNote">Nội dung và số tiền đã được tự động điền</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem vs Solution (Compare) Section -->
+  <section class="section compare" id="process">
+    <div class="container">
+      <div class="sectionIntro">
+        <span class="kicker">MỘT THAY ĐỔI NHỎ, HIỆU QUẢ LỚN</span>
+        <h2>Tại sao giáo viên không còn dùng sổ tay và Excel?</h2>
+      </div>
+
+      <div class="compareGrid">
+        <div class="compareCard old">
+          <div class="compareLabel"><span>✕</span> CÁCH CŨ</div>
+          <h3>Mỗi cuối tháng là một lần đối soát mệt mỏi.</h3>
+          @for (item of oldWay; track item) {
+            <div class="compareItem">
+              <span class="close" aria-hidden="true">×</span>
+              <p>{{ item }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="compareCard new">
+          <div class="compareLabel"><span>✓</span> VỚI EDUPAY</div>
+          <h3>Thu học phí chuyên nghiệp, nhẹ tênh.</h3>
+          @for (item of newWay; track item) {
+            <div class="compareItem">
+              <span class="check" aria-hidden="true">✓</span>
+              <p>{{ item }}</p>
+            </div>
+          }
+          <div class="timeSaved">
+            <strong>~6 giờ</strong>
+            <span>tiết kiệm mỗi tháng / giáo viên</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature Deep-Dive Section -->
+  <section class="section features" id="features">
+    <div class="container">
+      <div class="sectionIntro">
+        <span class="kicker">TỪ ĐIỂM DANH ĐẾN THANH TOÁN</span>
+        <h2>Một quy trình liền mạch.<br />Không còn việc thủ công.</h2>
+        <p>EduPay xử lý phần việc hành chính để thầy cô tập trung vào điều quan trọng nhất: chất lượng buổi học.</p>
+      </div>
+
+      <div class="featureList">
+        @for (f of features; track f.id; let i = $index) {
+          <article class="featureRow" [class.reverse]="i % 2 !== 0">
+            <div class="featureContent">
+              <span class="featureNum">{{ f.id }}</span>
+              <span class="kicker">{{ f.tag }}</span>
+              <h3>{{ f.title }}</h3>
+              <p>{{ f.copy }}</p>
+              @for (point of f.points; track point) {
+                <div class="point">
+                  <span class="check" aria-hidden="true">✓</span> {{ point }}
+                </div>
+              }
+            </div>
+
+            <div class="featureVisual">
+              @if (f.visual === 'attendance') {
+                <div class="featureMock attendanceMock">
+                  <div class="mockHeader">
+                    <span>Thứ 3, 12/05</span>
+                    <b>12/14 học sinh</b>
+                  </div>
+                  <div class="mockLine">
+                    <span class="miniAvatar">N</span>
+                    <strong>Nguyễn Minh Anh</strong>
+                    <span class="green">Có mặt</span>
+                  </div>
+                  <div class="mockLine">
+                    <span class="miniAvatar">T</span>
+                    <strong>Trần Gia Huy</strong>
+                    <span class="yellow">Có phép</span>
+                  </div>
+                  <div class="mockLine">
+                    <span class="miniAvatar">L</span>
+                    <strong>Lê Bảo Ngọc</strong>
+                    <span class="green">Có mặt</span>
+                  </div>
+                  <div class="tapHint">Chạm để đổi trạng thái</div>
+                </div>
+              } @else if (f.visual === 'bank') {
+                <div class="featureMock bankMock">
+                  <span class="bankLogo">VIETQR <small>NAPAS247</small></span>
+                  <p>SỐ TIỀN THANH TOÁN</p>
+                  <h3>1.200.000 đ</h3>
+                  <div class="bankInfo">
+                    <span>Nội dung</span>
+                    <strong>EDUPAY MQ T05</strong>
+                  </div>
+                  <div class="successLine">
+                    <span class="check" aria-hidden="true">✓</span> Thông tin đã được định danh
+                  </div>
+                </div>
+              } @else {
+                <div class="featureMock portalMock" id="parents">
+                  <div class="portalTitle">
+                    <span>TM</span>
+                    <div>
+                      <b>Trần Minh Quân</b>
+                      <small>Lớp Toán nâng cao 8</small>
+                    </div>
+                    <em>Đã thanh toán</em>
+                  </div>
+                  @for (t of timelineItems; track t.date) {
+                    <div class="timeline">
+                      <span>{{ t.date }}</span>
+                      <i></i>
+                      <b>{{ t.status }}</b>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section class="section pricing" id="pricing">
+    <div class="container">
+      <div class="sectionIntro centered">
+        <span class="kicker">BẢNG GIÁ RÕ RÀNG, KHÔNG ẨN PHÍ</span>
+        <h2>Chi phí nhỏ hơn 1 ly trà sữa mỗi tháng.</h2>
+        <p>Không phí khởi tạo. Không thu phần trăm học phí. Hủy bất cứ lúc nào.</p>
+      </div>
+
+      <div class="pricingGrid">
+        @for (plan of plans; track plan.name) {
+          <div class="priceCard" [class.popular]="plan.popular">
+            @if (plan.popular) {
+              <span class="popularTag">PHỔ BIẾN NHẤT</span>
+            }
+            <h3>{{ plan.name }}</h3>
+            <p>{{ plan.desc }}</p>
+            <div class="price">
+              <strong>{{ plan.price }}</strong>
+              <span>{{ plan.unit }}</span>
+            </div>
+
+            <a routerLink="/auth/register" class="button" [class.secondary]="!plan.popular">
+              {{ plan.popular ? 'Bắt đầu dùng thử' : 'Chọn gói này' }} <span aria-hidden="true">→</span>
+            </a>
+
+            <div class="divider"></div>
+
+            @for (feature of plan.features; track feature) {
+              <div class="planFeature">
+                <span class="check" aria-hidden="true">✓</span> {{ feature }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <p class="pricingNote">
+        14 ngày dùng thử đầy đủ · Không yêu cầu thẻ tín dụng · Hỗ trợ chuyển dữ liệu miễn phí
+      </p>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="section faq" id="faq">
+    <div class="container faqGrid">
+      <div>
+        <span class="kicker">CÂU HỎI THƯỜNG GẶP</span>
+        <h2>Thầy cô hỏi,<br />EduPay trả lời.</h2>
+        <p>Vẫn còn băn khoăn? Nhắn Zalo để đội ngũ EduPay hỗ trợ trực tiếp.</p>
+        <a class="textLink" href="https://zalo.me" target="_blank" rel="noopener">
+          Trò chuyện với chúng tôi <span aria-hidden="true">→</span>
+        </a>
+      </div>
+
+      <div class="accordion">
+        @for (item of faqs; track item.q; let i = $index) {
+          <div class="faqItem" [class.open]="openFaq() === i">
+            <button (click)="toggleFaq(i)">
+              <span>{{ item.q }}</span>
+              <i>{{ openFaq() === i ? '−' : '+' }}</i>
+            </button>
+            @if (openFaq() === i) {
+              <p>{{ item.a }}</p>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- High-Impact CTA Banner -->
+  <section class="ctaSection">
+    <div class="container">
+      <div class="ctaBanner">
+        <div>
+          <span>BẮT ĐẦU TRONG 2 PHÚT</span>
+          <h2>Sẵn sàng giải phóng thời gian ghi chép và tính toán học phí?</h2>
+          <p>Hơn 1.200 giáo viên đã để EduPay lo phần hành chính.</p>
+        </div>
+        <div class="ctaAction">
+          <a routerLink="/auth/register" class="button">
+            Bắt đầu dùng thử 14 ngày <span aria-hidden="true">→</span>
+          </a>
+          <small>✓ Không yêu cầu thẻ tín dụng</small>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Footer -->
+<footer>
+  <div class="container footerGrid">
+    <div>
+      <div class="logo">
+        <span class="logoMark">
+          <svg viewBox="0 0 28 28" aria-hidden="true">
+            <path d="m3 10 11-6 11 6-11 6L3 10Z" />
+            <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
+          </svg>
+        </span>
+        <strong>EduPay</strong>
+      </div>
+      <p style="margin-top: 12px;">
+        Nền tảng quản lý điểm danh & thu học phí<br />dành cho giáo viên Việt Nam.
+      </p>
+    </div>
+
+    <div>
+      <b>SẢN PHẨM</b>
+      <a href="#features">Tính năng</a>
+      <a href="#pricing">Bảng giá</a>
+      <a routerLink="/dashboard">Hướng dẫn sử dụng</a>
+    </div>
+
+    <div>
+      <b>PHÁP LÝ</b>
+      <a href="#">Điều khoản</a>
+      <a href="#">Chính sách bảo mật</a>
+    </div>
+
+    <div>
+      <b>HỖ TRỢ TRỰC TIẾP</b>
+      <a href="https://zalo.me" target="_blank" rel="noopener">Zalo Hỗ Trợ Giáo Viên →</a>
+      <a href="tel:19006868">Hotline: 1900 6868</a>
+    </div>
+  </div>
+
+  <div class="container copyright">
+    <span>© 2026 EduPay SaaS. Made for Vietnamese teachers.</span>
+    <span>Hệ thống vận hành ổn định <i></i></span>
+  </div>
+</footer>
