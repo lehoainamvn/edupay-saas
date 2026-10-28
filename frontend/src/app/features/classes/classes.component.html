@@ -1,0 +1,403 @@
+<div class="app">
+  <!-- Sticky Topbar -->
+  <nav class="topbar">
+    <div class="topbarInner">
+      <div class="brandGroup">
+        <a routerLink="/" class="logo" aria-label="EduPay">
+          <span class="logoMark">
+            <svg viewBox="0 0 28 28" aria-hidden="true">
+              <path d="m3 10 11-6 11 6-11 6L3 10Z" />
+              <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
+            </svg>
+          </span>
+          <strong>EduPay</strong>
+        </a>
+        <span class="version">SaaS v1.0</span>
+      </div>
+
+      <div class="mainNav">
+        <a routerLink="/dashboard" class="navBtn">Tổng quan</a>
+        <a routerLink="/classes" class="navBtn active">Lớp học</a>
+        <a routerLink="/students" class="navBtn">Học sinh</a>
+        <a routerLink="/attendance" class="navBtn">Điểm danh 1 chạm</a>
+        <a routerLink="/billing" class="navBtn">Học phí VietQR</a>
+      </div>
+
+      <div class="tenant">
+        <i></i>
+        <span>
+          Cô Nguyễn Thị Mai
+          <small>Gói Thuê Tháng</small>
+        </span>
+        <b>⌄</b>
+      </div>
+
+      <button type="button" class="mobileProfile" aria-label="Tài khoản giáo viên">NM</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="page">
+    @if (toastMessage(); as msg) {
+      <div class="toast" role="status">
+        <span>✓</span> {{ msg }}
+      </div>
+    }
+
+    <header class="pageHeader">
+      <div class="eyebrow">
+        <i></i> QUẢN LÝ LỚP HỌC · MULTI-TENANT ISOLATION
+      </div>
+      <div class="titleRow">
+        <div>
+          <h1>Danh sách lớp giảng dạy</h1>
+          <p>Theo dõi lịch học, sĩ số và thiết lập học phí cho từng lớp.</p>
+        </div>
+        <button type="button" class="create" (click)="openCreateModal()">
+          <span>＋</span> Tạo lớp học mới
+        </button>
+      </div>
+    </header>
+
+    <!-- 4 KPI Cards -->
+    <section class="kpiGrid">
+      <div class="kpi">
+        <span class="kpiIcon blue">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3" y="5" width="18" height="16" rx="3" />
+            <path d="M8 3v4M16 3v4M3 10h18" />
+          </svg>
+        </span>
+        <div>
+          <small>LỚP ĐANG MỞ</small>
+          <strong>{{ activeClasses().length }} <em>lớp</em></strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon green">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="9" cy="9" r="3" />
+            <circle cx="17" cy="10" r="2.5" />
+            <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6M15 15c3.6 0 5.5 1.7 6 5" />
+          </svg>
+        </span>
+        <div>
+          <small>TỔNG SĨ SỐ ĐANG HỌC</small>
+          <strong>{{ totalActiveStudents() }} <em>học sinh</em></strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon yellow">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h14a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h12" />
+            <path d="M15 11h7v5h-7a2.5 2.5 0 0 1 0-5Z" />
+          </svg>
+        </span>
+        <div>
+          <small>HÌNH THỨC HỌC PHÍ</small>
+          <strong>
+            {{ sessionActiveCount() }} <em>theo buổi</em>
+            <i>·</i>
+            {{ monthlyActiveCount() }} <em>trọn tháng</em>
+          </strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon slate">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 7h18M5 7v13h14V7M3 3h18v4H3zM10 12h4" />
+          </svg>
+        </span>
+        <div>
+          <small>LƯU TRỮ LỊCH SỬ</small>
+          <strong>{{ archivedCount() }} <em>lớp đã đóng</em></strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Card -->
+    <section class="workspace">
+      <div class="toolbar">
+        <label class="search">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+          <input
+            type="text"
+            [value]="search()"
+            (input)="onSearchInput($event)"
+            placeholder="Tìm theo tên lớp hoặc lịch học (VD: Toán 8A, Thứ 3...)" />
+        </label>
+
+        <div class="statusTabs">
+          <button
+            type="button"
+            [class.active]="status() === 'active'"
+            (click)="setStatus('active')">
+            Đang mở <span>{{ activeClasses().length }}</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="status() === 'archived'"
+            (click)="setStatus('archived')">
+            Đã lưu trữ <span>{{ archivedCount() }}</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="status() === 'all'"
+            (click)="setStatus('all')">
+            Tất cả <span>{{ classes().length }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filterRow">
+        <div class="filterLeft">
+          <span>Hình thức học phí</span>
+          <div class="feeFilterBtns">
+            <button
+              type="button"
+              [class.active]="feeFilter() === 'all'"
+              (click)="setFeeFilter('all')">
+              Mọi hình thức
+            </button>
+            <button
+              type="button"
+              [class.active]="feeFilter() === 'session'"
+              (click)="setFeeFilter('session')">
+              Theo buổi
+            </button>
+            <button
+              type="button"
+              [class.active]="feeFilter() === 'monthly'"
+              (click)="setFeeFilter('monthly')">
+              Trọn tháng
+            </button>
+          </div>
+        </div>
+        <b>{{ visibleClasses().length }} lớp được tìm thấy</b>
+      </div>
+
+      @if (visibleClasses().length > 0) {
+        <div class="classGrid">
+          @for (item of visibleClasses(); track item.id) {
+            <article class="classCard" [class.archived]="item.archived">
+              <div class="cardTop">
+                <span class="feeBadge" [ngClass]="item.feeType">
+                  {{ item.feeType === 'session' ? '⚡ Thu theo buổi' : '▣ Trọn gói tháng' }}
+                </span>
+                <span class="status" [class.closed]="item.archived">
+                  <i></i>{{ item.archived ? 'Đã lưu trữ' : 'Đang học' }}
+                </span>
+              </div>
+
+              <h2>{{ item.name }}</h2>
+
+              <div class="schedule">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="3" y="5" width="18" height="16" rx="3" />
+                  <path d="M8 3v4M16 3v4M3 10h18" />
+                </svg>
+                <span>{{ item.schedule }}</span>
+              </div>
+
+              <div class="classStats">
+                <div>
+                  <span>ĐƠN GIÁ MẶC ĐỊNH</span>
+                  <strong>
+                    {{ money(item.fee) }} đ
+                    <small>/ {{ item.feeType === 'session' ? 'buổi' : 'tháng' }}</small>
+                  </strong>
+                </div>
+                <div>
+                  <span>SĨ SỐ</span>
+                  <strong>{{ item.students }} <small>học sinh</small></strong>
+                </div>
+              </div>
+
+              @if (item.archived) {
+                <div class="preserved">✓ Lịch sử điểm danh &amp; phiếu thu được bảo toàn</div>
+              }
+
+              <div class="cardActions">
+                @if (!item.archived) {
+                  <a routerLink="/attendance" class="primaryAction">
+                    Điểm danh ngay <span>→</span>
+                  </a>
+                }
+                <button type="button" class="outlineAction" (click)="openEditModal(item)">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z" />
+                    <path d="m13.5 7.5 3 3" />
+                  </svg>
+                  {{ item.archived ? 'Xem / Sửa' : 'Chỉnh sửa' }}
+                </button>
+                <button
+                  type="button"
+                  class="textAction"
+                  [class.restore]="item.archived"
+                  (click)="toggleArchive(item)">
+                  @if (item.archived) {
+                    ↺ Khôi phục lớp
+                  } @else {
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 7h18M5 7v13h14V7M3 3h18v4H3zM10 12h4" />
+                    </svg>
+                    Lưu trữ
+                  }
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <span>⌕</span>
+          <h2>Không tìm thấy lớp học</h2>
+          <p>Thử thay đổi từ khóa hoặc bộ lọc của bạn.</p>
+        </div>
+      }
+    </section>
+  </main>
+
+  <button type="button" class="mobileCreate" (click)="openCreateModal()">
+    ＋ Tạo lớp học mới
+  </button>
+
+  <!-- Create / Edit Class Modal -->
+  @if (modalOpen()) {
+    <div class="modalBackdrop" (mousedown)="$event.target === $event.currentTarget && closeModal()">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="editingItem() ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới'"
+        [formGroup]="form">
+        <header class="modalHeader">
+          <div>
+            <span class="modalEyebrow">
+              {{ editingItem() ? 'CẬP NHẬT THÔNG TIN' : 'THIẾT LẬP TRONG 1 PHÚT' }}
+            </span>
+            <h2>{{ editingItem() ? 'Chỉnh sửa lớp học' : 'Tạo lớp học mới' }}</h2>
+            <p>Thông tin này sẽ được dùng để tính học phí tự động.</p>
+          </div>
+          <button type="button" class="closeModal" (click)="closeModal()" aria-label="Đóng">
+            ×
+          </button>
+        </header>
+
+        <div class="modalBody">
+          <label class="field">
+            <span>Tên lớp học <b>*</b></span>
+            <input
+              type="text"
+              formControlName="name"
+              [class.error]="isNameInvalid()"
+              placeholder="VD: Toán nâng cao 8A" />
+            @if (isNameInvalid()) {
+              <small class="errorText">Vui lòng nhập tên lớp học.</small>
+            }
+          </label>
+
+          <fieldset>
+            <legend>Hình thức thu học phí <b>*</b></legend>
+            <div class="radioGrid">
+              <button
+                type="button"
+                class="radioCard"
+                [class.selected]="form.controls.feeType.value === 'session'"
+                (click)="selectFeeType('session')">
+                <i>{{ form.controls.feeType.value === 'session' ? '●' : '' }}</i>
+                <span>
+                  <strong>⚡ Theo buổi</strong>
+                  <small>Tính theo số buổi thực tế</small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="radioCard"
+                [class.selected]="form.controls.feeType.value === 'monthly'"
+                [class.monthly]="form.controls.feeType.value === 'monthly'"
+                (click)="selectFeeType('monthly')">
+                <i>{{ form.controls.feeType.value === 'monthly' ? '●' : '' }}</i>
+                <span>
+                  <strong>▣ Trọn tháng</strong>
+                  <small>Thu trọn gói cố định tháng</small>
+                </span>
+              </button>
+            </div>
+          </fieldset>
+
+          <label class="field">
+            <span>Đơn giá mặc định (VNĐ) <b>*</b></span>
+            <div class="moneyInput">
+              <input
+                type="number"
+                formControlName="fee"
+                [class.error]="isFeeInvalid()" />
+              <em>đ</em>
+            </div>
+            @if (isFeeInvalid()) {
+              <small class="errorText">Vui lòng nhập đơn giá hợp lệ.</small>
+            }
+          </label>
+
+          <div class="presets">
+            @for (x of presets; track x) {
+              <button
+                type="button"
+                [class.active]="form.controls.fee.value === x"
+                (click)="selectPreset(x)">
+                {{ money(x) }} đ
+              </button>
+            }
+          </div>
+
+          <div class="twoFields">
+            <label class="field">
+              <span>Lịch học trong tuần</span>
+              <input
+                type="text"
+                formControlName="schedule"
+                placeholder="VD: Thứ 3, Thứ 6 · 18:00" />
+            </label>
+            <label class="field">
+              <span>Ghi chú</span>
+              <input
+                type="text"
+                formControlName="notes"
+                placeholder="Ghi chú nội bộ (nếu có)" />
+            </label>
+          </div>
+
+          <div class="formula">
+            <span class="formulaIcon">✓</span>
+            <div>
+              <b>Xem trước công thức học phí VietQR</b>
+              <p>
+                @if (form.controls.feeType.value === 'session') {
+                  Học sinh đi học <strong>8 buổi</strong> × <strong>{{ money(form.controls.fee.value) }} đ</strong> =
+                  <em>{{ money(form.controls.fee.value * 8) }} đ</em>
+                } @else {
+                  Học phí trọn gói tháng = <em>{{ money(form.controls.fee.value) }} đ</em>
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modalFooter">
+          <button type="button" class="cancel" (click)="closeModal()">Hủy bỏ</button>
+          <button type="button" class="save" (click)="saveClass()" [disabled]="saving()">
+            {{ editingItem() ? 'Lưu thay đổi' : 'Tạo lớp học ngay' }} →
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+</div>
