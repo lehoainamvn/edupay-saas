@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -9,28 +10,34 @@ export const routes: Routes = [
   {
     path: 'auth',
     children: [
-      { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
-      { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) }
+      { path: 'login',    loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
+      { path: 'register', loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent) },
+      { path: '', redirectTo: 'login', pathMatch: 'full' }
     ]
   },
   {
     path: 'dashboard',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
     path: 'classes',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/classes/classes.component').then(m => m.ClassesComponent)
   },
   {
     path: 'students',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/students/students.component').then(m => m.StudentsComponent)
   },
   {
     path: 'attendance',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/attendance/attendance.component').then(m => m.AttendanceComponent)
   },
   {
     path: 'billing',
+    canActivate: [authGuard],
     loadComponent: () => import('./features/billing/billing.component').then(m => m.BillingComponent)
   },
   {
@@ -39,6 +46,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'dashboard'
+    redirectTo: 'auth/login'
   }
 ];
