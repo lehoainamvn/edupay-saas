@@ -38,6 +38,10 @@ public class ApiResponse<T> {
         return ok(data, "Thành công");
     }
 
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ok(data, message);
+    }
+
     public static <T> ApiResponse<T> error(String errorCode, String message, List<String> errors) {
         return ApiResponse.<T>builder()
                 .success(false)
