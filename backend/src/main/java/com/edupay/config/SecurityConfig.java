@@ -1,7 +1,11 @@
 package com.edupay.config;
 
+import com.edupay.security.JwtAuthFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -9,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -17,7 +22,10 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
 
     private static final String[] PUBLIC_WHITE_LIST = {
             // Swagger / OpenAPI documentation
@@ -27,10 +35,17 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/webjars/**",
 
-            // Public API routes
+            // Auth endpoints (không cần token)
+            "/auth/register",
+            "/auth/login",
+            "/auth/refresh-token",
+            "/auth/logout",      // logout chỉ cần refreshToken trong body
+
+            // Public routes
             "/public/**",
-            "/auth/**",
+            "/webhooks/**",
             "/actuator/health",
+            "/health",
             "/error"
     };
 
@@ -42,8 +57,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_WHITE_LIST).permitAll()
-                        .anyRequest().permitAll() // Cho phép trong giai đoạn dev khởi tạo ban đầu
-                );
+                        .requestMatchers("/auth/logout-all").authenticated() // Cần JWT để biết revoke ai
+                        .anyRequest().authenticated()
+                )
+                // Chạy JwtAuthFilter trước UsernamePasswordAuthenticationFilter
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -51,6 +69,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
