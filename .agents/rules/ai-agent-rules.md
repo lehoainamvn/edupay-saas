@@ -39,6 +39,29 @@ Tài liệu này là **tập luật tối cao (Ground Truth)** dành riêng cho 
 * **CẤM SỬA ĐỔI** bất kỳ file migration nào đã commit (`V1__...`, `V2__...`).
 * Thay đổi bảng, thêm cột mới phải tạo file migration kế tiếp: `V3__...`, `V4__...`.
 
+### 6. Luật Tái Sử Dụng & Chống Trùng Lặp (Reuse-First & Anti-Duplication Law — P0)
+* **QUÉT VÀ KIỂM TRA TRƯỚC (Discovery First):** Trước khi tạo mới bất kỳ thành phần nào (UI Component, Layout/Thanh Navigation, Modal, Toast, Service, DTO, Entity, Helper, Enum, CSS Class, Icon), Agent **BẮT BUỘC PHẢI TỰ TRA CỨU** trong thư mục dùng chung (`frontend/src/app/shared/`, `core/`, `backend/src/.../entity/`, `dto/`, `config/`) và các nhánh tính năng (`feature/...`).
+* **CẤM TẠO TRÙNG LẶP / TẠO MỚI KHI ĐÃ CÓ SẴN:**
+  * Những gì hệ thống **ĐÃ THIẾT KẾ HOẶC XÂY DỰNG SẴN** (ví dụ: `NavbarComponent` `<app-navbar>`, `BaseEntity`, `TenantContext`, `ApiResponse<T>`, `TokenService`, `AuthService`,...):
+    - **BẮT BUỘC tự vào lấy lại để tái sử dụng 100%**, chỉ import và truyền tham số (`@Input`, props, method calls) phù hợp ngữ cảnh mới.
+    - **TUYỆT ĐỐI CẤM** tự ý tạo ra cái mới trùng lặp, không code lại từ đầu, không copy-paste tạo ra các component song song gây phân mảnh mã nguồn, lệch style giao diện hoặc sai lệch logic.
+* **NGUYÊN TẮC "SINGLE SOURCE OF TRUTH":** Mọi nâng cấp, tinh chỉnh cho một thành phần dùng chung phải được sửa trực tiếp tại component gốc trong `shared/` hoặc `core/` để toàn bộ các trang khác cùng được hưởng lợi đồng bộ. Tuyệt đối không tạo bản sao riêng lẻ trong từng feature folder.
+
+### 7. Luật Tránh Dùng Icon / Emoji Tùy Tiện Do AI Bịa (Anti-AI Cliché Icons & Clean Typography Law — P0)
+* **CẤM CHÈN EMOJI / ICON LẠ TỰ BỊA:** Tuyệt đối **CẤM** chèn emoji hoặc icon ngẫu hứng do AI tự sinh (ví dụ: `👋`, `📱`, `⚡`, `🧮`, `🎓`, `💸`, `🔥`...) vào tiêu đề H1/H2, button label, kicker badge, và các mục menu của thanh điều hướng.
+* **CLEAN TYPOGRAPHY FIRST:** Giao diện quản lý giảng dạy & tài chính B2B cho giáo viên cần sự thanh lịch, chuẩn mực, tối giản, chuyên nghiệp. Nội dung văn bản phải rõ ràng, gãy gọn, không màu mè.
+* **BỘ ICON VECTOR CHUẨN:** Chỉ sử dụng icon vector tối giản đã được chuẩn hóa (ví dụ: icon mũi tên `→`, checkmark `✓`, xóa `✕`, hoặc các icon có nét vẽ stroke `1.5px` - `1.8px` đồng bộ). Tuyệt đối không tự vẽ hoặc copy các icon SVG kỳ dị từ các công cụ AI khác.
+* **CHỐT THANH NAVIGATION (`NavbarComponent`):** Thanh điều hướng sử dụng nhãn chữ thuần túy (Text-only tabs) cho các mục: "Tổng quan", "Lớp học", "Học sinh", "Điểm danh 1 chạm", "Học phí VietQR". Không chèn thêm icon thừa vào trước chữ.
+
+### 8. Luật Thống Nhất Routing Tập Trung Tại Duy Nhất 1 File (Single Source of Truth for Routing Law — P0)
+* **DUY NHẤT 1 FILE ROUTING:** Toàn bộ cấu hình định tuyến (Routing) của ứng dụng Frontend **BẮT BUỘC** tập trung 100% tại duy nhất một file: `frontend/src/app/app.routes.ts`.
+* **CẤM PHÂN MẢNH ROUTE:** Tuyệt đối **CẤM** tạo các file routing con (e.g. `classes.routes.ts`, `dashboard.routes.ts`, `feature-routing.module.ts`) rải rác trong từng thư mục feature. Mọi route mới, route con (children), route redirect hay route alias đều phải được khai báo trực tiếp trong `app.routes.ts`.
+* **QUẢN LÝ BẢO VỆ ROUTE TẬP TRUNG:** Các guard như `authGuard` phải được gắn và quản lý tường minh ngay trên từng route trong file này để đảm bảo bức tranh toàn cảnh về bảo mật và điều hướng.
+
+### 9. Luật Kết Nối API Thật & Thiết Kế Trạng Thái Rỗng (Real API & Empty State First Law — P0)
+* **KHÔNG DÙNG DỮ LIỆU GIẢ CỨNG TRONG CODE (No Hardcoded Mock Data):** Mọi màn hình ứng dụng sau khi thiết kế xong khung giao diện **BẮT BUỘC** phải kết nối API gọi xuống cơ sở dữ liệu thật để lấy và hiển thị dữ liệu động của Tenant.
+* **THIẾT KẾ EMPTY STATE CHỈN CHU:** Khi cơ sở dữ liệu chưa có bản ghi (ví dụ: giáo viên mới đăng ký chưa có lớp học, hôm nay chưa có ca dạy, chưa phát sinh giao dịch VietQR, không có học sinh nợ), giao diện **BẮT BUỘC** phải hiển thị trạng thái rỗng (Empty State) sạch sẽ, lịch sự với thông báo hướng dẫn rõ ràng (ví dụ: *"Chưa có ca dạy nào hôm nay"*, *"Chưa có giao dịch VietQR nào phát sinh"*) kèm nút hành động thích hợp (như *"+ Tạo lớp học mới"*), tuyệt đối không để màn hình lỗi hay hiển thị dữ liệu giả của người khác.
+
 ---
 
 ## 🛠️ DANH SÁCH SKILLS CỦA DỰ ÁN

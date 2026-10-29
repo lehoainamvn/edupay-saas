@@ -7,8 +7,14 @@ import org.mapstruct.*;
 
 /**
  * MapStruct Mapper chuyển đổi giữa ClassEntity và các DTO.
+ * Sử dụng builder = @Builder(disableBuilder = true) để tránh xung đột với Lombok @Builder
+ * đối với các thuộc tính kế thừa từ BaseEntity (id, tenantId, createdAt, updatedAt).
  */
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(
+        componentModel = "spring",
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        builder = @Builder(disableBuilder = true)
+)
 public interface ClassMapper {
 
     @Mapping(target = "id", ignore = true)

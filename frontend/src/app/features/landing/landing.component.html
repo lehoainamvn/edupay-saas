@@ -1,39 +1,5 @@
-<!-- Navigation -->
-<nav class="nav">
-  <div class="navInner">
-    <div class="brandWrap">
-      <div class="logo" aria-label="EduPay">
-        <span class="logoMark">
-          <svg viewBox="0 0 28 28" aria-hidden="true">
-            <path d="m3 10 11-6 11 6-11 6L3 10Z" />
-            <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
-          </svg>
-        </span>
-        <strong>EduPay</strong>
-      </div>
-      <span class="version">SaaS v1.0</span>
-    </div>
-
-    <div class="navLinks" [class.open]="menuOpen()">
-      <a href="#features">Tính năng</a>
-      <a href="#process">Cách hoạt động</a>
-      <a href="#pricing">Bảng giá</a>
-      <a href="#parents">Cổng Phụ Huynh</a>
-      <a href="#faq">Câu hỏi thường gặp</a>
-    </div>
-
-    <div class="navActions">
-      <a routerLink="/auth/login" class="login">Đăng nhập</a>
-      <a routerLink="/auth/register" class="button small">
-        Dùng thử miễn phí 14 ngày <span aria-hidden="true">→</span>
-      </a>
-    </div>
-
-    <button class="menuButton" (click)="toggleMenu()" aria-label="Mở menu">
-      {{ menuOpen() ? '×' : '☰' }}
-    </button>
-  </div>
-</nav>
+<!-- Unified Navigation Bar -->
+<app-navbar mode="public"></app-navbar>
 
 <main>
   <!-- Hero Section -->

@@ -1,3 +1,4 @@
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -59,7 +60,7 @@ const INITIAL_CLASSES: ClassCardVm[] = [
 @Component({
   selector: 'app-classes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, NavbarComponent],
   templateUrl: './classes.component.html',
   styleUrls: ['./classes.component.css']
 })
