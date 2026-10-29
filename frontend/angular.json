@@ -43,7 +43,7 @@
                   "maximumError": "50kb"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all", "optimization": { "fonts": false }
             },
             "development": {
               "optimization": false,
@@ -67,5 +67,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

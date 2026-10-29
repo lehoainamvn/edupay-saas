@@ -1,40 +1,6 @@
 <div class="app">
-  <!-- Sticky Topbar -->
-  <nav class="topbar">
-    <div class="topbarInner">
-      <div class="brandGroup">
-        <a routerLink="/" class="logo" aria-label="EduPay">
-          <span class="logoMark">
-            <svg viewBox="0 0 28 28" aria-hidden="true">
-              <path d="m3 10 11-6 11 6-11 6L3 10Z" />
-              <path d="M7 13.5V19c3.8 3.2 10.2 3.2 14 0v-5.5" />
-            </svg>
-          </span>
-          <strong>EduPay</strong>
-        </a>
-        <span class="version">SaaS v1.0</span>
-      </div>
-
-      <div class="mainNav">
-        <a routerLink="/dashboard" class="navBtn">Tổng quan</a>
-        <a routerLink="/classes" class="navBtn active">Lớp học</a>
-        <a routerLink="/students" class="navBtn">Học sinh</a>
-        <a routerLink="/attendance" class="navBtn">Điểm danh 1 chạm</a>
-        <a routerLink="/billing" class="navBtn">Học phí VietQR</a>
-      </div>
-
-      <div class="tenant">
-        <i></i>
-        <span>
-          Cô Nguyễn Thị Mai
-          <small>Gói Thuê Tháng</small>
-        </span>
-        <b>⌄</b>
-      </div>
-
-      <button type="button" class="mobileProfile" aria-label="Tài khoản giáo viên">NM</button>
-    </div>
-  </nav>
+  <!-- Unified Navigation Bar -->
+  <app-navbar mode="app"></app-navbar>
 
   <!-- Main Content -->
   <main class="page">

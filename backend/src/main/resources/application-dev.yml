@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/edupay_dev_db
     username: postgres
-    password: postgres123
+    password: jcxdc@123
     driver-class-name: org.postgresql.Driver
     # Connection Pool (HikariCP) - Nhỏ gọn cho môi trường dev
     hikari:

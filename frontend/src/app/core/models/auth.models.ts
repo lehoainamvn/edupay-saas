@@ -1,6 +1,5 @@
 /**
- * Shared Auth Models — tách riêng để tránh circular dependency
- * giữa AuthService và TokenService.
+ * Shared Auth Models
  */
 
 export interface LoginRequest {
@@ -15,16 +14,33 @@ export interface RegisterRequest {
   centerName: string;
 }
 
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  tokenType: string;
-  expiresIn: number;
+export interface BackendUserDto {
   userId: string;
   tenantId: string;
   fullName: string;
   phone: string;
-  roles: string[];
+  email?: string;
+  avatarUrl?: string;
+  isOwner?: boolean;
+  roles?: string[];
+  subscriptionPlan?: string;
+  subscriptionStatus?: string;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  tokenType?: string;
+  accessTokenExpiresAt?: number;
+  user?: BackendUserDto;
+  // Fallback flat fields
+  userId?: string;
+  tenantId?: string;
+  fullName?: string;
+  phone?: string;
+  roles?: string[];
+  subscriptionPlan?: string;
+  subscriptionStatus?: string;
 }
 
 export interface UserInfo {
@@ -32,5 +48,7 @@ export interface UserInfo {
   tenantId: string;
   fullName: string;
   phone: string;
-  roles: string[];
+  roles?: string[];
+  subscriptionPlan?: string;
+  subscriptionStatus?: string;
 }

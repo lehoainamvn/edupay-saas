@@ -1,3 +1,4 @@
+import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { Component, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -5,7 +6,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NavbarComponent],
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.css']
 })
