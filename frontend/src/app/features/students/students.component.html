@@ -1,0 +1,614 @@
+<div class="app">
+  <!-- Unified Navigation Bar -->
+  <app-navbar mode="app"></app-navbar>
+
+  <!-- Main Content -->
+  <main class="page">
+    @if (toastMessage(); as msg) {
+      <div class="toast" role="status">
+        <span>✓</span> {{ msg }}
+      </div>
+    }
+
+    <!-- Page Header -->
+    <header class="pageHeader">
+      <div class="eyebrow">
+        <i></i> QUẢN LÝ HỌC SINH · ĐỐI SOÁT VIETQR ĐỊNH DANH
+      </div>
+      <div class="titleRow">
+        <div>
+          <h1>Danh sách học sinh &amp; Biệt danh</h1>
+          <p>
+            Quản lý họ tên, tên gọi ở nhà (biệt danh), SĐT Zalo phụ huynh và mức học phí riêng cho từng em.
+          </p>
+        </div>
+
+        <div class="headerButtons">
+          <button type="button" class="importBtn" (click)="openImportModal()">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Import Excel / Mẫu tải về
+          </button>
+
+          <button type="button" class="create" (click)="openCreateModal()">
+            <span>＋</span> Thêm học sinh mới
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 4 KPI Cards -->
+    <section class="kpiGrid">
+      <div class="kpi">
+        <span class="kpiIcon blue">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="9" cy="9" r="3" />
+            <circle cx="17" cy="10" r="2.5" />
+            <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6M15 15c3.6 0 5.5 1.7 6 5" />
+          </svg>
+        </span>
+        <div>
+          <small>ĐANG THEO HỌC</small>
+          <strong>{{ studyingStudents().length }} <em>học sinh</em></strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon green">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+            <line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+        </span>
+        <div>
+          <small>CÓ BIỆT DANH ĐỊNH DANH</small>
+          <strong>{{ withNicknameCount() }} <em>tên ở nhà</em></strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon yellow">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 6h14a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h12" />
+            <path d="M15 11h7v5h-7a2.5 2.5 0 0 1 0-5Z" />
+          </svg>
+        </span>
+        <div>
+          <small>HỌC PHÍ RIÊNG / ƯU ĐÃI</small>
+          <strong>{{ withCustomFeeCount() }} <em>học sinh</em></strong>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <span class="kpiIcon slate">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 7h18M5 7v13h14V7M3 3h18v4H3zM10 12h4" />
+          </svg>
+        </span>
+        <div>
+          <small>TẠM NGHỈ / ĐÃ NGHỈ</small>
+          <strong>{{ inactiveCount() }} <em>bảo toàn lịch sử</em></strong>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Card -->
+    <section class="workspace">
+      <div class="toolbar">
+        <label class="search">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+          <input
+            type="text"
+            [value]="search()"
+            (input)="onSearchInput($event)"
+            placeholder="Tìm tức thì theo Họ tên, Biệt danh ở nhà (Bé Bống, Tít...) hoặc SĐT phụ huynh..." />
+          @if (search()) {
+            <button type="button" class="clearSearchBtn" (click)="clearSearch()" aria-label="Xóa từ khóa">
+              ×
+            </button>
+          }
+        </label>
+
+        <div class="statusTabs">
+          <button
+            type="button"
+            [class.active]="statusFilter() === 'STUDYING'"
+            (click)="setStatusFilter('STUDYING')">
+            Đang học <span>{{ studyingStudents().length }}</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="statusFilter() === 'PAUSED_OR_DROPPED'"
+            (click)="setStatusFilter('PAUSED_OR_DROPPED')">
+            Tạm nghỉ / Đã nghỉ <span>{{ inactiveCount() }}</span>
+          </button>
+          <button
+            type="button"
+            [class.active]="statusFilter() === 'ALL'"
+            (click)="setStatusFilter('ALL')">
+            Tất cả <span>{{ students().length }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Class Filter Row -->
+      <div class="filterRow">
+        <div class="filterLeft">
+          <span>Lọc theo lớp</span>
+          <div class="classFilterBtns">
+            <button
+              type="button"
+              [class.active]="selectedClassFilter() === 'ALL'"
+              (click)="setClassFilter('ALL')">
+              Tất cả các lớp
+            </button>
+            @for (cls of classes(); track cls.id) {
+              <button
+                type="button"
+                [class.active]="selectedClassFilter() === cls.id"
+                (click)="setClassFilter(cls.id)">
+                {{ cls.name }}
+              </button>
+            }
+          </div>
+        </div>
+        <b>{{ visibleStudents().length }} học sinh được tìm thấy</b>
+      </div>
+
+      <!-- Student Cards Grid -->
+      @if (visibleStudents().length > 0) {
+        <div class="studentGrid">
+          @for (stu of visibleStudents(); track stu.id) {
+            <article class="studentCard" [class.inactiveCard]="stu.status !== 'STUDYING'">
+              <div class="cardTop">
+                <span class="classBadge">
+                  <svg class="icon miniIcon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 5a3 3 0 0 1 3-3h5v18H7a3 3 0 0 0-3 2V5ZM20 5a3 3 0 0 0-3-3h-5v18h5a3 3 0 0 1 3 2V5Z" />
+                  </svg>
+                  {{ stu.className }}
+                </span>
+
+                <span
+                  class="statusBadge"
+                  [class.paused]="stu.status === 'PAUSED'"
+                  [class.dropped]="stu.status === 'DROPPED'">
+                  <i></i>
+                  {{
+                    stu.status === 'STUDYING'
+                      ? 'Đang học'
+                      : stu.status === 'PAUSED'
+                        ? 'Tạm nghỉ'
+                        : 'Đã nghỉ học'
+                  }}
+                </span>
+              </div>
+
+              <!-- Student Avatar + Full Name + Nickname Pill -->
+              <div class="studentIdentity">
+                <span class="avatarCircle">{{ initials(stu.fullName) }}</span>
+                <div class="identityText">
+                  <div class="nameLine">
+                    <h2>{{ stu.fullName }}</h2>
+                    @if (stu.nickname) {
+                      <span class="nicknamePill" title="Biệt danh ở nhà dùng để đối soát sao kê">
+                        <svg class="icon miniIcon" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                          <line x1="7" y1="7" x2="7.01" y2="7" />
+                        </svg>
+                        {{ stu.nickname }}
+                      </span>
+                    } @else {
+                      <span class="nicknameEmpty">Chưa có biệt danh</span>
+                    }
+                  </div>
+                  <p class="parentMeta">
+                    Phụ huynh: <strong>{{ stu.parentName || 'Chưa cập nhật tên PH' }}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <!-- 2-Column Stats: Parent Phone & Tuition Fee -->
+              <div class="studentStats">
+                <div>
+                  <span>SĐT ZALO PHỤ HUYNH</span>
+                  <div class="phoneValueRow">
+                    <strong>{{ stu.parentPhone }}</strong>
+                    <button
+                      type="button"
+                      class="copyMiniBtn"
+                      (click)="copyParentPhone(stu.parentPhone, stu.fullName)"
+                      title="Sao chép SĐT phụ huynh">
+                      Copy
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <span>
+                    {{ stu.customFee != null ? 'HỌC PHÍ RIÊNG' : 'ĐƠN GIÁ THEO LỚP' }}
+                  </span>
+                  <strong [class.customFeeHighlight]="stu.customFee != null">
+                    {{ money(stu.effectiveFee) }} đ
+                    <small>/ {{ stu.classFeeType === 'MONTHLY_PACKAGE' ? 'tháng' : 'buổi' }}</small>
+                  </strong>
+                </div>
+              </div>
+
+              <!-- Card Touch Actions -->
+              <div class="cardActions">
+                <a
+                  class="primaryAction"
+                  [href]="'https://zalo.me/' + stu.parentPhone"
+                  target="_blank"
+                  rel="noopener">
+                  <span>Nhắn Zalo PH</span>
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 12h14m-5-5 5 5-5 5" />
+                  </svg>
+                </a>
+
+                <button type="button" class="outlineAction" (click)="openEditModal(stu)">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z" />
+                    <path d="m13.5 7.5 3 3" />
+                  </svg>
+                  Chỉnh sửa
+                </button>
+
+                <button
+                  type="button"
+                  class="textAction"
+                  [class.restore]="stu.status !== 'STUDYING'"
+                  (click)="toggleStudentStatus(stu)">
+                  @if (stu.status !== 'STUDYING') {
+                    Đi học lại
+                  } @else {
+                    Nghỉ học
+                  }
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <span class="emptyIconBox">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-4-4" />
+            </svg>
+          </span>
+          <h2>Không tìm thấy học sinh phù hợp</h2>
+          <p>Thử tìm bằng tên ở nhà (biệt danh), số điện thoại phụ huynh hoặc bấm thêm học sinh mới.</p>
+        </div>
+      }
+    </section>
+  </main>
+
+  <button type="button" class="mobileCreate" (click)="openCreateModal()">
+    ＋ Thêm học sinh mới
+  </button>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: THÊM MỚI / CHỈNH SỬA HỌC SINH                                -->
+  <!-- ===================================================================== -->
+  @if (studentModalOpen()) {
+    <div
+      class="modalBackdrop"
+      (mousedown)="$event.target === $event.currentTarget && closeStudentModal()">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="editingStudent() ? 'Chỉnh sửa học sinh' : 'Thêm học sinh mới'"
+        [formGroup]="studentForm">
+        <header class="modalHeader">
+          <div>
+            <span class="modalEyebrow">
+              {{ editingStudent() ? 'CẬP NHẬT HỒ SƠ HỌC SINH' : 'THÊM HỌC SINH VÀO LỚP' }}
+            </span>
+            <h2>{{ editingStudent() ? 'Chỉnh sửa thông tin học sinh' : 'Thêm học sinh mới' }}</h2>
+            <p>Hệ thống tự động kiểm tra SĐT 10 số và chống trùng lặp trong cùng lớp học.</p>
+          </div>
+          <button type="button" class="closeModal" (click)="closeStudentModal()" aria-label="Đóng">
+            ×
+          </button>
+        </header>
+
+        <div class="modalBody">
+          <!-- Chọn lớp học -->
+          <label class="field">
+            <span>Lớp theo học <b>*</b></span>
+            <select formControlName="classId" class="selectInput">
+              @for (cls of classes(); track cls.id) {
+                <option [value]="cls.id">
+                  {{ cls.name }} ({{ money(cls.defaultFee) }} đ / {{ cls.feeType === 'MONTHLY_PACKAGE' ? 'tháng' : 'buổi' }})
+                </option>
+              }
+            </select>
+          </label>
+
+          <!-- Họ tên & Biệt danh -->
+          <div class="twoFields">
+            <label class="field">
+              <span>Họ và tên học sinh <b>*</b></span>
+              <input
+                type="text"
+                formControlName="fullName"
+                [class.error]="isNameInvalid()"
+                placeholder="VD: Trần Minh Quân" />
+              @if (isNameInvalid()) {
+                <small class="errorText">Vui lòng nhập họ tên học sinh (tối thiểu 2 ký tự).</small>
+              }
+            </label>
+
+            <label class="field">
+              <span>Biệt danh (Tên ở nhà)</span>
+              <input
+                type="text"
+                formControlName="nickname"
+                placeholder="VD: Bé Tít, Bé Bống, Cún..." />
+              <small class="hintText">Giúp nhận diện nhanh khi PH chuyển khoản ghi tên ở nhà.</small>
+            </label>
+          </div>
+
+          <!-- Họ tên PH & SĐT PH -->
+          <div class="twoFields">
+            <label class="field">
+              <span>Họ tên phụ huynh</span>
+              <input
+                type="text"
+                formControlName="parentName"
+                placeholder="VD: Chị Hương / Anh Long" />
+            </label>
+
+            <label class="field">
+              <span>SĐT Zalo phụ huynh (10 số) <b>*</b></span>
+              <input
+                type="tel"
+                formControlName="parentPhone"
+                (blur)="normalizePhoneInput()"
+                [class.error]="isPhoneFormatInvalid() || isDuplicatePhoneInClass()"
+                placeholder="VD: 0912345678" />
+              @if (isPhoneFormatInvalid()) {
+                <small class="errorText">
+                  SĐT không hợp lệ (cần đúng 10 số di động VN: 09x, 03x, 07x, 08x, 05x).
+                </small>
+              } @else if (isDuplicatePhoneInClass()) {
+                <small class="errorText">
+                  SĐT phụ huynh này đã tồn tại trong lớp {{ getSelectedClassOption().name }}.
+                </small>
+              }
+            </label>
+          </div>
+
+          <!-- Thiết lập Học phí riêng hay Theo lớp -->
+          <fieldset>
+            <legend>Chế độ tính học phí cho học sinh này</legend>
+            <div class="radioGrid">
+              <button
+                type="button"
+                class="radioCard"
+                [class.selected]="!useCustomFee()"
+                (click)="toggleCustomFeeMode(false)">
+                <i>{{ !useCustomFee() ? '●' : '' }}</i>
+                <span>
+                  <strong>Theo mặc định lớp</strong>
+                  <small>
+                    {{ money(getSelectedClassOption().defaultFee) }} đ /
+                    {{ getSelectedClassOption().feeType === 'MONTHLY_PACKAGE' ? 'tháng' : 'buổi' }}
+                  </small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                class="radioCard"
+                [class.selected]="useCustomFee()"
+                [class.monthly]="useCustomFee()"
+                (click)="toggleCustomFeeMode(true)">
+                <i>{{ useCustomFee() ? '●' : '' }}</i>
+                <span>
+                  <strong>Học phí riêng / Học bổng</strong>
+                  <small>Tùy chỉnh đơn giá riêng cho học sinh</small>
+                </span>
+              </button>
+            </div>
+          </fieldset>
+
+          @if (useCustomFee()) {
+            <label class="field">
+              <span>Đơn giá học phí riêng (VNĐ) <b>*</b></span>
+              <div class="moneyInput">
+                <input type="number" formControlName="customFee" />
+                <em>đ</em>
+              </div>
+            </label>
+
+            <div class="presets">
+              @for (preset of customFeePresets; track preset) {
+                <button
+                  type="button"
+                  [class.active]="studentForm.controls.customFee.value === preset"
+                  (click)="selectCustomFeePreset(preset)">
+                  {{ money(preset) }} đ
+                </button>
+              }
+            </div>
+          }
+
+          <div class="formula">
+            <span class="formulaIcon">✓</span>
+            <div>
+              <b>Cú pháp VietQR định danh tự động</b>
+              <p>
+                Học sinh:
+                <strong>{{ studentForm.controls.fullName.value || 'Họ tên HS' }}</strong>
+                @if (studentForm.controls.nickname.value) {
+                  ({{ studentForm.controls.nickname.value }})
+                }
+                · Đơn giá áp dụng:
+                <em>
+                  {{
+                    money(
+                      useCustomFee()
+                        ? studentForm.controls.customFee.value
+                        : getSelectedClassOption().defaultFee
+                    )
+                  }}
+                  đ
+                </em>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modalFooter">
+          <button type="button" class="cancel" (click)="closeStudentModal()">Hủy bỏ</button>
+          <button type="button" class="save" (click)="saveStudent()" [disabled]="saving()">
+            {{ editingStudent() ? 'Lưu thay đổi' : 'Thêm vào lớp học' }} →
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: IMPORT HÀNG LOẠT TỪ FILE EXCEL / CSV + TẢI FILE TEMPLATE MẪU -->
+  <!-- ===================================================================== -->
+  @if (importModalOpen()) {
+    <div
+      class="modalBackdrop"
+      (mousedown)="$event.target === $event.currentTarget && closeImportModal()">
+      <section
+        class="modal importModal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Import danh sách học sinh từ Excel hoặc CSV">
+        <header class="modalHeader">
+          <div>
+            <span class="modalEyebrow">NHẬP DANH SÁCH HÀNG LOẠT · APACHE POI</span>
+            <h2>Import học sinh từ Excel / CSV</h2>
+            <p>Tải file mẫu chuẩn, điền danh sách học sinh và tải lên để kiểm tra SĐT trùng tự động.</p>
+          </div>
+          <button type="button" class="closeModal" (click)="closeImportModal()" aria-label="Đóng">
+            ×
+          </button>
+        </header>
+
+        <div class="modalBody">
+          <!-- Bước 1: Chọn lớp & Tải file mẫu -->
+          <div class="twoFields">
+            <label class="field">
+              <span>1. Chọn lớp cần nhập học sinh <b>*</b></span>
+              <select
+                class="selectInput"
+                [value]="importClassId()"
+                (change)="onImportClassChange($event)">
+                @for (cls of classes(); track cls.id) {
+                  <option [value]="cls.id">{{ cls.name }}</option>
+                }
+              </select>
+            </label>
+
+            <div class="field">
+              <span>2. File Excel mẫu chuẩn EduPay</span>
+              <button type="button" class="templateDownloadBtn" (click)="downloadSampleTemplate()">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                Tải file Template mẫu (.xlsx / .csv)
+              </button>
+            </div>
+          </div>
+
+          <!-- Bước 2: Chọn file từ máy hoặc Nạp thử dữ liệu mẫu -->
+          <div class="uploadZone">
+            <input
+              #fileInput
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              class="hiddenFileInput"
+              (change)="onFileSelected($event)" />
+            <div class="uploadContent">
+              <strong>
+                {{
+                  selectedFile()
+                    ? 'Đã chọn file: ' + selectedFile()!.name
+                    : 'Kéo thả hoặc chọn file Excel (.xlsx, .xls) hoặc CSV (.csv)'
+                }}
+              </strong>
+              <p>Các cột: Họ và tên (*), Biệt danh ở nhà, Họ tên PH, SĐT phụ huynh (*), Học phí riêng</p>
+              <div class="uploadActions">
+                <button type="button" class="chooseFileBtn" (click)="fileInput.click()">
+                  Chọn file từ máy tính
+                </button>
+                <button type="button" class="sampleLoadBtn" (click)="loadSamplePreviewRows()">
+                  Nạp thử dữ liệu mẫu (4 dòng)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bảng xem trước & kiểm tra lỗi SĐT / trùng trong lớp -->
+          @if (importPreviewRows().length > 0) {
+            <div class="previewSection">
+              <div class="previewHeader">
+                <strong>Kết quả kiểm tra trước khi nhập:</strong>
+                <div class="previewBadges">
+                  <span class="okCount">✓ {{ validPreviewCount() }} hợp lệ</span>
+                  @if (invalidPreviewCount() > 0) {
+                    <span class="errCount">✕ {{ invalidPreviewCount() }} lỗi / trùng SĐT</span>
+                  }
+                </div>
+              </div>
+
+              <div class="previewList">
+                @for (row of importPreviewRows(); track row.rowNumber) {
+                  <div class="previewRow" [class.invalidRow]="!row.valid">
+                    <div class="previewMain">
+                      <strong>{{ row.fullName }}</strong>
+                      @if (row.nickname) {
+                        <span class="miniNick">{{ row.nickname }}</span>
+                      }
+                      <span class="miniPhone">{{ row.parentPhone }}</span>
+                      @if (row.customFee) {
+                        <span class="miniCustomFee">{{ money(row.customFee) }} đ</span>
+                      }
+                    </div>
+                    <div class="previewStatus">
+                      @if (row.valid) {
+                        <span class="validTag">✓ Sẵn sàng thêm</span>
+                      } @else {
+                        <span class="invalidTag">✕ {{ row.errorReason }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <footer class="modalFooter">
+          <button type="button" class="cancel" (click)="closeImportModal()">Hủy bỏ</button>
+          <button
+            type="button"
+            class="save"
+            [disabled]="validPreviewCount() === 0 && !selectedFile()"
+            (click)="confirmImportStudents()">
+            Nhập {{ validPreviewCount() > 0 ? validPreviewCount() : '' }} học sinh vào lớp →
+          </button>
+        </footer>
+      </section>
+    </div>
+  }
+</div>
