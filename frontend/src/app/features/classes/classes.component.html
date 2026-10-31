@@ -154,7 +154,7 @@
             <article class="classCard" [class.archived]="item.archived">
               <div class="cardTop">
                 <span class="feeBadge" [ngClass]="item.feeType">
-                  {{ item.feeType === 'session' ? '⚡ Thu theo buổi' : '▣ Trọn gói tháng' }}
+                  {{ item.feeType === 'session' ? 'Thu theo buổi' : 'Trọn gói tháng' }}
                 </span>
                 <span class="status" [class.closed]="item.archived">
                   <i></i>{{ item.archived ? 'Đã lưu trữ' : 'Đang học' }}
@@ -208,7 +208,7 @@
                   [class.restore]="item.archived"
                   (click)="toggleArchive(item)">
                   @if (item.archived) {
-                    ↺ Khôi phục lớp
+                    Khôi phục lớp
                   } @else {
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M3 7h18M5 7v13h14V7M3 3h18v4H3zM10 12h4" />
@@ -279,7 +279,7 @@
                 (click)="selectFeeType('session')">
                 <i>{{ form.controls.feeType.value === 'session' ? '●' : '' }}</i>
                 <span>
-                  <strong>⚡ Theo buổi</strong>
+                  <strong>Theo buổi</strong>
                   <small>Tính theo số buổi thực tế</small>
                 </span>
               </button>
@@ -292,7 +292,7 @@
                 (click)="selectFeeType('monthly')">
                 <i>{{ form.controls.feeType.value === 'monthly' ? '●' : '' }}</i>
                 <span>
-                  <strong>▣ Trọn tháng</strong>
+                  <strong>Trọn tháng</strong>
                   <small>Thu trọn gói cố định tháng</small>
                 </span>
               </button>
