@@ -1,0 +1,617 @@
+<div class="app">
+  <!-- Unified Navigation Bar -->
+  <app-navbar mode="app"></app-navbar>
+
+  <!-- Main Content -->
+  <main class="page">
+    @if (toastMessage(); as msg) {
+      <div class="toast success" role="status">
+        <span class="toastIcon">✓</span> {{ msg }}
+      </div>
+    }
+
+    @if (errorMessage(); as err) {
+      <div class="toast error" role="alert">
+        <span class="toastIcon">✕</span> {{ err }}
+      </div>
+    }
+
+    <!-- Page Header -->
+    <header class="pageHeader">
+      <div class="eyebrow">
+        <i></i> ĐIỂM DANH BUỔI HỌC · THỐNG KÊ CHUYÊN CẦN
+      </div>
+      <div class="titleRow">
+        <div>
+          <h1>Điểm danh &amp; Chuyên cần học viên</h1>
+          <p>
+            Điểm danh 1 chạm tối ưu di động, theo dõi ma trận lịch sử học theo tháng và tổng hợp số buổi thực tế để xuất phiếu thu VietQR.
+          </p>
+        </div>
+
+        <!-- Class Selector Dropdown -->
+        @if (classes().length > 0) {
+          <div class="classSelectBox">
+            <label for="classSelect">Lớp đang chọn:</label>
+            <select
+              id="classSelect"
+              [ngModel]="selectedClassId()"
+              (ngModelChange)="onClassChange($event)"
+              class="classDropdown"
+            >
+              @for (c of classes(); track c.id) {
+                <option [value]="c.id">{{ c.name }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <!-- Tab Switcher (Mobile Touch Targets >= 48px) -->
+      @if (classes().length > 0) {
+        <nav class="tabNav" aria-label="Attendance tabs">
+          <button
+            type="button"
+            class="tabBtn"
+            [class.active]="activeTab() === 'daily'"
+            (click)="switchTab('daily')"
+          >
+            Điểm danh theo ngày
+          </button>
+          <button
+            type="button"
+            class="tabBtn"
+            [class.active]="activeTab() === 'monthly'"
+            (click)="switchTab('monthly')"
+          >
+            Ma trận &amp; Thống kê tháng
+          </button>
+        </nav>
+      }
+    </header>
+
+    <!-- ZERO STATE: NO CLASSES -->
+    @if (classes().length === 0) {
+      <section class="emptyContainer">
+        <div class="emptyCard">
+          <div class="emptyIconWrapper">
+            <svg class="emptySvg" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+              <path d="M6 6h10M6 10h10M6 14h6" />
+            </svg>
+          </div>
+          <h2>Chưa có lớp học nào</h2>
+          <p>
+            Bạn cần tạo lớp học và thêm học sinh trước khi có thể thực hiện điểm danh buổi học.
+          </p>
+          <a routerLink="/classes" class="primaryBtn emptyAction">
+            + Tạo lớp học mới
+          </a>
+        </div>
+      </section>
+    }
+
+    <!-- TAB 1: DAILY ATTENDANCE (UC-13) -->
+    @if (classes().length > 0 && activeTab() === 'daily') {
+      <section class="dailySection">
+        <!-- Date Bar & Controls -->
+        <div class="controlsCard">
+          <div class="dateControls">
+            <div class="dateInputWrapper">
+              <label for="lessonDateInput">Ngày học:</label>
+              <input
+                id="lessonDateInput"
+                type="date"
+                [ngModel]="selectedDate()"
+                (ngModelChange)="onDateChange($event)"
+                class="dateInput"
+              />
+            </div>
+
+            <div class="datePresets">
+              <button
+                type="button"
+                class="presetBtn"
+                [class.active]="isTodaySelected()"
+                (click)="selectDatePreset('today')"
+              >
+                Hôm nay
+              </button>
+              <button
+                type="button"
+                class="presetBtn"
+                (click)="selectDatePreset('yesterday')"
+              >
+                Hôm qua
+              </button>
+            </div>
+          </div>
+
+          <div class="actionButtons">
+            <button
+              type="button"
+              class="quickBtn"
+              (click)="markAllPresent()"
+              [disabled]="dailyItems().length === 0"
+            >
+              Tất cả có mặt
+            </button>
+            <button
+              type="button"
+              class="saveMainBtn"
+              [class.unsaved]="hasUnsavedChanges()"
+              (click)="saveDailyAttendance()"
+              [disabled]="isSavingDaily() || dailyItems().length === 0"
+            >
+              @if (isSavingDaily()) {
+                <span class="spinner"></span> Đang lưu...
+              } @else {
+                Lưu buổi học @if (hasUnsavedChanges()) { (Chưa lưu) }
+              }
+            </button>
+          </div>
+        </div>
+
+        <!-- Lock Warning Notice if invoice issued -->
+        @if (dailyAttendance()?.isClassLocked) {
+          <div class="lockAlert">
+            <span class="lockIcon">🔒</span>
+            <div>
+              <strong>Kỳ học này đã xuất phiếu thu học phí:</strong>
+              Các học sinh đã chốt phiếu thu sẽ bị khóa trạng thái điểm danh để bảo toàn tính toàn vẹn số tiền trên VietQR.
+            </div>
+          </div>
+        }
+
+        <!-- 5 KPI Cards -->
+        <div class="kpiGrid">
+          <div class="kpiCard">
+            <div class="kpiLabel">Sĩ số lớp</div>
+            <div class="kpiValue">{{ dailyTotal() }}</div>
+            <div class="kpiSub">học sinh</div>
+          </div>
+          <div class="kpiCard present">
+            <div class="kpiLabel">Có mặt</div>
+            <div class="kpiValue">{{ dailyPresentCount() }}</div>
+            <div class="kpiSub">em tham gia</div>
+          </div>
+          <div class="kpiCard excused">
+            <div class="kpiLabel">Nghỉ có phép</div>
+            <div class="kpiValue">{{ dailyExcusedCount() }}</div>
+            <div class="kpiSub">được miễn giảm</div>
+          </div>
+          <div class="kpiCard absent">
+            <div class="kpiLabel">Nghỉ không phép</div>
+            <div class="kpiValue">{{ dailyAbsentCount() }}</div>
+            <div class="kpiSub">cần phụ huynh xác nhận</div>
+          </div>
+          <div class="kpiCard rate">
+            <div class="kpiLabel">Tỷ lệ chuyên cần</div>
+            <div class="kpiValue">{{ dailyAttendanceRate() }}%</div>
+            <div class="kpiSub">tỷ lệ đi học</div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        @if (isDailyLoading()) {
+          <div class="loadingBox">
+            <div class="spinner"></div>
+            <span>Đang tải danh sách điểm danh...</span>
+          </div>
+        }
+
+        <!-- Empty Students in Class -->
+        @if (!isDailyLoading() && dailyItems().length === 0) {
+          <div class="emptyClassNotice">
+            <h3>Lớp này hiện chưa có học sinh nào</h3>
+            <p>Hãy thêm học sinh vào lớp để bắt đầu điểm danh từng buổi.</p>
+            <a routerLink="/students" class="secondaryBtn">
+              + Quản lý &amp; Thêm học sinh
+            </a>
+          </div>
+        }
+
+        <!-- Student Attendance Cards (Mobile-First Touch targets >= 48px) -->
+        @if (!isDailyLoading() && dailyItems().length > 0) {
+          <div class="studentCardList">
+            @for (item of dailyItems(); track item.studentId) {
+              <article class="studentCard" [class.locked]="item.isLocked">
+                <div class="studentInfo">
+                  <div class="nameRow">
+                    <span class="studentName">{{ item.fullName }}</span>
+                    @if (item.nickname) {
+                      <span class="nicknameBadge">{{ item.nickname }}</span>
+                    }
+                  </div>
+                  <div class="metaRow">
+                    @if (item.parentPhone) {
+                      <span class="phoneText">PH: {{ item.parentPhone }}</span>
+                    }
+                    @if (item.isLocked) {
+                      <span class="lockedBadge">🔒 Đã chốt hóa đơn</span>
+                    }
+                    @if (item.note) {
+                      <span class="notePreview">Ghi chú: {{ item.note }}</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- 1-Touch Status Controls (>= 48px Touch UX) -->
+                <div class="statusActions">
+                  <button
+                    type="button"
+                    class="statusBtn presentBtn"
+                    [class.active]="item.status === 'PRESENT'"
+                    [disabled]="item.isLocked"
+                    (click)="setStatus(item, 'PRESENT')"
+                    title="Có mặt"
+                  >
+                    Có mặt
+                  </button>
+                  <button
+                    type="button"
+                    class="statusBtn excusedBtn"
+                    [class.active]="item.status === 'EXCUSED'"
+                    [disabled]="item.isLocked"
+                    (click)="setStatus(item, 'EXCUSED')"
+                    title="Nghỉ có phép"
+                  >
+                    Có phép
+                  </button>
+                  <button
+                    type="button"
+                    class="statusBtn absentBtn"
+                    [class.active]="item.status === 'ABSENT'"
+                    [disabled]="item.isLocked"
+                    (click)="setStatus(item, 'ABSENT')"
+                    title="Nghỉ không phép"
+                  >
+                    Vắng
+                  </button>
+                  <button
+                    type="button"
+                    class="noteBtn"
+                    (click)="openNoteModal(item)"
+                    [title]="item.note ? 'Sửa ghi chú' : 'Thêm ghi chú'"
+                  >
+                    Ghi chú
+                  </button>
+                </div>
+              </article>
+            }
+          </div>
+
+          <!-- Footer Actions -->
+          <div class="dailyFooter">
+            <button
+              type="button"
+              class="clearBtn"
+              (click)="clearDailyAttendance()"
+              title="Xóa dữ liệu điểm danh ngày này"
+            >
+              Hủy điểm danh ngày này
+            </button>
+            <button
+              type="button"
+              class="saveMainBtn big"
+              [class.unsaved]="hasUnsavedChanges()"
+              (click)="saveDailyAttendance()"
+              [disabled]="isSavingDaily()"
+            >
+              @if (isSavingDaily()) {
+                <span class="spinner"></span> Đang lưu buổi học...
+              } @else {
+                Lưu kết quả điểm danh buổi học
+              }
+            </button>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- TAB 2: MONTHLY MATRIX & STATS (UC-14, UC-15) -->
+    @if (classes().length > 0 && activeTab() === 'monthly') {
+      <section class="monthlySection">
+        <!-- Month Controls Card -->
+        <div class="controlsCard">
+          <div class="dateControls">
+            <div class="dateInputWrapper">
+              <label for="monthInput">Kỳ học (Tháng):</label>
+              <input
+                id="monthInput"
+                type="month"
+                [ngModel]="selectedMonth()"
+                (ngModelChange)="onMonthChange($event)"
+                class="dateInput"
+              />
+            </div>
+            <div class="datePresets">
+              <button
+                type="button"
+                class="presetBtn"
+                (click)="selectMonthPreset('thisMonth')"
+              >
+                Tháng này
+              </button>
+              <button
+                type="button"
+                class="presetBtn"
+                (click)="selectMonthPreset('lastMonth')"
+              >
+                Tháng trước
+              </button>
+            </div>
+          </div>
+
+          <div class="monthSummary">
+            <div class="summaryChip">
+              <span>Tổng số buổi đã dạy:</span>
+              <strong>{{ monthlyMatrix()?.totalClassLessons || 0 }} buổi</strong>
+            </div>
+            <div class="summaryChip">
+              <span>Sĩ số lớp:</span>
+              <strong>{{ monthlyMatrix()?.students?.length || 0 }} học sinh</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        @if (isMonthlyLoading()) {
+          <div class="loadingBox">
+            <div class="spinner"></div>
+            <span>Đang tải ma trận điểm danh tháng...</span>
+          </div>
+        }
+
+        <!-- Empty Matrix -->
+        @if (!isMonthlyLoading() && (!monthlyMatrix() || monthlyMatrix()!.students.length === 0)) {
+          <div class="emptyClassNotice">
+            <h3>Chưa có dữ liệu điểm danh trong tháng {{ selectedMonth() }}</h3>
+            <p>Chuyển sang tab "Điểm danh theo ngày" để ghi nhận các buổi học đầu tiên của tháng.</p>
+            <button type="button" class="primaryBtn" (click)="switchTab('daily')">
+              Điểm danh ngay
+            </button>
+          </div>
+        }
+
+        @if (!isMonthlyLoading() && monthlyMatrix() && monthlyMatrix()!.students.length > 0) {
+          <!-- DESKTOP MATRIX TABLE (>= 640px) -->
+          <div class="matrixTableContainer desktopOnly">
+            <table class="matrixTable">
+              <thead>
+                <tr>
+                  <th class="stickyCol">Học sinh / Biệt danh</th>
+                  @for (date of monthlyMatrix()!.lessonDates; track date) {
+                    <th class="dateCol" [title]="date">
+                      <span class="dayNum">{{ formatDay(date) }}</span>
+                    </th>
+                  }
+                  <th class="statCol">Có mặt</th>
+                  <th class="statCol">Có phép</th>
+                  <th class="statCol">Vắng</th>
+                  <th class="statCol">Tổng buổi</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (student of monthlyMatrix()!.students; track student.studentId) {
+                  <tr [class.lockedRow]="student.isLocked">
+                    <td class="stickyCol studentCell">
+                      <div class="cellName">{{ student.fullName }}</div>
+                      @if (student.nickname) {
+                        <div class="cellNickname">{{ student.nickname }}</div>
+                      }
+                      @if (student.isLocked) {
+                        <span class="lockedPill">Đã xuất phiếu</span>
+                      }
+                    </td>
+
+                    @for (date of monthlyMatrix()!.lessonDates; track date) {
+                      <td class="cellDate" (click)="openEditCellModal(student, date)">
+                        @if (student.dailyRecords[date]; as rec) {
+                          <span
+                            class="statusDot"
+                            [class.present]="rec.status === 'PRESENT'"
+                            [class.excused]="rec.status === 'EXCUSED'"
+                            [class.absent]="rec.status === 'ABSENT'"
+                            [title]="date + ': ' + rec.status + (rec.note ? ' - ' + rec.note : '')"
+                          >
+                            {{ rec.status === 'PRESENT' ? '✓' : rec.status === 'EXCUSED' ? 'P' : 'V' }}
+                          </span>
+                        } @else {
+                          <span class="statusDot empty" title="Chưa có dữ liệu">—</span>
+                        }
+                      </td>
+                    }
+
+                    <td class="statCell presentText"><strong>{{ student.attendedCount }}</strong></td>
+                    <td class="statCell excusedText">{{ student.excusedCount }}</td>
+                    <td class="statCell absentText">{{ student.absentCount }}</td>
+                    <td class="statCell totalText">{{ student.totalLessons }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- MOBILE CARD LIST (< 640px) -->
+          <div class="mobileStudentList mobileOnly">
+            @for (student of monthlyMatrix()!.students; track student.studentId) {
+              <div class="mobileSummaryCard" [class.locked]="student.isLocked">
+                <div class="mobileSummaryHeader">
+                  <div>
+                    <h4 class="studentTitle">{{ student.fullName }}</h4>
+                    @if (student.nickname) {
+                      <span class="nicknameBadge">{{ student.nickname }}</span>
+                    }
+                  </div>
+                  @if (student.isLocked) {
+                    <span class="lockedBadge">🔒 Đã xuất phiếu thu</span>
+                  }
+                </div>
+
+                <div class="summaryPillsRow">
+                  <div class="summaryMiniPill present">
+                    <span>Có mặt:</span>
+                    <strong>{{ student.attendedCount }} buổi</strong>
+                  </div>
+                  <div class="summaryMiniPill excused">
+                    <span>Phép:</span>
+                    <strong>{{ student.excusedCount }}</strong>
+                  </div>
+                  <div class="summaryMiniPill absent">
+                    <span>Vắng:</span>
+                    <strong>{{ student.absentCount }}</strong>
+                  </div>
+                </div>
+
+                <!-- Lessons Expansion for Mobile -->
+                <div class="mobileLessonsGrid">
+                  <div class="gridLabel">Chi tiết các ngày học:</div>
+                  <div class="daysWrap">
+                    @for (date of monthlyMatrix()!.lessonDates; track date) {
+                      @if (student.dailyRecords[date]; as rec) {
+                        <button
+                          type="button"
+                          class="dayChip"
+                          [class.present]="rec.status === 'PRESENT'"
+                          [class.excused]="rec.status === 'EXCUSED'"
+                          [class.absent]="rec.status === 'ABSENT'"
+                          (click)="openEditCellModal(student, date)"
+                          [disabled]="student.isLocked"
+                        >
+                          {{ formatDay(date) }}
+                          <span class="chipStatus">
+                            {{ getStatusSymbol(rec.status) }}
+                          </span>
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="dayChip"
+                          (click)="openEditCellModal(student, date)"
+                          [disabled]="student.isLocked"
+                        >
+                          {{ formatDay(date) }}
+                          <span class="chipStatus">-</span>
+                        </button>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  </main>
+
+  <!-- MODAL 1: NOTE MODAL -->
+  @if (isNoteModalOpen() && noteStudent(); as s) {
+    <div class="modalBackdrop" (click)="closeNoteModal()">
+      <div class="modalDialog" (click)="$event.stopPropagation()">
+        <div class="modalHeader">
+          <h3>Ghi chú buổi học: {{ s.fullName }}</h3>
+          <button type="button" class="closeIconBtn" (click)="closeNoteModal()">✕</button>
+        </div>
+        <div class="modalBody">
+          <p class="modalHelpText">
+            Ghi chú này sẽ được lưu kèm buổi học ngày {{ formatDateVN(selectedDate()) }} (VD: Đi muộn 15 phút, mượn sách...).
+          </p>
+          <textarea
+            [(ngModel)]="noteText"
+            placeholder="Nhập ghi chú cho học sinh tại đây..."
+            rows="4"
+            class="modalTextarea"
+            maxlength="255"
+          ></textarea>
+        </div>
+        <div class="modalFooter">
+          <button type="button" class="secondaryBtn" (click)="closeNoteModal()">Đóng</button>
+          <button type="button" class="primaryBtn" (click)="saveNote()">Lưu ghi chú</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 2: EDIT MATRIX CELL MODAL -->
+  @if (isEditCellModalOpen() && editCellStudent(); as st) {
+    <div class="modalBackdrop" (click)="closeEditCellModal()">
+      <div class="modalDialog" (click)="$event.stopPropagation()">
+        <div class="modalHeader">
+          <h3>Cập nhật điểm danh</h3>
+          <button type="button" class="closeIconBtn" (click)="closeEditCellModal()">✕</button>
+        </div>
+        <div class="modalBody">
+          <div class="cellModalDetails">
+            <div><strong>Học sinh:</strong> {{ st.fullName }} @if (st.nickname) { ({{ st.nickname }}) }</div>
+            <div><strong>Ngày học:</strong> {{ formatDateVN(editCellDate()) }}</div>
+          </div>
+
+          <div class="formGroup">
+            <label>Trạng thái tham gia:</label>
+            <div class="statusChoiceGrid">
+              <label class="choiceLabel presentChoice">
+                <input
+                  type="radio"
+                  name="cellStatus"
+                  value="PRESENT"
+                  [ngModel]="editCellStatus()"
+                  (ngModelChange)="editCellStatus.set($event)"
+                />
+                <span>Có mặt (✓)</span>
+              </label>
+              <label class="choiceLabel excusedChoice">
+                <input
+                  type="radio"
+                  name="cellStatus"
+                  value="EXCUSED"
+                  [ngModel]="editCellStatus()"
+                  (ngModelChange)="editCellStatus.set($event)"
+                />
+                <span>Nghỉ có phép (P)</span>
+              </label>
+              <label class="choiceLabel absentChoice">
+                <input
+                  type="radio"
+                  name="cellStatus"
+                  value="ABSENT"
+                  [ngModel]="editCellStatus()"
+                  (ngModelChange)="editCellStatus.set($event)"
+                />
+                <span>Nghỉ không phép (V)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="formGroup">
+            <label for="cellNote">Ghi chú:</label>
+            <input
+              id="cellNote"
+              type="text"
+              [(ngModel)]="editCellNote"
+              placeholder="Ghi chú lý do nếu có..."
+              class="modalInput"
+              maxlength="255"
+            />
+          </div>
+        </div>
+        <div class="modalFooter">
+          <button type="button" class="secondaryBtn" (click)="closeEditCellModal()">Hủy</button>
+          <button
+            type="button"
+            class="primaryBtn"
+            (click)="saveEditCell()"
+            [disabled]="isSavingCell()"
+          >
+            @if (isSavingCell()) {
+              <span class="spinner"></span> Đang lưu...
+            } @else {
+              Cập nhật
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

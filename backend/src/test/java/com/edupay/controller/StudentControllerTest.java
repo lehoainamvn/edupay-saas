@@ -3,6 +3,8 @@ package com.edupay.controller;
 import com.edupay.dto.request.StudentRequest;
 import com.edupay.dto.response.StudentResponse;
 import com.edupay.entity.StudentStatus;
+import com.edupay.security.JwtTokenProvider;
+import com.edupay.security.RateLimitingFilter;
 import com.edupay.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +34,12 @@ class StudentControllerTest {
 
     @MockBean
     private StudentService studentService;
+
+    @MockBean
+    private JwtTokenProvider jwtTokenProvider;
+
+    @MockBean
+    private RateLimitingFilter rateLimitingFilter;
 
     @Autowired
     private ObjectMapper objectMapper;
