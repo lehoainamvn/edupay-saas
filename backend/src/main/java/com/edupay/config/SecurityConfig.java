@@ -1,6 +1,7 @@
 package com.edupay.config;
 
 import com.edupay.security.JwtAuthFilter;
+import com.edupay.security.RateLimitingFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitingFilter rateLimitingFilter;
 
     private static final String[] PUBLIC_WHITE_LIST = {
             // Swagger / OpenAPI documentation
@@ -61,7 +63,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 // Chạy JwtAuthFilter trước UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                // Áp dụng RateLimitingFilter cho điểm danh sau khi đã có thông tin xác thực/tenant
+                .addFilterAfter(rateLimitingFilter, JwtAuthFilter.class);
 
         return http.build();
     }

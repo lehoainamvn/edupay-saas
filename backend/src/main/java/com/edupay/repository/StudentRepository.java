@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -21,6 +22,12 @@ public interface StudentRepository extends JpaRepository<Student, UUID> {
     List<Student> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
     List<Student> findAllByTenantIdAndClassIdOrderByCreatedAtDesc(UUID tenantId, UUID classId);
+
+    List<Student> findAllByTenantIdAndClassIdAndStatusOrderByFullNameAsc(UUID tenantId, UUID classId, StudentStatus status);
+
+    List<Student> findAllByTenantIdAndClassIdOrderByFullNameAsc(UUID tenantId, UUID classId);
+
+    List<Student> findAllByTenantIdAndIdIn(UUID tenantId, Collection<UUID> ids);
 
     Optional<Student> findByIdAndTenantId(UUID id, UUID tenantId);
 
