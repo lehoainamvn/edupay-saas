@@ -37,3 +37,4 @@ public class PaymentSetting extends BaseEntity {
     @Builder.Default
     private String transferPrefix = "HP";
 }
+

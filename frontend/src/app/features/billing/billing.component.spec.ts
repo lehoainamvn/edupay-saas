@@ -137,3 +137,4 @@ describe('BillingComponent', () => {
     expect(billingServiceSpy.getInvoices).toHaveBeenCalled();
   });
 });
+

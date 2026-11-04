@@ -79,3 +79,4 @@ public class PublicInvoiceResponse {
     @Schema(description = "Danh sách ngày các buổi học con đã tham gia trong tháng")
     private List<LocalDate> attendedDates;
 }
+

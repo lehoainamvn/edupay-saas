@@ -44,3 +44,4 @@ public class InvoiceItemGenerateRequest {
     @Schema(description = "Ghi chú riêng cho phiếu thu", example = "Tiền sách Toán 9 tập 1")
     private String note;
 }
+

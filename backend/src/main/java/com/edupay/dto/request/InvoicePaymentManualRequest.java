@@ -21,3 +21,4 @@ public class InvoicePaymentManualRequest {
     @Schema(description = "Ghi chú khi gạch nợ", example = "Phụ huynh nộp tiền mặt trực tiếp tại lớp")
     private String note;
 }
+

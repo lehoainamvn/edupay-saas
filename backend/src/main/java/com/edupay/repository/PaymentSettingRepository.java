@@ -18,3 +18,4 @@ public interface PaymentSettingRepository extends JpaRepository<PaymentSetting, 
 
     boolean existsByTenantId(UUID tenantId);
 }
+

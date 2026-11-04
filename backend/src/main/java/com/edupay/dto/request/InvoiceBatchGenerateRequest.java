@@ -35,3 +35,4 @@ public class InvoiceBatchGenerateRequest {
     @Schema(description = "Danh sách chi tiết từng học sinh cần xuất phiếu thu", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<InvoiceItemGenerateRequest> items;
 }
+

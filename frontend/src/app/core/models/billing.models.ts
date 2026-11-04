@@ -101,3 +101,4 @@ export interface PublicInvoice {
   vietQrUrl?: string;
   attendedDates?: string[];
 }
+

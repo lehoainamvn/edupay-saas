@@ -32,3 +32,4 @@ public class PublicInvoiceController {
         return ResponseEntity.ok(ApiResponse.ok(data, "Tra cứu phiếu thu thành công"));
     }
 }
+

@@ -84,3 +84,4 @@ public class InvoiceResponse {
     @Schema(description = "Thời điểm tạo phiếu thu")
     private Instant createdAt;
 }
+

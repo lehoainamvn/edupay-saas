@@ -42,6 +42,7 @@ export class BillingComponent implements OnInit {
   readonly loadingPreview = signal<boolean>(false);
   readonly loadingInvoices = signal<boolean>(false);
   readonly submittingBatch = signal<boolean>(false);
+  readonly previewError = signal<string | null>(null);
 
   readonly toastMessage = signal<string | null>(null);
   readonly toastType = signal<'success' | 'error'>('success');
@@ -125,6 +126,7 @@ export class BillingComponent implements OnInit {
     if (!classId || !month) return;
 
     this.loadingPreview.set(true);
+    this.previewError.set(null);
     this.billingService.getBillingPreview(classId, month).subscribe({
       next: (res) => {
         this.loadingPreview.set(false);
@@ -142,7 +144,11 @@ export class BillingComponent implements OnInit {
       },
       error: (err) => {
         this.loadingPreview.set(false);
-        const msg = err.error?.message || 'Không thể tải bảng tính học phí';
+        const msg =
+          err.status === 404
+            ? 'Backend hiện tại chưa có API /api/billing (Lỗi 404). Vui lòng RESTART lại ứng dụng Backend Java (Spring Boot) để nạp các file Controller mới!'
+            : err.error?.message || 'Không thể tải bảng tính học phí';
+        this.previewError.set(msg);
         this.showToast(msg, 'error');
       }
     });

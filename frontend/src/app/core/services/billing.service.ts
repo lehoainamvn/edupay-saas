@@ -80,3 +80,4 @@ export class BillingService {
     return this.http.get<ApiResponse<PublicInvoice>>(`${this.publicApiUrl}/${publicHash}`);
   }
 }
+

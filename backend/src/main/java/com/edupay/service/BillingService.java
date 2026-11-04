@@ -51,3 +51,4 @@ public interface BillingService {
      */
     PublicInvoiceResponse getPublicInvoice(String publicHash);
 }
+
