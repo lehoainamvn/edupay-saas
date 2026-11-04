@@ -98,7 +98,7 @@
     <!-- Workspace Card -->
     <section class="workspace">
       <div class="toolbar">
-        <label class="search">
+        <div class="search" role="search">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-4-4" />
@@ -107,13 +107,14 @@
             type="text"
             [value]="search()"
             (input)="onSearchInput($event)"
+            aria-label="Tìm kiếm học sinh"
             placeholder="Tìm tức thì theo Họ tên, Biệt danh ở nhà (Bé Bống, Tít...) hoặc SĐT phụ huynh..." />
           @if (search()) {
             <button type="button" class="clearSearchBtn" (click)="clearSearch()" aria-label="Xóa từ khóa">
               ×
             </button>
           }
-        </label>
+        </div>
 
         <div class="statusTabs">
           <button
@@ -301,7 +302,7 @@
   @if (studentModalOpen()) {
     <div
       class="modalBackdrop"
-      (mousedown)="$event.target === $event.currentTarget && closeStudentModal()">
+      (mousedown)="onStudentBackdropMouseDown($event)">
       <section
         class="modal"
         role="dialog"
@@ -323,7 +324,7 @@
 
         <div class="modalBody">
           <!-- Chọn lớp học -->
-          <label class="field">
+          <div class="field">
             <span>Lớp theo học <b>*</b></span>
             <select formControlName="classId" class="selectInput">
               @for (cls of classes(); track cls.id) {
@@ -332,11 +333,11 @@
                 </option>
               }
             </select>
-          </label>
+          </div>
 
           <!-- Họ tên & Biệt danh -->
           <div class="twoFields">
-            <label class="field">
+            <div class="field">
               <span>Họ và tên học sinh <b>*</b></span>
               <input
                 type="text"
@@ -346,29 +347,29 @@
               @if (isNameInvalid()) {
                 <small class="errorText">Vui lòng nhập họ tên học sinh (tối thiểu 2 ký tự).</small>
               }
-            </label>
+            </div>
 
-            <label class="field">
+            <div class="field">
               <span>Biệt danh (Tên ở nhà)</span>
               <input
                 type="text"
                 formControlName="nickname"
                 placeholder="VD: Bé Tít, Bé Bống, Cún..." />
               <small class="hintText">Giúp nhận diện nhanh khi PH chuyển khoản ghi tên ở nhà.</small>
-            </label>
+            </div>
           </div>
 
           <!-- Họ tên PH & SĐT PH -->
           <div class="twoFields">
-            <label class="field">
+            <div class="field">
               <span>Họ tên phụ huynh</span>
               <input
                 type="text"
                 formControlName="parentName"
                 placeholder="VD: Chị Hương / Anh Long" />
-            </label>
+            </div>
 
-            <label class="field">
+            <div class="field">
               <span>SĐT Zalo phụ huynh (10 số) <b>*</b></span>
               <input
                 type="tel"
@@ -385,7 +386,7 @@
                   SĐT phụ huynh này đã tồn tại trong lớp {{ getSelectedClassOption().name }}.
                 </small>
               }
-            </label>
+            </div>
           </div>
 
           <!-- Thiết lập Học phí riêng hay Theo lớp -->
@@ -423,13 +424,13 @@
           </fieldset>
 
           @if (useCustomFee()) {
-            <label class="field">
+            <div class="field">
               <span>Đơn giá học phí riêng (VNĐ) <b>*</b></span>
               <div class="moneyInput">
                 <input type="number" formControlName="customFee" />
                 <em>đ</em>
               </div>
-            </label>
+            </div>
 
             <div class="presets">
               @for (preset of customFeePresets; track preset) {
@@ -485,7 +486,7 @@
   @if (importModalOpen()) {
     <div
       class="modalBackdrop"
-      (mousedown)="$event.target === $event.currentTarget && closeImportModal()">
+      (mousedown)="onImportBackdropMouseDown($event)">
       <section
         class="modal importModal"
         role="dialog"
@@ -505,7 +506,7 @@
         <div class="modalBody">
           <!-- Bước 1: Chọn lớp & Tải file mẫu -->
           <div class="twoFields">
-            <label class="field">
+            <div class="field">
               <span>1. Chọn lớp cần nhập học sinh <b>*</b></span>
               <select
                 class="selectInput"
@@ -515,7 +516,7 @@
                   <option [value]="cls.id">{{ cls.name }}</option>
                 }
               </select>
-            </label>
+            </div>
 
             <div class="field">
               <span>2. File Excel mẫu chuẩn EduPay</span>

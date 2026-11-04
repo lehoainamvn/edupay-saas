@@ -84,7 +84,7 @@ function strongPassword(ctrl: AbstractControl): ValidationErrors | null {
                 placeholder="Nguyễn Thị Lan"
                 autocomplete="name"
                 (focus)="focusedField.set('fullName')"
-                (blur)="focusedField.set(null)"
+                (blur)="onFieldBlur()"
               />
             </div>
             @if (isInvalid('fullName')) {
@@ -105,7 +105,7 @@ function strongPassword(ctrl: AbstractControl): ValidationErrors | null {
                 placeholder="Trung tâm Toán Gia Sư Lan Anh"
                 autocomplete="organization"
                 (focus)="focusedField.set('centerName')"
-                (blur)="focusedField.set(null)"
+                (blur)="onFieldBlur()"
               />
             </div>
             @if (isInvalid('centerName')) {
@@ -127,7 +127,7 @@ function strongPassword(ctrl: AbstractControl): ValidationErrors | null {
                 inputmode="numeric"
                 autocomplete="tel"
                 (focus)="focusedField.set('phone')"
-                (blur)="focusedField.set(null)"
+                (blur)="onFieldBlur()"
               />
             </div>
             @if (isInvalid('phone')) {
@@ -148,7 +148,7 @@ function strongPassword(ctrl: AbstractControl): ValidationErrors | null {
                 placeholder="Tối thiểu 8 ký tự, có chữ HOA và số"
                 autocomplete="new-password"
                 (focus)="focusedField.set('password')"
-                (blur)="focusedField.set(null)"
+                (blur)="onFieldBlur()"
               />
               <button type="button" class="toggle-password" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">
                 @if (showPassword()) {
@@ -573,6 +573,15 @@ export class RegisterComponent {
     this.showPassword.update(v => !v);
   }
 
+  onFieldBlur(): void {
+    this.focusedField.set(null);
+    const raw = this.form.controls.phone.value || '';
+    const cleaned = raw.replace(/[\s.\-()]/g, '').replace(/^\+84/, '0');
+    if (cleaned !== raw) {
+      this.form.controls.phone.setValue(cleaned);
+    }
+  }
+
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
@@ -618,7 +627,7 @@ export class RegisterComponent {
     return map[score];
   }
 
-  onSubmit(): void {
+  onSubmit(): void { this.onFieldBlur();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

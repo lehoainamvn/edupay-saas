@@ -61,7 +61,7 @@ import { AuthService } from '../../core/services/auth.service';
                 inputmode="numeric"
                 autocomplete="tel"
                 (focus)="focusedField.set('phone')"
-                (blur)="focusedField.set(null)"
+                (blur)="onPhoneBlur()"
               />
             </div>
             @if (isInvalid('phone')) {
@@ -84,7 +84,7 @@ import { AuthService } from '../../core/services/auth.service';
                 placeholder="Nhập mật khẩu"
                 autocomplete="current-password"
                 (focus)="focusedField.set('password')"
-                (blur)="focusedField.set(null)"
+                (blur)="onPhoneBlur()"
               />
               <button type="button" class="toggle-password" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'">
                 @if (showPassword()) {
@@ -451,6 +451,15 @@ export class LoginComponent {
     this.showPassword.update(v => !v);
   }
 
+  onPhoneBlur(): void {
+    this.focusedField.set(null);
+    const raw = this.form.controls.phone.value || '';
+    const cleaned = raw.replace(/[\s.\-()]/g, '').replace(/^\+84/, '0');
+    if (cleaned !== raw) {
+      this.form.controls.phone.setValue(cleaned);
+    }
+  }
+
   isInvalid(field: string): boolean {
     const ctrl = this.form.get(field);
     return !!(ctrl && ctrl.invalid && (ctrl.dirty || ctrl.touched));
@@ -470,7 +479,7 @@ export class LoginComponent {
     return 'Giá trị không hợp lệ';
   }
 
-  onSubmit(): void {
+  onSubmit(): void { this.onPhoneBlur();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
