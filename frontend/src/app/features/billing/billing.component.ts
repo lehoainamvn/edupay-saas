@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ClassService } from '../../core/services/class.service';
 import { BillingService } from '../../core/services/billing.service';
@@ -24,7 +25,7 @@ interface EditableBillingItem extends BillingPreviewItem {
 @Component({
   selector: 'app-billing',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule, NavbarComponent, RouterLink],
   templateUrl: './billing.component.html',
   styleUrls: ['./billing.component.css']
 })

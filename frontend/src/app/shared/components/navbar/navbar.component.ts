@@ -38,6 +38,7 @@ import { AuthService } from '../../../core/services/auth.service';
             <a routerLink="/students" routerLinkActive="active" (click)="closeMobileMenu()">Học sinh</a>
             <a routerLink="/attendance" routerLinkActive="active" (click)="closeMobileMenu()">Điểm danh 1 chạm</a>
             <a routerLink="/billing" routerLinkActive="active" (click)="closeMobileMenu()">Học phí VietQR</a>
+            <a routerLink="/settings" routerLinkActive="active" (click)="closeMobileMenu()">Cài đặt VietQR</a>
           }
         </div>
 
@@ -380,4 +381,3 @@ export class NavbarComponent {
     this.router.navigate(['/auth/login']);
   }
 }
-

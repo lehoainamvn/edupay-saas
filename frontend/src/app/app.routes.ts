@@ -60,6 +60,12 @@ export const routes: Routes = [
       import('./features/billing/billing.component').then((m) => m.BillingComponent),
   },
   {
+    path: 'settings',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+  },
+  {
     path: 'p/:hash', // Public invoice link cho Phụ huynh (không cần login)
     loadComponent: () =>
       import('./features/public-invoice/public-invoice.component').then(
