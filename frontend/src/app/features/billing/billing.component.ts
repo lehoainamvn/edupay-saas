@@ -105,9 +105,12 @@ export class BillingComponent implements OnInit {
     this.classService.getClasses(false).subscribe({
       next: (res) => {
         this.loadingClasses.set(false);
-        if (res.success && res.data && res.data.length > 0) {
-          this.classes.set(res.data);
-          this.selectedClassId.set(res.data[0].id);
+        const list = res?.data ?? (Array.isArray(res) ? (res as any) : []);
+        if (list.length > 0) {
+          this.classes.set(list);
+          if (!this.selectedClassId() || !list.some((c: ClassItem) => c.id === this.selectedClassId())) {
+            this.selectedClassId.set(list[0].id);
+          }
           this.loadPreview();
         } else {
           this.classes.set([]);
@@ -115,7 +118,7 @@ export class BillingComponent implements OnInit {
       },
       error: () => {
         this.loadingClasses.set(false);
-        this.showToast('Không thể tải danh sách lớp học', 'error');
+        this.showToast('Không thể tải danh sách lớp học. Vui lòng kiểm tra máy chủ Backend (Port 8080)', 'error');
       }
     });
   }

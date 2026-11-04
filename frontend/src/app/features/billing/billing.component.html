@@ -78,7 +78,25 @@
   <!-- TAB 1: BẢNG TÍNH HỌC PHÍ THÁNG (CALCULATOR)                               -->
   <!-- ════════════════════════════════════════════════════════════════════════ -->
   @if (activeTab() === 'calculator') {
-    @if (loadingPreview()) {
+    @if (loadingClasses()) {
+      <div class="loadingCard">
+        <div class="spinner"></div>
+        <p>Đang tải danh sách lớp học...</p>
+      </div>
+    } @else if (classes().length === 0) {
+      <div class="emptyStateCard">
+        <svg class="emptyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <line x1="12" y1="8" x2="12" y2="12" stroke-width="2"/>
+          <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2"/>
+        </svg>
+        <h3>Chưa có lớp học nào hoặc Backend chưa chạy</h3>
+        <p>Không thể kết nối hoặc chưa có lớp học nào từ máy chủ Backend (cổng 8080). Hãy đảm bảo Backend Spring Boot đã được khởi động thành công.</p>
+        <button type="button" class="primaryBtn" style="margin-top: 12px;" (click)="loadClasses()">
+          Thử tải lại danh sách lớp
+        </button>
+      </div>
+    } @else if (loadingPreview()) {
       <div class="loadingCard">
         <div class="spinner"></div>
         <p>Đang tổng hợp số buổi điểm danh và tính toán học phí...</p>
