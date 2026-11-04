@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +27,11 @@ public interface ClassRepository extends JpaRepository<ClassEntity, UUID> {
      * Lấy toàn bộ danh sách lớp (bao gồm cả lớp đã lưu trữ/soft-delete) của Tenant.
      */
     List<ClassEntity> findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(UUID tenantId);
+
+    /**
+     * Lấy danh sách lớp theo danh sách ID thuộc Tenant.
+     */
+    List<ClassEntity> findAllByTenantIdAndIdIn(UUID tenantId, Collection<UUID> ids);
 
     /**
      * Tìm kiếm lớp học theo ID và TenantId.
