@@ -87,7 +87,7 @@
     <!-- Workspace Card -->
     <section class="workspace">
       <div class="toolbar">
-        <label class="search">
+        <div class="search" role="search">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-4-4" />
@@ -96,8 +96,9 @@
             type="text"
             [value]="search()"
             (input)="onSearchInput($event)"
+            aria-label="Tìm theo tên lớp hoặc lịch học"
             placeholder="Tìm theo tên lớp hoặc lịch học (VD: Toán 8A, Thứ 3...)" />
-        </label>
+        </div>
 
         <div class="statusTabs">
           <button
@@ -191,7 +192,7 @@
 
               <div class="cardActions">
                 @if (!item.archived) {
-                  <a routerLink="/attendance" class="primaryAction">
+                  <a routerLink="/attendance" [queryParams]="{ classId: item.id }" class="primaryAction">
                     Điểm danh ngay <span>→</span>
                   </a>
                 }
@@ -236,7 +237,7 @@
 
   <!-- Create / Edit Class Modal -->
   @if (modalOpen()) {
-    <div class="modalBackdrop" (mousedown)="$event.target === $event.currentTarget && closeModal()">
+    <div class="modalBackdrop" (mousedown)="onBackdropMouseDown($event)">
       <section
         class="modal"
         role="dialog"
@@ -257,7 +258,7 @@
         </header>
 
         <div class="modalBody">
-          <label class="field">
+          <div class="field">
             <span>Tên lớp học <b>*</b></span>
             <input
               type="text"
@@ -267,7 +268,7 @@
             @if (isNameInvalid()) {
               <small class="errorText">Vui lòng nhập tên lớp học.</small>
             }
-          </label>
+          </div>
 
           <fieldset>
             <legend>Hình thức thu học phí <b>*</b></legend>
@@ -299,7 +300,7 @@
             </div>
           </fieldset>
 
-          <label class="field">
+          <div class="field">
             <span>Đơn giá mặc định (VNĐ) <b>*</b></span>
             <div class="moneyInput">
               <input
@@ -311,7 +312,7 @@
             @if (isFeeInvalid()) {
               <small class="errorText">Vui lòng nhập đơn giá hợp lệ.</small>
             }
-          </label>
+          </div>
 
           <div class="presets">
             @for (x of presets; track x) {
@@ -325,20 +326,20 @@
           </div>
 
           <div class="twoFields">
-            <label class="field">
+            <div class="field">
               <span>Lịch học trong tuần</span>
               <input
                 type="text"
                 formControlName="schedule"
                 placeholder="VD: Thứ 3, Thứ 6 · 18:00" />
-            </label>
-            <label class="field">
+            </div>
+            <div class="field">
               <span>Ghi chú</span>
               <input
                 type="text"
                 formControlName="notes"
                 placeholder="Ghi chú nội bộ (nếu có)" />
-            </label>
+            </div>
           </div>
 
           <div class="formula">

@@ -138,7 +138,7 @@ export class ClassesComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+          if (res?.success && Array.isArray(res.data)) {
             this.classes.set(res.data.map(item => this.mapApiToVm(item)));
           }
         },
@@ -185,7 +185,7 @@ export class ClassesComponent implements OnInit {
       name: item.name,
       feeType: item.feeType,
       fee: item.fee,
-      schedule: item.schedule,
+      schedule: item.schedule === 'Chưa thiết lập lịch học' ? '' : item.schedule,
       notes: item.notes || ''
     });
     this.modalOpen.set(true);
@@ -195,6 +195,12 @@ export class ClassesComponent implements OnInit {
     this.modalOpen.set(false);
     this.editingItem.set(null);
     this.submitted.set(false);
+  }
+
+  onBackdropMouseDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeModal();
+    }
   }
 
   selectFeeType(type: 'session' | 'monthly'): void {

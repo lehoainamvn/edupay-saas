@@ -267,14 +267,19 @@ export class StudentsComponent implements OnInit {
       .subscribe({
         next: res => {
           if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
-            this.classes.set(
-              res.data.map(c => ({
-                id: c.id,
-                name: c.name,
-                feeType: c.feeType,
-                defaultFee: Number(c.defaultFee) || 150000
-              }))
-            );
+            const mapped = res.data.map(c => ({
+              id: c.id,
+              name: c.name,
+              feeType: c.feeType,
+              defaultFee: Number(c.defaultFee) || 150000
+            }));
+            this.classes.set(mapped);
+            if (!mapped.some(c => c.id === this.studentForm.controls.classId.value)) {
+              this.studentForm.controls.classId.setValue(mapped[0].id);
+            }
+            if (!mapped.some(c => c.id === this.importClassId())) {
+              this.importClassId.set(mapped[0].id);
+            }
           }
         },
         error: () => {}
@@ -285,7 +290,7 @@ export class StudentsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          if (res?.success && Array.isArray(res.data) && res.data.length > 0) {
+          if (res?.success && Array.isArray(res.data)) {
             this.students.set(res.data);
           }
         },
@@ -323,12 +328,12 @@ export class StudentsComponent implements OnInit {
 
   getSelectedClassOption(): ClassOptionVm {
     const id = this.studentForm.controls.classId.value;
-    return this.classes().find(c => c.id === id) || this.classes()[0];
+    return this.classes().find(c => c.id === id) || this.classes()[0] || DEFAULT_CLASSES[0];
   }
 
   getImportClassOption(): ClassOptionVm {
     const id = this.importClassId();
-    return this.classes().find(c => c.id === id) || this.classes()[0];
+    return this.classes().find(c => c.id === id) || this.classes()[0] || DEFAULT_CLASSES[0];
   }
 
   // Create / Edit Modal
@@ -373,6 +378,12 @@ export class StudentsComponent implements OnInit {
     this.studentModalOpen.set(false);
     this.editingStudent.set(null);
     this.submitted.set(false);
+  }
+
+  onStudentBackdropMouseDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeStudentModal();
+    }
   }
 
   toggleCustomFeeMode(enableCustom: boolean): void {
@@ -606,6 +617,12 @@ export class StudentsComponent implements OnInit {
     this.importModalOpen.set(false);
     this.selectedFile.set(null);
     this.importPreviewRows.set([]);
+  }
+
+  onImportBackdropMouseDown(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.closeImportModal();
+    }
   }
 
   onImportClassChange(event: Event): void {
