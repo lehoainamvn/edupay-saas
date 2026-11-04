@@ -1,6 +1,7 @@
 package com.edupay.dto.response;
 
 import com.edupay.entity.InvoiceStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,8 +48,9 @@ public class BillingPreviewItemResponse {
     @Schema(description = "Tổng tiền tạm tính (baseAmount + extraFee - discount)")
     private BigDecimal totalAmount;
 
+    @JsonProperty("isLocked")
     @Schema(description = "Cờ khóa (true nếu kỳ học này đã xuất phiếu thu PENDING/PAID)")
-    private boolean isLocked;
+    private Boolean isLocked;
 
     @Schema(description = "ID phiếu thu hiện tại (nếu đã xuất)")
     private UUID existingInvoiceId;
@@ -61,5 +63,13 @@ public class BillingPreviewItemResponse {
 
     @Schema(description = "Mã public hash hiện tại (nếu đã xuất)")
     private String existingPublicHash;
-}
 
+    @JsonProperty("isLocked")
+    public Boolean getIsLocked() {
+        return this.isLocked;
+    }
+
+    public void setIsLocked(Boolean isLocked) {
+        this.isLocked = isLocked;
+    }
+}

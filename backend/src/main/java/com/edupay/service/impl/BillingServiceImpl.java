@@ -97,18 +97,23 @@ public class BillingServiceImpl implements BillingService {
             BigDecimal extraFee;
             BigDecimal discount;
             BigDecimal totalAmount;
+            BigDecimal defaultFee = (classEntity.getDefaultFee() != null) ? classEntity.getDefaultFee() : BigDecimal.ZERO;
 
             if (isLocked) {
-                unitPrice = existingInvoice.getUnitPrice();
-                attended = existingInvoice.getAttendedCount();
+                unitPrice = existingInvoice.getUnitPrice() != null ? existingInvoice.getUnitPrice() : defaultFee;
+                attended = existingInvoice.getAttendedCount() != null ? existingInvoice.getAttendedCount() : 0;
                 extraFee = existingInvoice.getExtraFee() != null ? existingInvoice.getExtraFee() : BigDecimal.ZERO;
                 discount = existingInvoice.getDiscount() != null ? existingInvoice.getDiscount() : BigDecimal.ZERO;
-                baseAmount = unitPrice.multiply(BigDecimal.valueOf(attended));
-                totalAmount = existingInvoice.getTotalAmount();
+                if (classEntity.getFeeType() == FeeType.MONTHLY_PACKAGE) {
+                    baseAmount = unitPrice;
+                } else {
+                    baseAmount = unitPrice.multiply(BigDecimal.valueOf(attended));
+                }
+                totalAmount = existingInvoice.getTotalAmount() != null ? existingInvoice.getTotalAmount() : BigDecimal.ZERO;
             } else {
                 unitPrice = (s.getCustomFee() != null && s.getCustomFee().compareTo(BigDecimal.ZERO) > 0)
                         ? s.getCustomFee()
-                        : classEntity.getDefaultFee();
+                        : defaultFee;
 
                 if (classEntity.getFeeType() == FeeType.MONTHLY_PACKAGE) {
                     baseAmount = unitPrice;

@@ -274,6 +274,7 @@
                         class="cellInput"
                         placeholder="0"
                         [(ngModel)]="item.tempExtraFee"
+                        (ngModelChange)="onFeeChange(item)"
                       />
                     } @else {
                       <span class="cellNum">+{{ formatCurrency(item.extraFee) }}</span>
@@ -290,6 +291,7 @@
                         class="cellInput"
                         placeholder="0"
                         [(ngModel)]="item.tempDiscount"
+                        (ngModelChange)="onFeeChange(item)"
                       />
                     } @else {
                       <span class="cellNum">-{{ formatCurrency(item.discount) }}</span>
@@ -382,6 +384,7 @@
                       class="cardInput"
                       placeholder="0 đ"
                       [(ngModel)]="item.tempExtraFee"
+                      (ngModelChange)="onFeeChange(item)"
                     />
                   </div>
                   <div class="cardInputCol">
@@ -393,6 +396,7 @@
                       class="cardInput"
                       placeholder="0 đ"
                       [(ngModel)]="item.tempDiscount"
+                      (ngModelChange)="onFeeChange(item)"
                     />
                   </div>
                 </div>

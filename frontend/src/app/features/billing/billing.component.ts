@@ -135,13 +135,17 @@ export class BillingComponent implements OnInit {
         this.loadingPreview.set(false);
         if (res.success && res.data) {
           this.previewData.set(res.data);
-          const mapped: EditableBillingItem[] = res.data.items.map((it) => ({
-            ...it,
-            selected: !it.isLocked,
-            tempExtraFee: it.extraFee || 0,
-            tempDiscount: it.discount || 0,
-            tempNote: ''
-          }));
+          const mapped: EditableBillingItem[] = res.data.items.map((it: any) => {
+            const isLocked = Boolean(it.isLocked ?? it.locked);
+            return {
+              ...it,
+              isLocked,
+              selected: !isLocked,
+              tempExtraFee: it.extraFee || 0,
+              tempDiscount: it.discount || 0,
+              tempNote: ''
+            };
+          });
           this.editableItems.set(mapped);
         }
       },
@@ -227,11 +231,20 @@ export class BillingComponent implements OnInit {
   }
 
   calculateItemTotal(item: EditableBillingItem): number {
-    const base = item.baseAmount || 0;
+    if (item.isLocked) {
+      return item.totalAmount != null ? item.totalAmount : 0;
+    }
+    const base = Number(item.baseAmount) || 0;
     const extra = Number(item.tempExtraFee) || 0;
     const discount = Number(item.tempDiscount) || 0;
     const total = base + extra - discount;
     return total > 0 ? total : 0;
+  }
+
+  onFeeChange(item: EditableBillingItem): void {
+    item.totalAmount = this.calculateItemTotal(item);
+    // Kích hoạt signal re-compute cho selectedTotalAmount và các computed signals
+    this.editableItems.update((items) => [...items]);
   }
 
   openConfirmModal(): void {
@@ -274,6 +287,7 @@ export class BillingComponent implements OnInit {
         this.submittingBatch.set(false);
         this.closeConfirmModal();
         this.showToast(`Đã xuất thành công ${res.data?.length || 0} phiếu thu!`, 'success');
+        this.loadPreview();
         // Chuyển sang tab phiếu thu để xem danh sách vừa xuất
         this.switchTab('invoices');
       },
@@ -348,6 +362,7 @@ export class BillingComponent implements OnInit {
           this.closeMarkPaidModal();
           this.showToast(`Đã xác nhận thanh toán cho bé ${inv.studentName}!`, 'success');
           this.loadInvoices();
+          this.loadPreview();
         },
         error: (err) => {
           const msg = err.error?.message || 'Không thể cập nhật trạng thái phiếu thu';
@@ -367,6 +382,7 @@ export class BillingComponent implements OnInit {
       next: () => {
         this.showToast(`Đã hủy phiếu thu của ${invoice.studentName}`, 'success');
         this.loadInvoices();
+        this.loadPreview();
       },
       error: (err) => {
         const msg = err.error?.message || 'Không thể hủy phiếu thu';

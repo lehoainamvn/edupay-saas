@@ -13,6 +13,7 @@ export interface BillingPreviewItem {
   discount: number;
   totalAmount: number;
   isLocked: boolean;
+  locked?: boolean;
   existingInvoiceId?: string;
   existingInvoiceStatus?: InvoiceStatus;
   existingTransferCode?: string;
