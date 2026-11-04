@@ -1,0 +1,750 @@
+<app-navbar mode="app"></app-navbar>
+
+<div class="page">
+  <!-- Toast Thông Báo -->
+  @if (toastMessage()) {
+    <div class="toast" [class.error]="toastType() === 'error'">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        @if (toastType() === 'error') {
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <line x1="12" y1="8" x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2" stroke-linecap="round"/>
+        } @else {
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke-width="2"/>
+          <polyline points="22 4 12 14.01 9 11.01" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        }
+      </svg>
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+
+  <!-- Header & Bộ Lọc Kỳ Thu Phí -->
+  <header class="header">
+    <div class="titleWrap">
+      <div class="kicker">QUẢN LÝ TÀI CHÍNH & THU PHÍ</div>
+      <h1 class="title">Học Phí & Đối Soát VietQR</h1>
+      <p class="subtitle">
+        Tự động tính tiền theo số buổi thực học, thêm phụ phí / giảm trừ inline và xuất phiếu thu Napas247 hàng loạt.
+      </p>
+    </div>
+
+    <!-- Controls Filter Bar -->
+    <div class="controlsBar">
+      <div class="filterGroup">
+        <label class="filterLabel" for="classSelect">Lớp học:</label>
+        <div class="selectWrap">
+          <select id="classSelect" class="formSelect" [value]="selectedClassId()" (change)="onClassChange($event)">
+            @for (c of classes(); track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="filterGroup">
+        <label class="filterLabel" for="monthInput">Kỳ thu phí:</label>
+        <input
+          id="monthInput"
+          type="month"
+          class="formInput monthInput"
+          [value]="selectedMonth()"
+          (change)="onMonthChange($event)"
+        />
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="tabNav">
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="activeTab() === 'calculator'"
+          (click)="switchTab('calculator')"
+        >
+          Bảng tính học phí
+        </button>
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="activeTab() === 'invoices'"
+          (click)="switchTab('invoices')"
+        >
+          Phiếu thu đã lập
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: BẢNG TÍNH HỌC PHÍ THÁNG (CALCULATOR)                               -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'calculator') {
+    @if (loadingPreview()) {
+      <div class="loadingCard">
+        <div class="spinner"></div>
+        <p>Đang tổng hợp số buổi điểm danh và tính toán học phí...</p>
+      </div>
+    } @else {
+      @if (previewData(); as preview) {
+        <!-- Summary Bar / KPI Cards -->
+      <div class="kpiGrid">
+        <div class="kpiCard">
+          <div class="kpiLabel">Hình thức tính phí</div>
+          <div class="kpiValue">
+            @if (preview.feeType === 'PER_LESSON') {
+              <span class="badge blue">Theo buổi thực học</span>
+            } @else {
+              <span class="badge purple">Thu trọn gói tháng</span>
+            }
+          </div>
+          <div class="kpiSub">Tự động đếm buổi có mặt</div>
+        </div>
+
+        <div class="kpiCard">
+          <div class="kpiLabel">Sĩ số lớp</div>
+          <div class="kpiValue">{{ preview.totalStudents }} <span class="unit">em</span></div>
+          <div class="kpiSub">Tổng số học sinh đang học</div>
+        </div>
+
+        <div class="kpiCard">
+          <div class="kpiLabel">Tổng lượt có mặt</div>
+          <div class="kpiValue">{{ preview.totalAttendedCount }} <span class="unit">buổi</span></div>
+          <div class="kpiSub">Cả lớp trong tháng {{ preview.billingMonth }}</div>
+        </div>
+
+        <div class="kpiCard highlight">
+          <div class="kpiLabel">Dự kiến thu cả lớp</div>
+          <div class="kpiValue currency">{{ formatCurrency(preview.totalCalculatedAmount) }}</div>
+          <div class="kpiSub">Đã tính phụ phí & giảm trừ</div>
+        </div>
+      </div>
+
+      <!-- Cảnh báo cấu hình ngân hàng -->
+      @if (!preview.hasBankConfigured) {
+        <div class="bankAlert">
+          <div class="alertIcon">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="alertContent">
+            <strong>Chưa cấu hình tài khoản ngân hàng nhận tiền!</strong>
+            <p>Hệ thống đang tạm thời dùng tài khoản VietQR mặc định. Bạn có thể cập nhật STK chính thức tại mục Cài đặt.</p>
+          </div>
+        </div>
+      }
+
+      <!-- Danh sách học sinh & Bảng tính tương tác -->
+      <div class="tableWrapper">
+        <div class="tableHeaderBar">
+          <div class="bulkSelectWrap">
+            <label class="customCheck">
+              <input
+                type="checkbox"
+                [checked]="isAllSelected()"
+                [disabled]="selectableItems().length === 0"
+                (change)="toggleSelectAll()"
+              />
+              <span class="checkmark"></span>
+              <span class="checkLabel">
+                Chọn tất cả ({{ selectedCount() }}/{{ selectableItems().length }} em chưa lập phiếu)
+              </span>
+            </label>
+          </div>
+
+          <div class="tableLegend">
+            <span class="legendDot locked"></span> Đã lập phiếu (Đang khóa)
+            <span class="legendDot unlocked"></span> Chưa lập phiếu
+          </div>
+        </div>
+
+        <!-- Desktop Table View (>= 640px) -->
+        <div class="desktopTableContainer">
+          <table class="dataTable">
+            <thead>
+              <tr>
+                <th style="width: 44px;"></th>
+                <th style="width: 50px;">STT</th>
+                <th>Học sinh</th>
+                <th style="text-align: center;">Số buổi có mặt</th>
+                <th style="text-align: right;">Đơn giá</th>
+                <th style="text-align: right; width: 140px;">Phụ phí (+)</th>
+                <th style="text-align: right; width: 140px;">Giảm trừ (-)</th>
+                <th style="text-align: right;">Thành tiền</th>
+                <th style="text-align: center; width: 130px;">Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of editableItems(); track item.studentId; let idx = $index) {
+                <tr [class.lockedRow]="item.isLocked" [class.selectedRow]="item.selected && !item.isLocked">
+                  <!-- Checkbox -->
+                  <td>
+                    @if (!item.isLocked) {
+                      <label class="customCheck">
+                        <input
+                          type="checkbox"
+                          [checked]="item.selected"
+                          (change)="toggleItemSelection(item.studentId)"
+                        />
+                        <span class="checkmark"></span>
+                      </label>
+                    } @else {
+                      <span class="lockIcon" title="Đã xuất phiếu thu, điểm danh đang được khóa">
+                        <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"/>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke-width="2"/>
+                        </svg>
+                      </span>
+                    }
+                  </td>
+
+                  <!-- STT -->
+                  <td class="colIndex">{{ idx + 1 }}</td>
+
+                  <!-- Student Info -->
+                  <td>
+                    <div class="studentCell">
+                      <strong class="studentName">{{ item.fullName }}</strong>
+                      @if (item.nickname) {
+                        <span class="nickname">({{ item.nickname }})</span>
+                      }
+                      @if (item.parentPhone) {
+                        <span class="phone">{{ item.parentPhone }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Số buổi có mặt -->
+                  <td style="text-align: center;">
+                    <span class="countBadge">{{ item.attendedCount }} buổi</span>
+                  </td>
+
+                  <!-- Đơn giá -->
+                  <td style="text-align: right;" class="cellNum">
+                    {{ formatCurrency(item.unitPrice) }}
+                  </td>
+
+                  <!-- Phụ phí inline -->
+                  <td style="text-align: right;">
+                    @if (!item.isLocked) {
+                      <input
+                        type="number"
+                        min="0"
+                        step="10000"
+                        class="cellInput"
+                        placeholder="0"
+                        [(ngModel)]="item.tempExtraFee"
+                      />
+                    } @else {
+                      <span class="cellNum">+{{ formatCurrency(item.extraFee) }}</span>
+                    }
+                  </td>
+
+                  <!-- Giảm trừ inline -->
+                  <td style="text-align: right;">
+                    @if (!item.isLocked) {
+                      <input
+                        type="number"
+                        min="0"
+                        step="10000"
+                        class="cellInput"
+                        placeholder="0"
+                        [(ngModel)]="item.tempDiscount"
+                      />
+                    } @else {
+                      <span class="cellNum">-{{ formatCurrency(item.discount) }}</span>
+                    }
+                  </td>
+
+                  <!-- Thành tiền tính toán -->
+                  <td style="text-align: right;" class="totalCell">
+                    <strong>{{ formatCurrency(calculateItemTotal(item)) }}</strong>
+                  </td>
+
+                  <!-- Trạng thái phiếu thu -->
+                  <td style="text-align: center;">
+                    @if (item.isLocked) {
+                      @if (item.existingInvoiceStatus === 'PAID') {
+                        <span class="statusBadge paid">Đã nộp</span>
+                      } @else {
+                        <span class="statusBadge pending">Chờ nộp</span>
+                      }
+                    } @else {
+                      <span class="statusBadge uncreated">Chưa lập</span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View (< 640px) -->
+        <div class="mobileCardsList">
+          @for (item of editableItems(); track item.studentId) {
+            <div
+              class="studentCard"
+              [class.lockedCard]="item.isLocked"
+              [class.selectedCard]="item.selected && !item.isLocked"
+            >
+              <div class="cardTop">
+                <div class="cardCheckWrap">
+                  @if (!item.isLocked) {
+                    <label class="customCheck">
+                      <input
+                        type="checkbox"
+                        [checked]="item.selected"
+                        (change)="toggleItemSelection(item.studentId)"
+                      />
+                      <span class="checkmark"></span>
+                    </label>
+                  }
+                  <div class="cardStudentInfo">
+                    <strong class="cardName">{{ item.fullName }}</strong>
+                    @if (item.nickname) {
+                      <span class="cardNick">({{ item.nickname }})</span>
+                    }
+                  </div>
+                </div>
+
+                <div class="cardStatus">
+                  @if (item.isLocked) {
+                    @if (item.existingInvoiceStatus === 'PAID') {
+                      <span class="statusBadge paid">Đã nộp</span>
+                    } @else {
+                      <span class="statusBadge pending">Chờ nộp</span>
+                    }
+                  } @else {
+                    <span class="statusBadge uncreated">Chưa lập</span>
+                  }
+                </div>
+              </div>
+
+              <div class="cardMetrics">
+                <div class="metricRow">
+                  <span>Số buổi có mặt:</span>
+                  <strong>{{ item.attendedCount }} buổi</strong>
+                </div>
+                <div class="metricRow">
+                  <span>Đơn giá áp dụng:</span>
+                  <span>{{ formatCurrency(item.unitPrice) }}</span>
+                </div>
+              </div>
+
+              @if (!item.isLocked) {
+                <div class="cardInputsGrid">
+                  <div class="cardInputCol">
+                    <label>Phụ phí (+)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="10000"
+                      class="cardInput"
+                      placeholder="0 đ"
+                      [(ngModel)]="item.tempExtraFee"
+                    />
+                  </div>
+                  <div class="cardInputCol">
+                    <label>Giảm trừ (-)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="10000"
+                      class="cardInput"
+                      placeholder="0 đ"
+                      [(ngModel)]="item.tempDiscount"
+                    />
+                  </div>
+                </div>
+              }
+
+              <div class="cardBottom">
+                <span class="bottomLabel">Tổng thanh toán:</span>
+                <strong class="bottomTotal">{{ formatCurrency(calculateItemTotal(item)) }}</strong>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Sticky Action Bar Cuối Trang -->
+      @if (selectableItems().length > 0) {
+        <div class="stickyActionBar">
+          <div class="actionBarInner">
+            <div class="actionSummary">
+              <span class="summaryCount">
+                Đã chọn: <strong>{{ selectedCount() }}</strong> / {{ selectableItems().length }} học sinh
+              </span>
+              <span class="summaryTotal">
+                Tổng cộng: <strong>{{ formatCurrency(selectedTotalAmount()) }}</strong>
+              </span>
+            </div>
+
+            <button
+              type="button"
+              class="primaryBtn"
+              [disabled]="selectedCount() === 0 || submittingBatch()"
+              (click)="openConfirmModal()"
+            >
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-width="2"/>
+                <polyline points="14 2 14 8 20 8" stroke-width="2"/>
+                <line x1="12" y1="18" x2="12" y2="12" stroke-width="2"/>
+                <line x1="9" y1="15" x2="15" y2="15" stroke-width="2"/>
+              </svg>
+              Xuất phiếu thu đã chọn ({{ selectedCount() }} em)
+            </button>
+          </div>
+        </div>
+      }
+    } @else {
+      <div class="emptyStateCard">
+        <svg class="emptyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke-width="2"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke-width="2"/>
+        </svg>
+        <h3>Chưa có dữ liệu học sinh</h3>
+        <p>Vui lòng thêm học sinh vào lớp học trước khi tính học phí.</p>
+      </div>
+    }
+  }
+}
+
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: DANH SÁCH PHIẾU THU ĐÃ LẬP (INVOICES)                              -->
+  <!-- ════════════════════════════════════════════════════════════════════════ -->
+  @if (activeTab() === 'invoices') {
+    <div class="invoicesSection">
+      <!-- Filter Chips -->
+      <div class="filterChips">
+        <button
+          type="button"
+          class="chipBtn"
+          [class.active]="invoiceStatusFilter() === 'ALL'"
+          (click)="invoiceStatusFilter.set('ALL')"
+        >
+          Tất cả ({{ invoices().length }})
+        </button>
+        <button
+          type="button"
+          class="chipBtn"
+          [class.active]="invoiceStatusFilter() === 'PENDING'"
+          (click)="invoiceStatusFilter.set('PENDING')"
+        >
+          Chờ nộp tiền
+        </button>
+        <button
+          type="button"
+          class="chipBtn"
+          [class.active]="invoiceStatusFilter() === 'PAID'"
+          (click)="invoiceStatusFilter.set('PAID')"
+        >
+          Đã thanh toán
+        </button>
+        <button
+          type="button"
+          class="chipBtn"
+          [class.active]="invoiceStatusFilter() === 'CANCELLED'"
+          (click)="invoiceStatusFilter.set('CANCELLED')"
+        >
+          Đã hủy
+        </button>
+      </div>
+
+      @if (loadingInvoices()) {
+        <div class="loadingCard">
+          <div class="spinner"></div>
+          <p>Đang tải danh sách phiếu thu...</p>
+        </div>
+      } @else if (filteredInvoices().length === 0) {
+        <div class="emptyStateCard">
+          <svg class="emptyIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="2" y="4" width="20" height="16" rx="2" stroke-width="2"/>
+            <line x1="6" y1="12" x2="10" y2="12" stroke-width="2"/>
+            <line x1="6" y1="8" x2="14" y2="8" stroke-width="2"/>
+            <line x1="6" y1="16" x2="18" y2="16" stroke-width="2"/>
+          </svg>
+          <h3>Chưa có phiếu thu nào trong kỳ này</h3>
+          <p>Chuyển sang tab "Bảng tính học phí" để chọn học sinh và xuất phiếu thu.</p>
+        </div>
+      } @else {
+        <div class="invoicesGrid">
+          @for (inv of filteredInvoices(); track inv.id) {
+            <div class="invoiceCard" [class.paidCard]="inv.status === 'PAID'">
+              <div class="invHeader">
+                <div>
+                  <h4 class="invStudent">{{ inv.studentName }}</h4>
+                  @if (inv.nickname) {
+                    <span class="invNick">({{ inv.nickname }})</span>
+                  }
+                  <span class="invClass">{{ inv.className }} • Kỳ {{ inv.billingMonth }}</span>
+                </div>
+
+                <div>
+                  @if (inv.status === 'PAID') {
+                    <span class="statusBadge paid">Đã nộp</span>
+                  } @else if (inv.status === 'PENDING') {
+                    <span class="statusBadge pending">Chờ nộp</span>
+                  } @else {
+                    <span class="statusBadge cancelled">Đã hủy</span>
+                  }
+                </div>
+              </div>
+
+              <div class="invDetails">
+                <div class="invRow">
+                  <span>Số buổi học:</span>
+                  <strong>{{ inv.attendedCount }} buổi</strong>
+                </div>
+                <div class="invRow">
+                  <span>Mã chuyển khoản:</span>
+                  <code class="codeTag">{{ inv.transferCode }}</code>
+                </div>
+                <div class="invRow">
+                  <span>Tổng thanh toán:</span>
+                  <strong class="invAmount">{{ formatCurrency(inv.totalAmount) }}</strong>
+                </div>
+                @if (inv.status === 'PAID' && inv.paidAt) {
+                  <div class="invRow paidNote">
+                    <span>Đã nhận tiền:</span>
+                    <span>{{ formatDate(inv.paidAt) }} ({{ inv.paidMethod }})</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Action buttons -->
+              <div class="invActions">
+                <!-- Copy link Zalo -->
+                <button
+                  type="button"
+                  class="actionBtn secondary"
+                  title="Sao chép tin nhắn Zalo kèm link phiếu thu"
+                  (click)="copyZaloMessage(inv, $event)"
+                >
+                  <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>
+                  </svg>
+                  Gửi Zalo
+                </button>
+
+                <!-- Xem QR Napas247 -->
+                <button
+                  type="button"
+                  class="actionBtn primary"
+                  (click)="viewQr(inv, $event)"
+                >
+                  <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="14" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="14" y="14" width="7" height="7" stroke-width="2"/>
+                    <rect x="3" y="14" width="7" height="7" stroke-width="2"/>
+                  </svg>
+                  Mã QR
+                </button>
+
+                <!-- Gạch nợ thủ công nếu PENDING -->
+                @if (inv.status === 'PENDING') {
+                  <button
+                    type="button"
+                    class="actionBtn success"
+                    (click)="openMarkPaidModal(inv, $event)"
+                  >
+                    Gạch nợ
+                  </button>
+
+                  <button
+                    type="button"
+                    class="actionBtn danger"
+                    title="Hủy phiếu thu để mở khóa sửa điểm danh"
+                    (click)="cancelInvoice(inv, $event)"
+                  >
+                    Hủy
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: XÁC NHẬN XUẤT PHIẾU THU HÀNG LOẠT                                 -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+@if (showConfirmModal()) {
+  <div class="modalBackdrop" (click)="closeConfirmModal()">
+    <div class="modalBox" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <h3 class="modalTitle">Xác nhận xuất phiếu thu</h3>
+        <button type="button" class="closeBtn" (click)="closeConfirmModal()">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <p class="modalDesc">
+          Bạn đang chuẩn bị xuất phiếu thu cho <strong>{{ selectedCount() }} học sinh</strong> thuộc lớp
+          <strong>{{ currentClass()?.name }}</strong> cho kỳ <strong>{{ selectedMonth() }}</strong>.
+        </p>
+
+        <div class="confirmMetrics">
+          <div class="confirmRow">
+            <span>Số học sinh được chọn:</span>
+            <strong>{{ selectedCount() }} em</strong>
+          </div>
+          <div class="confirmRow">
+            <span>Tổng tiền học phí:</span>
+            <strong class="confirmTotal">{{ formatCurrency(selectedTotalAmount()) }}</strong>
+          </div>
+        </div>
+
+        <div class="infoNotice">
+          <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+            <line x1="12" y1="16" x2="12" y2="12" stroke-width="2"/>
+            <line x1="12" y1="8" x2="12.01" y2="8" stroke-width="2"/>
+          </svg>
+          Sau khi xuất phiếu, điểm danh của các học sinh này trong tháng {{ selectedMonth() }} sẽ được khóa để bảo vệ số liệu công nợ.
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button type="button" class="btn secondary" (click)="closeConfirmModal()" [disabled]="submittingBatch()">
+          Hủy bỏ
+        </button>
+        <button type="button" class="btn primary" (click)="confirmGenerateInvoices()" [disabled]="submittingBatch()">
+          @if (submittingBatch()) {
+            Đang xuất phiếu thu...
+          } @else {
+            Đồng ý xuất {{ selectedCount() }} phiếu thu
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: XEM MÃ VIETQR NAPAS247 & LINK PUBLIC                              -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+@if (showQrModal() && activeQrInvoice(); as qrInv) {
+  <div class="modalBackdrop" (click)="closeQrModal()">
+    <div class="modalBox qrModal" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <h3 class="modalTitle">Mã VietQR Napas247</h3>
+        <button type="button" class="closeBtn" (click)="closeQrModal()">✕</button>
+      </div>
+
+      <div class="modalBody qrBody">
+        <div class="qrStudentTag">
+          <strong>{{ qrInv.studentName }}</strong>
+          @if (qrInv.nickname) {
+            <span>({{ qrInv.nickname }})</span>
+          }
+          • Kỳ {{ qrInv.billingMonth }}
+        </div>
+
+        <div class="qrAmountTag">
+          {{ formatCurrency(qrInv.totalAmount) }}
+        </div>
+
+        <!-- Ảnh QR Code -->
+        <div class="qrImgWrap">
+          @if (qrInv.vietQrUrl) {
+            <img [src]="qrInv.vietQrUrl" alt="VietQR Napas247" class="qrImg" />
+          } @else {
+            <div class="qrPlaceholder">Không có ảnh QR</div>
+          }
+        </div>
+
+        <!-- Thông tin chuyển khoản sao chép 1 chạm -->
+        <div class="bankCopyGrid">
+          <div class="copyItem">
+            <span class="copyLabel">Nội dung chuyển khoản chuẩn:</span>
+            <div class="copyActionWrap">
+              <code class="copyValue">{{ qrInv.transferCode }}</code>
+              <button type="button" class="miniBtn" (click)="copyText(qrInv.transferCode, 'nội dung CK')">
+                Sao chép
+              </button>
+            </div>
+          </div>
+
+          <div class="copyItem">
+            <span class="copyLabel">Link Cổng Phụ huynh (/p/:hash):</span>
+            <div class="copyActionWrap">
+              <span class="copyValue linkValue">{{ qrInv.publicUrl }}</span>
+              <button type="button" class="miniBtn" (click)="copyPublicLink(qrInv)">
+                Sao chép link
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button type="button" class="btn secondary" (click)="copyZaloMessage(qrInv)">
+          Sao chép tin nhắn Zalo
+        </button>
+        <button type="button" class="btn primary" (click)="closeQrModal()">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: GẠCH NỢ THỦ CÔNG                                                  -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+@if (showMarkPaidModal() && activePayInvoice(); as payInv) {
+  <div class="modalBackdrop" (click)="closeMarkPaidModal()">
+    <div class="modalBox" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <h3 class="modalTitle">Gạch nợ học phí</h3>
+        <button type="button" class="closeBtn" (click)="closeMarkPaidModal()">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <p class="modalDesc">
+          Xác nhận học sinh <strong>{{ payInv.studentName }}</strong> đã hoàn tất đóng học phí kỳ <strong>{{ payInv.billingMonth }}</strong>.
+        </p>
+
+        <div class="confirmMetrics">
+          <div class="confirmRow">
+            <span>Số tiền thu:</span>
+            <strong class="confirmTotal">{{ formatCurrency(payInv.totalAmount) }}</strong>
+          </div>
+        </div>
+
+        <div class="formField">
+          <label class="formLabel">Hình thức nộp tiền:</label>
+          <select class="formSelect" [value]="payMethod()" (change)="payMethod.set($any($event.target).value)">
+            <option value="CASH">Tiền mặt tại lớp</option>
+            <option value="MANUAL">Chuyển khoản (Xác nhận thủ công)</option>
+            <option value="VIETQR">Quét mã VietQR</option>
+          </select>
+        </div>
+
+        <div class="formField">
+          <label class="formLabel">Ghi chú (Tùy chọn):</label>
+          <input
+            type="text"
+            class="formInput"
+            placeholder="Ví dụ: Phụ huynh gửi tiền mặt qua con..."
+            [value]="payNote()"
+            (input)="payNote.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button type="button" class="btn secondary" (click)="closeMarkPaidModal()">
+          Hủy bỏ
+        </button>
+        <button type="button" class="btn success" (click)="confirmMarkPaid()">
+          Xác nhận đã thu tiền
+        </button>
+      </div>
+    </div>
+  </div>
+}

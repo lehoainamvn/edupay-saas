@@ -8,13 +8,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * Repository quản lý Phiếu thu học phí.
- * Phục vụ kiểm tra khóa (Locking Rule) để bảo vệ tính toàn vẹn công nợ khi sửa điểm danh.
+ * Repository quản lý Phiếu thu học phí (bảng invoices).
+ * Luôn cô lập dữ liệu theo tenantId (P0), ngoại trừ tra cứu public qua publicHash.
  */
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
@@ -23,6 +24,12 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
      * Kiểm tra xem học sinh đã có phiếu thu hợp lệ trong kỳ thu (tháng) hay chưa.
      */
     boolean existsByTenantIdAndStudentIdAndBillingMonthAndStatusIn(
+            UUID tenantId, UUID studentId, String billingMonth, Collection<InvoiceStatus> statuses);
+
+    /**
+     * Tìm phiếu thu của học sinh trong kỳ thu (nếu có).
+     */
+    Optional<Invoice> findFirstByTenantIdAndStudentIdAndBillingMonthAndStatusIn(
             UUID tenantId, UUID studentId, String billingMonth, Collection<InvoiceStatus> statuses);
 
     /**
@@ -58,5 +65,21 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
             @Param("statuses") Collection<InvoiceStatus> statuses);
 
     Optional<Invoice> findByIdAndTenantId(UUID id, UUID tenantId);
-}
 
+    List<Invoice> findAllByTenantIdAndClassIdAndBillingMonthOrderByCreatedAtDesc(
+            UUID tenantId, UUID classId, String billingMonth);
+
+    List<Invoice> findAllByTenantIdAndClassIdAndBillingMonthAndStatusOrderByCreatedAtDesc(
+            UUID tenantId, UUID classId, String billingMonth, InvoiceStatus status);
+
+    List<Invoice> findAllByTenantIdAndBillingMonthOrderByCreatedAtDesc(UUID tenantId, String billingMonth);
+
+    /**
+     * Tra cứu phiếu thu bằng public_hash (Dành cho Cổng Phụ huynh công khai không cần login).
+     */
+    Optional<Invoice> findByPublicHash(String publicHash);
+
+    boolean existsByTransferCode(String transferCode);
+
+    boolean existsByPublicHash(String publicHash);
+}
