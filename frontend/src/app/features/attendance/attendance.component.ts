@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { AttendanceService } from '../../core/services/attendance.service';
 import { ClassService } from '../../core/services/class.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ClassItem } from '../../shared/models/class.model';
 import {
   AttendanceStatus,
@@ -26,6 +27,7 @@ import {
 export class AttendanceComponent implements OnInit {
   private readonly attendanceService = inject(AttendanceService);
   private readonly classService = inject(ClassService);
+  private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -497,22 +499,30 @@ export class AttendanceComponent implements OnInit {
     return `${y}-${m}`;
   }
 
-  showToast(message: string): void {
+  showToast(message: string, type: 'success' | 'warning' | 'info' = 'success'): void {
+    this.toastMessage.set(message);
+    this.errorMessage.set(null);
+    if (type === 'warning') {
+      this.toastService.warning(message);
+    } else if (type === 'info') {
+      this.toastService.info(message);
+    } else {
+      this.toastService.success(message);
+    }
     if (this.toastTimer) {
       clearTimeout(this.toastTimer);
     }
-    this.toastMessage.set(message);
-    this.errorMessage.set(null);
     this.toastTimer = setTimeout(() => {
       this.toastMessage.set(null);
     }, 3500);
   }
 
   showError(message: string): void {
+    this.errorMessage.set(message);
+    this.toastService.error(message);
     if (this.toastTimer) {
       clearTimeout(this.toastTimer);
     }
-    this.errorMessage.set(message);
     this.toastTimer = setTimeout(() => {
       this.errorMessage.set(null);
     }, 4500);

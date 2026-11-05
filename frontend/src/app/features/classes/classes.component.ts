@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ClassService } from '../../core/services/class.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ClassItem, ClassRequestPayload, FeeType } from '../../shared/models/class.model';
 
 export interface ClassCardVm {
@@ -67,6 +68,7 @@ const INITIAL_CLASSES: ClassCardVm[] = [
 export class ClassesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly classService = inject(ClassService);
+  private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly classes = signal<ClassCardVm[]>(INITIAL_CLASSES);
@@ -376,8 +378,9 @@ export class ClassesComponent implements OnInit {
     return type === 'monthly' ? 'MONTHLY_PACKAGE' : 'PER_LESSON';
   }
 
-  private showToast(msg: string): void {
+  private showToast(msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success'): void {
     this.toastMessage.set(msg);
+    this.toastService.show(msg, type);
     setTimeout(() => {
       if (this.toastMessage() === msg) {
         this.toastMessage.set(null);

@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { BillingService } from '../../core/services/billing.service';
+import { ToastService } from '../../core/services/toast.service';
 import { PublicInvoice } from '../../core/models/billing.models';
 
 @Component({
@@ -10,12 +11,6 @@ import { PublicInvoice } from '../../core/models/billing.models';
   imports: [CommonModule],
   template: `
     <div class="publicContainer">
-      <!-- Toast thông báo sao chép -->
-      @if (toastMessage()) {
-        <div class="toast">
-          {{ toastMessage() }}
-        </div>
-      }
 
       <div class="invoiceCard">
         @if (loading()) {
@@ -212,27 +207,6 @@ import { PublicInvoice } from '../../core/models/billing.models';
       display: flex;
       justify-content: center;
       position: relative;
-    }
-
-    .toast {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #0f172a;
-      color: #ffffff;
-      padding: 10px 20px;
-      border-radius: 999px;
-      font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 1000;
-      animation: fadeIn 0.2s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translate(-50%, -10px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
     }
 
     .invoiceCard {
@@ -590,6 +564,7 @@ import { PublicInvoice } from '../../core/models/billing.models';
 export class PublicInvoiceComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly billingService = inject(BillingService);
+  private readonly toastService = inject(ToastService);
 
   readonly invoice = signal<PublicInvoice | null>(null);
   readonly loading = signal<boolean>(true);
@@ -637,7 +612,7 @@ export class PublicInvoiceComponent implements OnInit {
   copyText(text: string, label: string): void {
     navigator.clipboard.writeText(text).then(() => {
       this.toastMessage.set(`Đã sao chép ${label}!`);
-      setTimeout(() => this.toastMessage.set(null), 2500);
+      this.toastService.info(`Đã sao chép ${label}!`);
     });
   }
 }

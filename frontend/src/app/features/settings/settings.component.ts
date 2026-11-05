@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { PaymentSettingService } from '../../core/services/payment-setting.service';
+import { ToastService } from '../../core/services/toast.service';
 import { POPULAR_BANKS, BankInfo, PaymentSettingRequest } from '../../core/models/payment-setting.models';
 
 @Component({
@@ -14,6 +15,7 @@ import { POPULAR_BANKS, BankInfo, PaymentSettingRequest } from '../../core/model
 })
 export class SettingsComponent implements OnInit {
   private readonly paymentSettingService = inject(PaymentSettingService);
+  private readonly toastService = inject(ToastService);
 
   readonly banks: BankInfo[] = POPULAR_BANKS;
 
@@ -27,9 +29,6 @@ export class SettingsComponent implements OnInit {
   readonly loading = signal<boolean>(false);
   readonly saving = signal<boolean>(false);
   readonly isConfigured = signal<boolean>(false);
-
-  readonly toastMessage = signal<string | null>(null);
-  readonly toastType = signal<'success' | 'error'>('success');
 
   // ─── COMPUTED SIGNALS ───────────────────────────────────────────────────────
   readonly selectedBank = computed(() => {
@@ -143,11 +142,11 @@ export class SettingsComponent implements OnInit {
 
   // ─── HELPERS ────────────────────────────────────────────────────────────────
   showToast(message: string, type: 'success' | 'error' = 'success'): void {
-    this.toastMessage.set(message);
-    this.toastType.set(type);
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 3500);
+    if (type === 'error') {
+      this.toastService.error(message);
+    } else {
+      this.toastService.success(message);
+    }
   }
 }
 

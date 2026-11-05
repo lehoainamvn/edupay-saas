@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { ClassService } from '../../core/services/class.service';
 import { BillingService } from '../../core/services/billing.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ClassItem } from '../../shared/models/class.model';
 import {
   BillingPreview,
@@ -32,6 +33,7 @@ interface EditableBillingItem extends BillingPreviewItem {
 export class BillingComponent implements OnInit {
   private readonly classService = inject(ClassService);
   private readonly billingService = inject(BillingService);
+  private readonly toastService = inject(ToastService);
 
   // ─── STATE SIGNALS ──────────────────────────────────────────────────────────
   readonly classes = signal<ClassItem[]>([]);
@@ -44,9 +46,6 @@ export class BillingComponent implements OnInit {
   readonly loadingInvoices = signal<boolean>(false);
   readonly submittingBatch = signal<boolean>(false);
   readonly previewError = signal<string | null>(null);
-
-  readonly toastMessage = signal<string | null>(null);
-  readonly toastType = signal<'success' | 'error'>('success');
 
   readonly previewData = signal<BillingPreview | null>(null);
   readonly editableItems = signal<EditableBillingItem[]>([]);
@@ -408,12 +407,12 @@ export class BillingComponent implements OnInit {
     });
   }
 
-  showToast(message: string, type: 'success' | 'error'): void {
-    this.toastMessage.set(message);
-    this.toastType.set(type);
-    setTimeout(() => {
-      this.toastMessage.set(null);
-    }, 3500);
+  showToast(message: string, type: 'success' | 'error' = 'success'): void {
+    if (type === 'error') {
+      this.toastService.error(message);
+    } else {
+      this.toastService.success(message);
+    }
   }
 
   private getDefaultMonth(): string {

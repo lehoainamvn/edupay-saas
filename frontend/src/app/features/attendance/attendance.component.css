@@ -49,50 +49,6 @@ button {
   padding: 24px 16px 80px;
 }
 
-/* Toast */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 1000;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-  animation: slideUp 0.25s ease-out;
-}
-
-.toast.success {
-  background: #064e3b;
-  color: #ecfdf5;
-  border: 1px solid #059669;
-}
-
-.toast.error {
-  background: #7f1d1d;
-  color: #fef2f2;
-  border: 1px solid #dc2626;
-}
-
-.toastIcon {
-  font-weight: 700;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(12px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
 /* Page Header */
 .pageHeader {
   margin-bottom: 24px;

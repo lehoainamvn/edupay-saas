@@ -4,17 +4,6 @@
 
   <!-- Main Content -->
   <main class="page">
-    @if (toastMessage(); as msg) {
-      <div class="toast success" role="status">
-        <span class="toastIcon">✓</span> {{ msg }}
-      </div>
-    }
-
-    @if (errorMessage(); as err) {
-      <div class="toast error" role="alert">
-        <span class="toastIcon">✕</span> {{ err }}
-      </div>
-    }
 
     <!-- Page Header -->
     <header class="pageHeader">

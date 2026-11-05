@@ -5,6 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentService } from '../../core/services/student.service';
+import { ToastService } from '../../core/services/toast.service';
 import { ClassService } from '../../core/services/class.service';
 import { FeeType } from '../../shared/models/class.model';
 import {
@@ -165,6 +166,7 @@ const VN_PHONE_REGEX = /^0(3|5|7|8|9)[0-9]{8}$/;
 export class StudentsComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly studentService = inject(StudentService);
+  private readonly toastService = inject(ToastService);
   private readonly classService = inject(ClassService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -863,12 +865,13 @@ export class StudentsComponent implements OnInit {
       .replace(/đ/g, 'd');
   }
 
-  private showToast(msg: string): void {
+  private showToast(msg: string, type: 'success' | 'error' | 'warning' | 'info' = 'success'): void {
     this.toastMessage.set(msg);
+    this.toastService.show(msg, type);
     setTimeout(() => {
       if (this.toastMessage() === msg) {
         this.toastMessage.set(null);
       }
-    }, 3400);
+    }, 3200);
   }
 }

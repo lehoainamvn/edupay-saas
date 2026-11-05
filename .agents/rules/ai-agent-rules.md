@@ -62,6 +62,20 @@ Tài liệu này là **tập luật tối cao (Ground Truth)** dành riêng cho 
 * **KHÔNG DÙNG DỮ LIỆU GIẢ CỨNG TRONG CODE (No Hardcoded Mock Data):** Mọi màn hình ứng dụng sau khi thiết kế xong khung giao diện **BẮT BUỘC** phải kết nối API gọi xuống cơ sở dữ liệu thật để lấy và hiển thị dữ liệu động của Tenant.
 * **THIẾT KẾ EMPTY STATE CHỈN CHU:** Khi cơ sở dữ liệu chưa có bản ghi (ví dụ: giáo viên mới đăng ký chưa có lớp học, hôm nay chưa có ca dạy, chưa phát sinh giao dịch VietQR, không có học sinh nợ), giao diện **BẮT BUỘC** phải hiển thị trạng thái rỗng (Empty State) sạch sẽ, lịch sự với thông báo hướng dẫn rõ ràng (ví dụ: *"Chưa có ca dạy nào hôm nay"*, *"Chưa có giao dịch VietQR nào phát sinh"*) kèm nút hành động thích hợp (như *"+ Tạo lớp học mới"*), tuyệt đối không để màn hình lỗi hay hiển thị dữ liệu giả của người khác.
 
+### 10. Luật Thống Nhất Thông Báo Toàn Hệ Thống (Single Source of Truth for Toast & Notifications Law — P0)
+* **DUY NHẤT 1 TOAST SERVICE & COMPONENT TOÀN ỨNG DỤNG:** Toàn bộ thông báo người dùng (Thành công, Thất bại, Cảnh báo, Thông tin) trên toàn bộ ứng dụng Frontend **BẮT BUỘC** sử dụng tập trung qua `ToastService` (`frontend/src/app/core/services/toast.service.ts`) và hiển thị qua component dùng chung `ToastComponent` (`<app-toast>`) được gắn duy nhất tại gốc ứng dụng (`AppComponent`).
+* **CẤM TỰ TẠO THÔNG BÁO CỤC BỘ (No Local Toasts):**
+  * **TUYỆT ĐỐI CẤM** tự khai báo signal cục bộ như `toastMessage`, `errorMessage`, `toastType` và tự viết HTML `@if (toastMessage()) { <div class="toast">...</div> }` hoặc định nghĩa CSS `.toast` trong từng feature component riêng lẻ (`billing`, `settings`, `attendance`, `classes`, `students`, `dashboard`, `public-invoice`,...).
+  * Mọi hành động thông báo phản hồi người dùng **BẮT BUỘC** gọi các hàm chuẩn hóa của `ToastService`:
+    - **Thành công (Success):** `this.toastService.success(message, title?, durationMs?)` (Màu xanh lục `#10b981`, icon `✓`, mặc định 3.5s)
+    - **Thất bại / Lỗi (Error):** `this.toastService.error(message, title?, durationMs?)` (Màu đỏ `#ef4444`, icon `✕`, mặc định 4.5s)
+    - **Cảnh báo (Warning):** `this.toastService.warning(message, title?, durationMs?)` (Màu vàng cam `#f59e0b`, icon `⚠`, mặc định 4.0s)
+    - **Thông tin (Info):** `this.toastService.info(message, title?, durationMs?)` (Màu xanh dương `#3b82f6`, icon `ℹ`, mặc định 3.5s)
+* **QUY CHUẨN TRẢI NGHIỆM & GIAO DIỆN (UI/UX Standards):**
+  * Vị trí hiển thị: Cố định góc trên bên phải màn hình (`top: 24px; right: 24px; z-index: 999999`), tự co giãn full chiều ngang trên mobile (`left: 16px; right: 16px`).
+  * Animation: Trượt từ trên xuống `slideInDown`, hỗ trợ nút bấm tắt thủ công `✕` với touch target thân thiện di động.
+  * Tối đa 4 thông báo cùng lúc để không làm che khuất nội dung làm việc của giáo viên.
+
 ---
 
 ## 🛠️ DANH SÁCH SKILLS CỦA DỰ ÁN
