@@ -72,4 +72,8 @@ public class BillingPreviewItemResponse {
     public void setIsLocked(Boolean isLocked) {
         this.isLocked = isLocked;
     }
+
+    public Boolean isLocked() {
+        return Boolean.TRUE.equals(this.isLocked);
+    }
 }
