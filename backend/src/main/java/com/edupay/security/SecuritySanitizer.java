@@ -4,7 +4,8 @@ import java.util.regex.Pattern;
 
 /**
  * Tiện ích làm sạch và khử độc dữ liệu đầu vào (Input Sanitization).
- * Chuyên trách bảo vệ chống Stored XSS và chèn mã độc/ký tự điều khiển cho ghi chú điểm danh (Attendance Notes).
+ * Chuyên trách bảo vệ chống Stored XSS và chèn mã độc/ký tự điều khiển cho ghi chú điểm danh (Attendance Notes)
+ * và các thông tin dạng văn bản thô (Plain Text) của hệ thống.
  */
 public final class SecuritySanitizer {
 
@@ -18,6 +19,31 @@ public final class SecuritySanitizer {
     }
 
     /**
+     * Làm sạch văn bản thô chung:
+     * - Loại bỏ toàn bộ thẻ script, html tags, iframe
+     * - Loại bỏ event handlers và giao thức javascript:
+     * - Cắt bỏ null-byte (\0) và ký tự điều khiển đảo ngược (\u202E)
+     */
+    public static String sanitizePlainText(String text) {
+        if (text == null) {
+            return null;
+        }
+
+        String cleaned = text.trim();
+        if (cleaned.isEmpty()) {
+            return "";
+        }
+
+        cleaned = cleaned.replace("\0", "").replace("\u202E", "");
+        cleaned = SCRIPT_PATTERN.matcher(cleaned).replaceAll("");
+        cleaned = ON_EVENT_PATTERN.matcher(cleaned).replaceAll("");
+        cleaned = JAVASCRIPT_PROTOCOL_PATTERN.matcher(cleaned).replaceAll("");
+        cleaned = HTML_TAG_PATTERN.matcher(cleaned).replaceAll("");
+
+        return cleaned.trim();
+    }
+
+    /**
      * Làm sạch ghi chú buổi học:
      * - Loại bỏ toàn bộ thẻ script, iframe, html tags
      * - Loại bỏ các event handler (onload=, onerror=, ...)
@@ -26,25 +52,10 @@ public final class SecuritySanitizer {
      * - Cắt khoảng trắng thừa và giới hạn độ dài an toàn tối đa 255 ký tự
      */
     public static String sanitizeNote(String note) {
-        if (note == null) {
+        String cleaned = sanitizePlainText(note);
+        if (cleaned == null || cleaned.isEmpty()) {
             return null;
         }
-
-        String cleaned = note.trim();
-        if (cleaned.isEmpty()) {
-            return null;
-        }
-
-        // Loại bỏ null byte và các ký tự điều khiển ẩn
-        cleaned = cleaned.replace("\0", "").replace("\u202E", "");
-
-        // Loại bỏ thẻ script, sự kiện on*, javascript: và toàn bộ HTML tags
-        cleaned = SCRIPT_PATTERN.matcher(cleaned).replaceAll("");
-        cleaned = ON_EVENT_PATTERN.matcher(cleaned).replaceAll("");
-        cleaned = JAVASCRIPT_PROTOCOL_PATTERN.matcher(cleaned).replaceAll("");
-        cleaned = HTML_TAG_PATTERN.matcher(cleaned).replaceAll("");
-
-        cleaned = cleaned.trim();
 
         if (cleaned.length() > 255) {
             cleaned = cleaned.substring(0, 255);
@@ -53,4 +64,3 @@ public final class SecuritySanitizer {
         return cleaned.isEmpty() ? null : cleaned;
     }
 }
-
