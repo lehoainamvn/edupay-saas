@@ -59,6 +59,8 @@ export class BillingComponent implements OnInit {
   readonly activeQrInvoice = signal<Invoice | null>(null);
   readonly showMarkPaidModal = signal<boolean>(false);
   readonly activePayInvoice = signal<Invoice | null>(null);
+  readonly copiedField = signal<string | null>(null);
+  private copyResetTimer: ReturnType<typeof setTimeout> | null = null;
   readonly payMethod = signal<string>('CASH');
   readonly payNote = signal<string>('');
 
@@ -299,22 +301,26 @@ export class BillingComponent implements OnInit {
     });
   }
 
-  copyPublicLink(invoice: Invoice, event?: Event): void {
+  copyPublicLink(invoice: Invoice, event?: Event, fieldKey?: string): void {
     if (event) event.stopPropagation();
     const fullUrl = `${window.location.origin}/p/${invoice.publicHash}`;
     navigator.clipboard.writeText(fullUrl).then(() => {
-      this.showToast(`Đã sao chép link phụ huynh: ${invoice.studentName}`, 'success');
+      this.triggerCopiedFeedback(fieldKey);
+      this.toastService.success(`Đã sao chép link phụ huynh: ${invoice.studentName}`);
     });
   }
 
-  copyZaloMessage(invoice: Invoice, event?: Event): void {
+  copyZaloMessage(invoice: Invoice, event?: Event, fieldKey?: string): void {
     if (event) event.stopPropagation();
     const fullUrl = `${window.location.origin}/p/${invoice.publicHash}`;
     const formattedAmount = this.formatCurrency(invoice.totalAmount);
-    const text = `Dạ em gửi phiếu báo học phí tháng ${invoice.billingMonth} của bé ${invoice.studentName} (${invoice.nickname || ''}) ạ:\n- Số buổi học: ${invoice.attendedCount} buổi\n- Tổng học phí: ${formattedAmount}\n- Link xem chi tiết và quét mã QR chuyển khoản:\n${fullUrl}\nEm cảm ơn ba mẹ!`;
+    const monthVN = this.formatMonthVN(invoice.billingMonth);
+    const nicknamePart = invoice.nickname ? ` (${invoice.nickname})` : '';
+    const text = `Dạ em gửi phiếu báo học phí ${monthVN} của bé ${invoice.studentName}${nicknamePart} ạ:\n- Số buổi học: ${invoice.attendedCount} buổi\n- Tổng học phí: ${formattedAmount}\n- Link xem chi tiết và quét mã QR chuyển khoản:\n${fullUrl}\nEm cảm ơn ba mẹ!`;
 
     navigator.clipboard.writeText(text).then(() => {
-      this.showToast('Đã sao chép mẫu tin nhắn Zalo kèm link phiếu thu!', 'success');
+      this.triggerCopiedFeedback(fieldKey);
+      this.toastService.success('Đã sao chép mẫu tin nhắn Zalo kèm link phiếu thu!');
     });
   }
 
@@ -329,10 +335,24 @@ export class BillingComponent implements OnInit {
     this.activeQrInvoice.set(null);
   }
 
-  copyText(text: string, label: string): void {
+  copyText(text: string, label: string, fieldKey?: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      this.showToast(`Đã sao chép ${label}!`, 'success');
+      this.triggerCopiedFeedback(fieldKey);
+      this.toastService.success(`Đã sao chép ${label}!`);
     });
+  }
+
+  private triggerCopiedFeedback(fieldKey?: string): void {
+    if (!fieldKey) return;
+    if (this.copyResetTimer) {
+      clearTimeout(this.copyResetTimer);
+    }
+    this.copiedField.set(fieldKey);
+    this.copyResetTimer = setTimeout(() => {
+      if (this.copiedField() === fieldKey) {
+        this.copiedField.set(null);
+      }
+    }, 2200);
   }
 
   openMarkPaidModal(invoice: Invoice, event?: Event): void {

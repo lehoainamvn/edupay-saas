@@ -76,6 +76,24 @@ Tài liệu này là **tập luật tối cao (Ground Truth)** dành riêng cho 
   * Animation: Trượt từ trên xuống `slideInDown`, hỗ trợ nút bấm tắt thủ công `✕` với touch target thân thiện di động.
   * Tối đa 4 thông báo cùng lúc để không làm che khuất nội dung làm việc của giáo viên.
 
+
+### 11. Luật Thống Nhất Cỡ Chữ 16px & Khung Bố Cục Chuẩn 1280px Toàn Hệ Thống (Unified 16px Typography & 1280px Layout Frame Law — P0)
+* **CHUẨN FONT-SIZE 16PX GỐC TOÀN HỆ THỐNG (Base 16px Typography):**
+  * Toàn bộ ứng dụng lấy cỡ chữ **16px** làm chuẩn mực thiết kế cơ sở (`html { font-size: 16px; }`, `body { font-size: 16px; line-height: 1.5; }`).
+  * Mọi ô nhập liệu (`input`, `select`, `textarea`), nút bấm (`button`) chính và nội dung đọc chính **BẮT BUỘC** đạt kích thước tối thiểu **15px - 16px** (chống hiện tượng tự động phóng to khó chịu trên iOS Safari di động, đồng thời đảm bảo giáo viên đọc thông tin học sinh và số tiền rõ ràng, không mỏi mắt).
+  * **CẤM DÙNG FONT CHỮ LI TI:** Tuyệt đối không dùng font chữ < 13px cho nội dung đọc chính, danh sách học sinh, bảng tính học phí hoặc nhãn form. Chỉ cho phép dùng 11px - 12px duy nhất cho các tag kicker/badge in hoa phụ.
+  * Phân cấp cỡ chữ chuẩn:
+    - **Tiêu đề trang (H1):** `font-size: 26px - 28px; font-weight: 700 - 800;`
+    - **Tiêu đề mục / Thẻ (H2, H3, Modal Title):** `font-size: 18px - 20px; font-weight: 700;`
+    - **Đoạn mô tả dưới tiêu đề (Subtitle/Desc):** `font-size: 15px - 16px; line-height: 1.5; color: #64748b;`
+    - **Nội dung bảng, thẻ học sinh, ô nhập liệu:** `font-size: 15px - 16px;`
+    - **Nhãn phụ / Badge kicker:** `font-size: 11px - 12px; font-weight: 700; text-transform: uppercase;`
+* **THỐNG NHẤT KHUNG BỐ CỤC 1280PX CHO TẤT CẢ CÁC TRANG (No Layout Jumping):**
+  * Toàn bộ các trang nghiệp vụ (`dashboard`, `classes`, `students`, `attendance`, `billing`, `settings`) **BẮT BUỘC DÙNG CHUNG DUY NHẤT 1 BỘ THÔNG SỐ KHUNG BỐ CỤC**:
+    - **Chiều rộng tối đa (Max Width):** Đúng chuẩn **`1280px`** căn giữa (`margin: 0 auto;`).
+    - **Khoảng đệm đồng bộ (Padding):** `padding: 28px 24px 96px;` trên desktop/laptop; `padding: 24px 20px 88px;` trên tablet; và `padding: 20px 16px 80px;` trên mobile.
+  * **CẤM LỆCH KHUNG TRANG:** Tuyệt đối cấm mỗi trang tự đặt `max-width` cục bộ khác nhau (ví dụ: `1120px`, `1200px`, `1240px`) hoặc đặt khoảng đệm lệch nhau, gây hiện tượng co giật chiều ngang hoặc nhảy vị trí khi giáo viên bấm chuyển giữa các tab trên thanh điều hướng.
+
 ---
 
 ## 🛠️ DANH SÁCH SKILLS CỦA DỰ ÁN

@@ -61,7 +61,7 @@ a {
 .dashboard {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 40px 24px 90px;
+  padding: 28px 24px 96px;
 }
 
 /* Greeting Header */
@@ -81,7 +81,7 @@ a {
   border-radius: 999px;
   background: var(--blueSoft);
   color: var(--blue);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;

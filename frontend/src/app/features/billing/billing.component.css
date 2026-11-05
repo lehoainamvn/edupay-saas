@@ -47,31 +47,17 @@
 
 /* Page Layout */
 .page {
-  max-width: 1240px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 24px 20px 100px;
+  padding: 28px 24px 96px;
 }
 
-/* Toast */
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
-  font-weight: 500;
-  font-size: 14px;
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 80px;
+  }
 }
 
-.toast.error {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #991b1b;
-}
 
 /* Header */
 .header {
@@ -79,7 +65,7 @@
 }
 
 .kicker {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -97,7 +83,7 @@
 
 .subtitle {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 15px;
   margin: 0 0 20px;
   max-width: 700px;
 }
