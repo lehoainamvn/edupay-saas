@@ -26,13 +26,16 @@
 
       <div class="filterGroup">
         <label class="filterLabel" for="monthInput">Kỳ thu phí:</label>
-        <input
-          id="monthInput"
-          type="month"
-          class="formInput monthInput"
-          [value]="selectedMonth()"
-          (change)="onMonthChange($event)"
-        />
+        <div class="monthInputWrap">
+          <input
+            id="monthInput"
+            type="month"
+            class="formInput monthInput"
+            [value]="selectedMonth()"
+            (change)="onMonthChange($event)"
+          />
+          <span class="monthTag">{{ formatMonthVN(selectedMonth()) }}</span>
+        </div>
       </div>
 
       <!-- Tab Switcher -->
@@ -132,7 +135,7 @@
         <div class="kpiCard">
           <div class="kpiLabel">Tổng lượt có mặt</div>
           <div class="kpiValue">{{ preview.totalAttendedCount }} <span class="unit">buổi</span></div>
-          <div class="kpiSub">Cả lớp trong tháng {{ preview.billingMonth }}</div>
+          <div class="kpiSub">Cả lớp trong {{ formatMonthVN(preview.billingMonth) }}</div>
         </div>
 
         <div class="kpiCard highlight">
@@ -497,7 +500,7 @@
                   @if (inv.nickname) {
                     <span class="invNick">({{ inv.nickname }})</span>
                   }
-                  <span class="invClass">{{ inv.className }} • Kỳ {{ inv.billingMonth }}</span>
+                  <span class="invClass">{{ inv.className }} • {{ formatMonthVN(inv.billingMonth) }}</span>
                 </div>
 
                 <div>
@@ -538,14 +541,19 @@
                 <button
                   type="button"
                   class="actionBtn secondary"
+                  [class.copied]="copiedField() === inv.id"
                   title="Sao chép tin nhắn Zalo kèm link phiếu thu"
-                  (click)="copyZaloMessage(inv, $event)"
+                  (click)="copyZaloMessage(inv, $event, inv.id)"
                 >
-                  <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>
-                  </svg>
-                  Gửi Zalo
+                  @if (copiedField() === inv.id) {
+                    <span>✓ Đã sao chép</span>
+                  } @else {
+                    <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>
+                    </svg>
+                    <span>Gửi Zalo</span>
+                  }
                 </button>
 
                 <!-- Xem QR Napas247 -->
@@ -662,7 +670,7 @@
           @if (qrInv.nickname) {
             <span>({{ qrInv.nickname }})</span>
           }
-          • Kỳ {{ qrInv.billingMonth }}
+          • {{ formatMonthVN(qrInv.billingMonth) }}
         </div>
 
         <div class="qrAmountTag">
@@ -684,8 +692,18 @@
             <span class="copyLabel">Nội dung chuyển khoản chuẩn:</span>
             <div class="copyActionWrap">
               <code class="copyValue">{{ qrInv.transferCode }}</code>
-              <button type="button" class="miniBtn" (click)="copyText(qrInv.transferCode, 'nội dung CK')">
-                Sao chép
+              <button
+                type="button"
+                class="miniBtn"
+                [class.copied]="copiedField() === 'transferCode'"
+                (click)="copyText(qrInv.transferCode, 'nội dung chuyển khoản', 'transferCode')"
+                title="Sao chép nội dung chuyển khoản"
+              >
+                @if (copiedField() === 'transferCode') {
+                  <span>✓ Đã sao chép</span>
+                } @else {
+                  <span>Sao chép</span>
+                }
               </button>
             </div>
           </div>
@@ -694,8 +712,18 @@
             <span class="copyLabel">Link Cổng Phụ huynh (/p/:hash):</span>
             <div class="copyActionWrap">
               <span class="copyValue linkValue">{{ qrInv.publicUrl }}</span>
-              <button type="button" class="miniBtn" (click)="copyPublicLink(qrInv)">
-                Sao chép link
+              <button
+                type="button"
+                class="miniBtn"
+                [class.copied]="copiedField() === 'publicLink'"
+                (click)="copyPublicLink(qrInv, undefined, 'publicLink')"
+                title="Sao chép đường link phiếu thu"
+              >
+                @if (copiedField() === 'publicLink') {
+                  <span>✓ Đã sao chép</span>
+                } @else {
+                  <span>Sao chép link</span>
+                }
               </button>
             </div>
           </div>
@@ -703,8 +731,18 @@
       </div>
 
       <div class="modalFooter">
-        <button type="button" class="btn secondary" (click)="copyZaloMessage(qrInv)">
-          Sao chép tin nhắn Zalo
+        <button
+          type="button"
+          class="btn secondary"
+          [class.copied]="copiedField() === 'zaloMessage'"
+          (click)="copyZaloMessage(qrInv, undefined, 'zaloMessage')"
+          title="Sao chép toàn bộ tin nhắn Zalo kèm link"
+        >
+          @if (copiedField() === 'zaloMessage') {
+            <span>✓ Đã sao chép tin nhắn Zalo</span>
+          } @else {
+            <span>Sao chép tin nhắn Zalo</span>
+          }
         </button>
         <button type="button" class="btn primary" (click)="closeQrModal()">
           Đóng
@@ -727,7 +765,7 @@
 
       <div class="modalBody">
         <p class="modalDesc">
-          Xác nhận học sinh <strong>{{ payInv.studentName }}</strong> đã hoàn tất đóng học phí kỳ <strong>{{ payInv.billingMonth }}</strong>.
+          Xác nhận học sinh <strong>{{ payInv.studentName }}</strong> đã hoàn tất đóng học phí <strong>{{ formatMonthVN(payInv.billingMonth) }}</strong>.
         </p>
 
         <div class="confirmMetrics">

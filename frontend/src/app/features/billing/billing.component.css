@@ -1250,3 +1250,53 @@
   }
 }
 
+
+
+/* ─── COPIED FEEDBACK STATES ─────────────────────────────────────────────── */
+.monthInputWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.monthTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.miniBtn.copied {
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  color: #065f46 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  transform: scale(1.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn.copied {
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  color: #065f46 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  transform: scale(1.01);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.actionBtn.copied {
+  background: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  color: #065f46 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}

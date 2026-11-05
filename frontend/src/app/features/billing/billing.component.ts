@@ -397,6 +397,17 @@ export class BillingComponent implements OnInit {
     return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
   }
 
+  formatMonthVN(monthStr: string | undefined | null): string {
+    if (!monthStr) return '';
+    const parts = monthStr.split('-');
+    if (parts.length === 2) {
+      const y = parts[0];
+      const m = parseInt(parts[1], 10);
+      return `Tháng ${m}/${y}`;
+    }
+    return monthStr;
+  }
+
   formatDate(isoString: string | undefined): string {
     if (!isoString) return '';
     const date = new Date(isoString);

@@ -34,7 +34,7 @@ import { PublicInvoice } from '../../core/models/billing.models';
           <div class="header">
             <div class="brandTag">EDUPAY SAAS</div>
             <h1 class="title">PHIẾU BÁO HỌC PHÍ</h1>
-            <p class="period">Kỳ học: Tháng {{ inv.billingMonth }}</p>
+            <p class="period">Kỳ học: {{ formatMonthVN(inv.billingMonth) }}</p>
 
             <div class="statusWrap">
               @if (inv.status === 'PAID') {
@@ -131,8 +131,17 @@ import { PublicInvoice } from '../../core/models/billing.models';
                   <span class="tLabel">Số tài khoản:</span>
                   <div class="tActionWrap">
                     <strong class="tValue num">{{ inv.accountNumber || '0987654321' }}</strong>
-                    <button type="button" class="copyBtn" (click)="copyText(inv.accountNumber || '0987654321', 'Số tài khoản')">
-                      Sao chép
+                    <button
+                      type="button"
+                      class="copyBtn"
+                      [class.copied]="copiedField() === 'accNum'"
+                      (click)="copyText(inv.accountNumber || '0987654321', 'Số tài khoản', 'accNum')"
+                    >
+                      @if (copiedField() === 'accNum') {
+                        <span>✓ Đã sao chép</span>
+                      } @else {
+                        <span>Sao chép</span>
+                      }
                     </button>
                   </div>
                 </div>
@@ -146,16 +155,34 @@ import { PublicInvoice } from '../../core/models/billing.models';
                   <span class="tLabel">Nội dung chuyển khoản chính xác:</span>
                   <div class="tActionWrap">
                     <code class="tCode">{{ inv.transferCode }}</code>
-                    <button type="button" class="copyBtn" (click)="copyText(inv.transferCode, 'Nội dung chuyển khoản')">
-                      Sao chép
+                    <button
+                      type="button"
+                      class="copyBtn"
+                      [class.copied]="copiedField() === 'code'"
+                      (click)="copyText(inv.transferCode, 'Nội dung chuyển khoản', 'code')"
+                    >
+                      @if (copiedField() === 'code') {
+                        <span>✓ Đã sao chép</span>
+                      } @else {
+                        <span>Sao chép</span>
+                      }
                     </button>
                   </div>
                 </div>
               </div>
 
               <div class="footerActions">
-                <button type="button" class="fullBtn primary" (click)="copyText(inv.accountNumber || '0987654321', 'Số tài khoản')">
-                  Sao chép Số tài khoản
+                <button
+                  type="button"
+                  class="fullBtn primary"
+                  [class.copied]="copiedField() === 'footerAcc'"
+                  (click)="copyText(inv.accountNumber || '0987654321', 'Số tài khoản', 'footerAcc')"
+                >
+                  @if (copiedField() === 'footerAcc') {
+                    <span>✓ Đã sao chép Số tài khoản</span>
+                  } @else {
+                    <span>Sao chép Số tài khoản</span>
+                  }
                 </button>
               </div>
             </div>
@@ -166,7 +193,7 @@ import { PublicInvoice } from '../../core/models/billing.models';
                 <polyline points="22 4 12 14.01 9 11.01" stroke-width="2"/>
               </svg>
               <h3>ĐÃ HOÀN TẤT THANH TOÁN</h3>
-              <p>Giáo viên đã nhận đủ học phí kỳ {{ inv.billingMonth }}. Xin chân thành cảm ơn Quý phụ huynh!</p>
+              <p>Giáo viên đã nhận đủ học phí {{ formatMonthVN(inv.billingMonth) }}. Xin chân thành cảm ơn Quý phụ huynh!</p>
             </div>
           }
 
@@ -569,6 +596,8 @@ export class PublicInvoiceComponent implements OnInit {
   readonly invoice = signal<PublicInvoice | null>(null);
   readonly loading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
+  readonly copiedField = signal<string | null>(null);
+  private copyTimer: ReturnType<typeof setTimeout> | null = null;
   readonly toastMessage = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -600,6 +629,17 @@ export class PublicInvoiceComponent implements OnInit {
     return new Intl.NumberFormat('vi-VN').format(amount) + ' đ';
   }
 
+  formatMonthVN(monthStr: string | undefined | null): string {
+    if (!monthStr) return '';
+    const parts = monthStr.split('-');
+    if (parts.length === 2) {
+      const y = parts[0];
+      const m = parseInt(parts[1], 10);
+      return `Tháng ${m}/${y}`;
+    }
+    return monthStr;
+  }
+
   formatDate(dateStr: string): string {
     if (!dateStr) return '';
     const parts = dateStr.split('-');
@@ -609,9 +649,15 @@ export class PublicInvoiceComponent implements OnInit {
     return dateStr;
   }
 
-  copyText(text: string, label: string): void {
+  copyText(text: string, label: string, fieldKey?: string): void {
     navigator.clipboard.writeText(text).then(() => {
-      this.toastMessage.set(`Đã sao chép ${label}!`);
+      if (fieldKey) {
+        if (this.copyTimer) clearTimeout(this.copyTimer);
+        this.copiedField.set(fieldKey);
+        this.copyTimer = setTimeout(() => {
+          if (this.copiedField() === fieldKey) this.copiedField.set(null);
+        }, 2200);
+      }
       this.toastService.info(`Đã sao chép ${label}!`);
     });
   }
