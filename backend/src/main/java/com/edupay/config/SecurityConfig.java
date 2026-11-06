@@ -45,6 +45,7 @@ public class SecurityConfig {
 
             // Public routes
             "/public/**",
+            "/settings/payment/banks",
             "/webhooks/**",
             "/actuator/health",
             "/health",

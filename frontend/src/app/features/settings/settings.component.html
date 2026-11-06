@@ -5,9 +5,9 @@
   <header class="header">
     <div class="titleWrap">
       <div class="kicker">CÀI ĐẶT TÀI CHÍNH</div>
-      <h1 class="title">Tài Khoản Nhận Tiền VietQR</h1>
+      <h1 class="title">Tài Khoản Ngân Hàng & VietQR</h1>
       <p class="subtitle">
-        Cấu hình số tài khoản ngân hàng nhận học phí. Mọi phiếu thu và mã QR Napas247 gửi cho phụ huynh sẽ tự động nhận diện tài khoản này.
+        Cấu hình số tài khoản ngân hàng và cú pháp đối soát học phí. Mọi phiếu thu và mã QR Napas247 gửi cho phụ huynh sẽ tự động nhận diện tài khoản này để gạch nợ tự động.
       </p>
     </div>
   </header>
@@ -15,7 +15,7 @@
   @if (loading()) {
     <div class="loadingCard">
       <div class="spinner"></div>
-      <p>Đang tải thông tin tài khoản...</p>
+      <p>Đang tải thông tin tài khoản ngân hàng...</p>
     </div>
   } @else {
     <div class="contentGrid">
@@ -24,7 +24,7 @@
         <div class="cardHeader">
           <div class="cardTitleWrap">
             <h2 class="cardTitle">Thông tin tài khoản ngân hàng</h2>
-            <p class="cardDesc">Nhập chính xác số tài khoản và ngân hàng nhận học phí của bạn.</p>
+            <p class="cardDesc">Chọn ngân hàng trong liên minh Napas247 và nhập chính xác số tài khoản của bạn.</p>
           </div>
           <div>
             @if (isConfigured()) {
@@ -36,36 +36,89 @@
         </div>
 
         <form class="settingsForm" (submit)="$event.preventDefault(); saveSetting()">
-          <!-- 1. Chọn Ngân Hàng -->
+          <!-- 1. Chọn Ngân Hàng (Gọi VietQR API v2 với 54+ ngân hàng) -->
           <div class="formGroup">
-            <label class="formLabel" for="bankSelect">
-              Ngân hàng nhận tiền <span class="required">*</span>
-            </label>
+            <div class="labelRow">
+              <label class="formLabel" for="bankSelect">
+                Ngân hàng nhận tiền <span class="required">*</span>
+              </label>
+              <span class="bankCountBadge">
+                @if (loadingBanks()) {
+                  Đang tải danh sách ngân hàng...
+                } @else {
+                  {{ banks().length }} ngân hàng Napas247
+                }
+              </span>
+            </div>
+
+            <!-- Ô tìm kiếm nhanh ngân hàng -->
+            <div class="searchBankWrap">
+              <svg class="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"/>
+              </svg>
+              <input
+                type="text"
+                class="bankSearchInput"
+                placeholder="Tìm nhanh ngân hàng (VD: MB, VCB, Techcom, BIDV, 970422...)"
+                [value]="bankSearchQuery()"
+                (input)="onBankSearchInput($event)"
+              />
+              @if (bankSearchQuery()) {
+                <button
+                  type="button"
+                  class="clearSearchBtn"
+                  (click)="bankSearchQuery.set('')"
+                  title="Xóa tìm kiếm"
+                >
+                  ✕
+                </button>
+              }
+            </div>
+
+            <!-- Dropdown danh sách ngân hàng -->
             <div class="selectWrap">
               <select id="bankSelect" class="formSelect" [value]="selectedBankBin()" (change)="onBankChange($event)">
-                @for (b of banks; track b.bin) {
-                  <option [value]="b.bin">{{ b.shortName }} - {{ b.name }}</option>
+                @for (b of filteredBanks(); track b.bin) {
+                  <option [value]="b.bin">
+                    {{ b.shortName }} - {{ b.name }} (BIN: {{ b.bin }})
+                  </option>
+                }
+                @if (filteredBanks().length === 0) {
+                  <option disabled value="">Không tìm thấy ngân hàng phù hợp</option>
                 }
               </select>
             </div>
-            <span class="fieldHelp">Hỗ trợ tất cả ngân hàng thuộc liên minh Napas247 Việt Nam.</span>
+
+            <!-- Preview ngân hàng đang chọn -->
+            @if (selectedBank(); as currentBank) {
+              <div class="selectedBankSummary">
+                @if (currentBank.logo) {
+                  <img [src]="currentBank.logo" [alt]="currentBank.shortName" class="bankLogoThumb" />
+                }
+                <div class="selectedBankText">
+                  <strong>{{ currentBank.shortName }}</strong> — {{ currentBank.name }}
+                  <span class="binTag">Mã BIN: {{ currentBank.bin }}</span>
+                </div>
+              </div>
+            }
           </div>
 
-          <!-- 2. Số Tài Khoản -->
+          <!-- 2. Số Tài Khoản (STK) -->
           <div class="formGroup">
             <label class="formLabel" for="accountNumberInput">
-              Số tài khoản ngân hàng <span class="required">*</span>
+              Số tài khoản ngân hàng (STK) <span class="required">*</span>
             </label>
             <input
               id="accountNumberInput"
               type="text"
               inputmode="numeric"
-              class="formInput"
-              placeholder="Ví dụ: 0988111222 hoặc 1903..."
+              class="formInput numFont"
+              placeholder="Ví dụ: 0988111222 hoặc 1903678..."
               [value]="accountNumber()"
               (input)="onAccountNumberInput($event)"
             />
-            <span class="fieldHelp">Chỉ nhập các chữ số, không cần dấu cách.</span>
+            <span class="fieldHelp">Chỉ nhập chữ số, hệ thống tự loại bỏ khoảng trắng thừa.</span>
           </div>
 
           <!-- 3. Tên Chủ Tài Khoản -->
@@ -77,30 +130,52 @@
               id="accountNameInput"
               type="text"
               class="formInput uppercase"
-              placeholder="Ví dụ: LE HOAI NAM"
+              placeholder="Ví dụ: NGUYEN VAN A hoặc LE HOAI NAM"
               [value]="accountName()"
               (input)="onAccountNameInput($event)"
             />
-            <span class="fieldHelp">Nhập đúng họ tên chủ tài khoản như đăng ký với ngân hàng.</span>
+            <span class="fieldHelp">Họ và tên chủ tài khoản như hiển thị trên ứng dụng ngân hàng.</span>
           </div>
 
-          <!-- 4. Tiền Tố Nội Dung Chuyển Khoản -->
+          <!-- 4. Cú Pháp Mẫu Nội Dung CK -->
           <div class="formGroup">
             <label class="formLabel" for="prefixInput">
-              Tiền tố mã chuyển khoản
+              Tiền tố / Cú pháp mẫu nội dung CK
             </label>
             <input
               id="prefixInput"
               type="text"
               class="formInput uppercase"
-              maxlength="10"
+              maxlength="15"
               placeholder="HP"
               [value]="transferPrefix()"
               (input)="onPrefixInput($event)"
             />
-            <span class="fieldHelp">
-              Mã nội dung CK khi phụ huynh quét sẽ bắt đầu bằng chữ này (Mặc định: <strong>HP</strong>, ví dụ: <code>{{ transferPrefix() || 'HP' }}TOAN9A...</code>).
-            </span>
+            
+            <!-- Box giải thích cú pháp đối soát tự động -->
+            <div class="syntaxBox">
+              <div class="syntaxRow">
+                <span class="syntaxLabel">Cấu trúc mã chuẩn:</span>
+                <span class="syntaxPattern"><code>{{ sampleSyntaxPattern() }}</code></span>
+              </div>
+              <div class="syntaxRow">
+                <span class="syntaxLabel">Ví dụ mẫu khi quét:</span>
+                <span class="syntaxExample">
+                  <strong>{{ sampleTransferCode() }}</strong>
+                  <button
+                    type="button"
+                    class="miniCopyBtn"
+                    (click)="copyToClipboard(sampleTransferCode(), 'Mã đối soát mẫu')"
+                    title="Sao chép mã đối soát mẫu"
+                  >
+                    Sao chép
+                  </button>
+                </span>
+              </div>
+              <p class="syntaxHint">
+                Mã chuyển khoản được sinh tự động không dấu giúp hệ thống tự động gạch nợ 100% khi nhận webhook từ ngân hàng.
+              </p>
+            </div>
           </div>
 
           <!-- Nút Lưu -->
@@ -129,51 +204,115 @@
       <section class="previewSection">
         <div class="previewCard">
           <div class="previewHeader">
-            <h3 class="previewTitle">Xem trước mã VietQR Napas247</h3>
-            <span class="badge liveBadge">Cập nhật trực tiếp</span>
+            <h3 class="previewTitle">Xem trước mã VietQR mẫu</h3>
+            @if (isInfoComplete()) {
+              <span class="badge liveBadge">Hiển thị trực tiếp</span>
+            } @else {
+              <span class="badge waitBadge">Chờ nhập đủ thông tin</span>
+            }
           </div>
           <p class="previewDesc">
-            Mã QR này sẽ hiển thị trên tất cả phiếu thu học phí và cổng tra cứu dành cho phụ huynh.
+            Mã VietQR động Napas247 sẽ hiển thị ngay khi nhập đủ ngân hàng, STK và tên chủ tài khoản.
           </p>
 
           <div class="qrDisplayBox">
             @if (liveQrUrl(); as qrUrl) {
+              <!-- Header thẻ ngân hàng -->
               <div class="qrBankTag">
+                @if (selectedBank()?.logo; as logoUrl) {
+                  <img [src]="logoUrl" [alt]="selectedBankName()" class="qrBankLogo" />
+                }
                 <span class="bankShort">{{ selectedBankName() }}</span>
                 <span class="napasTag">Napas 247</span>
               </div>
 
+              <!-- Ảnh QR VietQR -->
               <div class="qrImgWrap">
-                <img [src]="qrUrl" alt="Mã VietQR xem trước" class="previewImg" />
+                <img [src]="qrUrl" alt="Mã VietQR mẫu" class="previewImg" />
               </div>
 
+              <!-- Chi tiết thông tin chuyển khoản -->
               <div class="qrAccountInfo">
                 <div class="infoRow">
                   <span class="infoLabel">Chủ tài khoản:</span>
-                  <strong class="infoVal">{{ accountName() || 'CHƯA NHẬP TÊN' }}</strong>
+                  <strong class="infoVal">{{ accountName() }}</strong>
                 </div>
                 <div class="infoRow">
                   <span class="infoLabel">Số tài khoản:</span>
-                  <strong class="infoVal numVal">{{ accountNumber() || 'CHƯA NHẬP STK' }}</strong>
+                  <div class="infoWithCopy">
+                    <strong class="infoVal numVal">{{ accountNumber() }}</strong>
+                    <button
+                      type="button"
+                      class="copyIconBtn"
+                      (click)="copyToClipboard(accountNumber(), 'Số tài khoản')"
+                      title="Sao chép STK"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="copyIcon">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="infoRow">
+                  <span class="infoLabel">Cú pháp mẫu CK:</span>
+                  <div class="infoWithCopy">
+                    <strong class="infoVal codeVal">{{ sampleTransferCode() }}</strong>
+                    <button
+                      type="button"
+                      class="copyIconBtn"
+                      (click)="copyToClipboard(sampleTransferCode(), 'Cú pháp mẫu CK')"
+                      title="Sao chép nội dung mẫu"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="copyIcon">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke-width="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke-width="2"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div class="infoRow">
+                  <span class="infoLabel">Số tiền thử nghiệm:</span>
+                  <strong class="infoVal amountVal">50.000 đ</strong>
                 </div>
               </div>
 
+              <!-- Hướng dẫn quét thử -->
               <div class="testNotice">
                 <svg class="icon small" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2"/>
                   <path d="M9 12l2 2 4-4" stroke-width="2"/>
                 </svg>
-                <span>Mở App ngân hàng quét thử ngay để kiểm tra tên tài khoản chính xác!</span>
+                <span>Mở App ngân hàng bất kỳ quét thử ngay để xác minh số tài khoản & tên chủ tài khoản!</span>
               </div>
             } @else {
+              <!-- Trạng thái chờ: checklist thông tin -->
               <div class="qrEmptyBox">
-                <svg class="icon large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <rect x="3" y="3" width="7" height="7" stroke-width="2"/>
-                  <rect x="14" y="3" width="7" height="7" stroke-width="2"/>
-                  <rect x="14" y="14" width="7" height="7" stroke-width="2"/>
-                  <rect x="3" y="14" width="7" height="7" stroke-width="2"/>
-                </svg>
-                <p>Vui lòng nhập Số tài khoản ngân hàng để xem trước mã VietQR.</p>
+                <div class="emptyIconWrap">
+                  <svg class="icon large" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <rect x="3" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="14" y="3" width="7" height="7" stroke-width="2"/>
+                    <rect x="14" y="14" width="7" height="7" stroke-width="2"/>
+                    <rect x="3" y="14" width="7" height="7" stroke-width="2"/>
+                  </svg>
+                </div>
+                <h4 class="emptyTitle">Mã QR xem trước sẽ xuất hiện tại đây</h4>
+                <p class="emptyDesc">Vui lòng nhập đầy đủ thông tin bên cạnh để hệ thống sinh mã VietQR:</p>
+
+                <ul class="infoChecklist">
+                  <li class="checkItem" [class.done]="selectedBankBin().length === 6">
+                    <span class="checkIcon">{{ selectedBankBin().length === 6 ? '✓' : '○' }}</span>
+                    <span>Ngân hàng: <strong>{{ selectedBankName() }}</strong></span>
+                  </li>
+                  <li class="checkItem" [class.done]="accountNumber().trim().length >= 4">
+                    <span class="checkIcon">{{ accountNumber().trim().length >= 4 ? '✓' : '○' }}</span>
+                    <span>Số tài khoản (STK tối thiểu 4 chữ số)</span>
+                  </li>
+                  <li class="checkItem" [class.done]="accountName().trim().length >= 2">
+                    <span class="checkIcon">{{ accountName().trim().length >= 2 ? '✓' : '○' }}</span>
+                    <span>Tên chủ tài khoản (tối thiểu 2 ký tự)</span>
+                  </li>
+                </ul>
               </div>
             }
           </div>
@@ -182,4 +321,3 @@
     </div>
   }
 </div>
-

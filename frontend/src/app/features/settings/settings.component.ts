@@ -17,9 +17,11 @@ export class SettingsComponent implements OnInit {
   private readonly paymentSettingService = inject(PaymentSettingService);
   private readonly toastService = inject(ToastService);
 
-  readonly banks: BankInfo[] = POPULAR_BANKS;
-
   // ─── STATE SIGNALS ──────────────────────────────────────────────────────────
+  readonly banks = signal<BankInfo[]>(POPULAR_BANKS);
+  readonly loadingBanks = signal<boolean>(false);
+  readonly bankSearchQuery = signal<string>('');
+
   readonly selectedBankBin = signal<string>('970422');
   readonly selectedBankName = signal<string>('MBBank');
   readonly accountNumber = signal<string>('');
@@ -31,36 +33,100 @@ export class SettingsComponent implements OnInit {
   readonly isConfigured = signal<boolean>(false);
 
   // ─── COMPUTED SIGNALS ───────────────────────────────────────────────────────
-  readonly selectedBank = computed(() => {
-    const bin = this.selectedBankBin();
-    return this.banks.find((b) => b.bin === bin) || null;
+  readonly filteredBanks = computed(() => {
+    const query = this.bankSearchQuery().trim().toLowerCase();
+    const list = this.banks();
+    if (!query) {
+      return list;
+    }
+    return list.filter((b) =>
+      b.shortName.toLowerCase().includes(query) ||
+      b.name.toLowerCase().includes(query) ||
+      b.code.toLowerCase().includes(query) ||
+      b.bin.includes(query)
+    );
   });
 
-  readonly isFormValid = computed(() => {
+  readonly selectedBank = computed(() => {
+    const bin = this.selectedBankBin();
+    return this.banks().find((b) => b.bin === bin) || null;
+  });
+
+  readonly sampleTransferCode = computed(() => {
+    const cleanPrefix = (this.transferPrefix() || 'HP')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '') || 'HP';
+    return `${cleanPrefix}9A01210`;
+  });
+
+  readonly sampleSyntaxPattern = computed(() => {
+    const cleanPrefix = (this.transferPrefix() || 'HP')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '') || 'HP';
+    return `${cleanPrefix} + [MÃ LỚP] + [TÊN HS] + [THÁNG]`;
+  });
+
+  /**
+   * Kiểm tra đã nhập đủ thông tin ngân hàng cần thiết hay chưa:
+   * - Mã BIN 6 số
+   * - Số tài khoản >= 4 số
+   * - Tên chủ tài khoản >= 2 ký tự
+   */
+  readonly isInfoComplete = computed(() => {
     const bin = this.selectedBankBin().trim();
-    const accNum = this.accountNumber().trim();
+    const accNum = this.accountNumber().trim().replace(/\s+/g, '');
     const accName = this.accountName().trim();
     return bin.length === 6 && accNum.length >= 4 && accName.length >= 2;
   });
 
-  readonly liveQrUrl = computed(() => {
-    const bin = this.selectedBankBin().trim();
-    const accNum = this.accountNumber().trim().replace(/\s+/g, '');
-    const name = encodeURIComponent(this.accountName().trim().toUpperCase());
+  readonly isFormValid = computed(() => this.isInfoComplete());
 
-    if (!bin || !accNum) {
+  /**
+   * Preview mã VietQR mẫu: chỉ hiển thị ngay khi nhập đủ thông tin
+   */
+  readonly liveQrUrl = computed(() => {
+    if (!this.isInfoComplete()) {
       return null;
     }
 
-    return `https://img.vietqr.io/image/${bin}-${accNum}-compact2.png?amount=50000&addInfo=TEST%20EDUPAY&accountName=${name}`;
+    const bin = this.selectedBankBin().trim();
+    const accNum = this.accountNumber().trim().replace(/\s+/g, '');
+    const name = encodeURIComponent(this.accountName().trim().toUpperCase());
+    const transferCode = encodeURIComponent(this.sampleTransferCode());
+
+    return `https://img.vietqr.io/image/${bin}-${accNum}-compact2.png?amount=50000&addInfo=${transferCode}&accountName=${name}`;
   });
 
   // ─── LIFECYCLE ──────────────────────────────────────────────────────────────
   ngOnInit(): void {
+    this.loadBanks();
     this.loadPaymentSetting();
   }
 
   // ─── LOAD DATA ──────────────────────────────────────────────────────────────
+  loadBanks(): void {
+    this.loadingBanks.set(true);
+    this.paymentSettingService.getBanks().subscribe({
+      next: (res) => {
+        this.loadingBanks.set(false);
+        if (res.success && res.data && res.data.length > 0) {
+          this.banks.set(res.data);
+          // Cập nhật lại tên ngân hàng đang chọn nếu đã có
+          const current = res.data.find((b) => b.bin === this.selectedBankBin());
+          if (current) {
+            this.selectedBankName.set(current.shortName);
+          }
+        }
+      },
+      error: () => {
+        // Nếu lỗi, giữ nguyên danh sách 56 ngân hàng dự phòng
+        this.loadingBanks.set(false);
+      }
+    });
+  }
+
   loadPaymentSetting(): void {
     this.loading.set(true);
     this.paymentSettingService.getPaymentSetting().subscribe({
@@ -80,7 +146,7 @@ export class SettingsComponent implements OnInit {
       },
       error: () => {
         this.loading.set(false);
-        this.showToast('Không thể tải cấu hình tài khoản. Vui lòng thử lại sau.', 'error');
+        this.toastService.error('Không thể tải cấu hình tài khoản. Vui lòng thử lại sau.');
       }
     });
   }
@@ -89,11 +155,16 @@ export class SettingsComponent implements OnInit {
   onBankChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     const bin = select.value;
-    const found = this.banks.find((b) => b.bin === bin);
+    const found = this.banks().find((b) => b.bin === bin);
     if (found) {
       this.selectedBankBin.set(found.bin);
       this.selectedBankName.set(found.shortName);
     }
+  }
+
+  onBankSearchInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.bankSearchQuery.set(input.value);
   }
 
   onAccountNameInput(event: Event): void {
@@ -114,6 +185,36 @@ export class SettingsComponent implements OnInit {
     this.transferPrefix.set(clean);
   }
 
+  copyToClipboard(text: string, label: string): void {
+    if (!text) return;
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        this.toastService.success(`Đã sao chép ${label}: ${text}`);
+      }).catch(() => {
+        this.fallbackCopy(text, label);
+      });
+    } else {
+      this.fallbackCopy(text, label);
+    }
+  }
+
+  private fallbackCopy(text: string, label: string): void {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      this.toastService.success(`Đã sao chép ${label}: ${text}`);
+    } catch {
+      this.toastService.warning(`Không thể tự động sao chép. Hãy chọn và copy thủ công: ${text}`);
+    }
+  }
+
   saveSetting(): void {
     if (!this.isFormValid() || this.saving()) return;
 
@@ -130,23 +231,13 @@ export class SettingsComponent implements OnInit {
       next: (res) => {
         this.saving.set(false);
         this.isConfigured.set(true);
-        this.showToast('Lưu cấu hình tài khoản VietQR thành công!', 'success');
+        this.toastService.success('Lưu cấu hình tài khoản VietQR thành công!');
       },
       error: (err) => {
         this.saving.set(false);
         const msg = err.error?.message || 'Có lỗi xảy ra khi lưu cấu hình';
-        this.showToast(msg, 'error');
+        this.toastService.error(msg);
       }
     });
   }
-
-  // ─── HELPERS ────────────────────────────────────────────────────────────────
-  showToast(message: string, type: 'success' | 'error' = 'success'): void {
-    if (type === 'error') {
-      this.toastService.error(message);
-    } else {
-      this.toastService.success(message);
-    }
-  }
 }
-

@@ -1,10 +1,16 @@
-/* ─── PAGE CONTAINER ──────────────────────────────────────────────────────── */
+/* ─── PAGE CONTAINER (Rule 11: Unified 1280px Layout Frame) ─────────────── */
 .page {
   max-width: 1280px;
   margin: 0 auto;
   padding: 28px 24px 96px;
   min-height: 100vh;
   box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 20px 88px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -15,7 +21,7 @@
 
 /* ─── HEADER ─────────────────────────────────────────────────────────────── */
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .kicker {
@@ -39,7 +45,7 @@
   font-size: 15px;
   color: #64748b;
   margin: 0;
-  max-width: 680px;
+  max-width: 720px;
   line-height: 1.5;
 }
 
@@ -97,20 +103,20 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 28px;
-  padding-bottom: 20px;
+  margin-bottom: 24px;
+  padding-bottom: 18px;
   border-bottom: 1px solid #f1f5f9;
 }
 
 .cardTitle {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: #0f172a;
   margin: 0 0 4px;
 }
 
 .cardDesc {
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
   margin: 0;
 }
@@ -118,7 +124,7 @@
 .statusBadge {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  padding: 6px 14px;
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 600;
@@ -137,7 +143,7 @@
   border: 1px solid #fde68a;
 }
 
-/* ─── FORM ELEMENTS ──────────────────────────────────────────────────────── */
+/* ─── FORM ELEMENTS (Rule 11: Base 16px, min 48px touch targets) ─────────── */
 .settingsForm {
   display: flex;
   flex-direction: column;
@@ -147,19 +153,95 @@
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
+
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .formLabel {
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 600;
   color: #1e293b;
+}
+
+.bankCountBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 9999px;
 }
 
 .required {
   color: #ef4444;
 }
 
+/* Search Bank Wrap */
+.searchBankWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.bankSearchInput {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 36px 8px 40px;
+  font-size: 14px;
+  color: #0f172a;
+  background-color: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.bankSearchInput:focus {
+  background-color: #fff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.clearSearchBtn {
+  position: absolute;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  background: #cbd5e1;
+  color: #475569;
+  border: none;
+  border-radius: 50%;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clearSearchBtn:hover {
+  background: #94a3b8;
+  color: #fff;
+}
+
+/* Select Wrap */
 .selectWrap {
   position: relative;
   width: 100%;
@@ -169,8 +251,8 @@
 .formInput {
   width: 100%;
   min-height: 48px;
-  padding: 10px 14px;
-  font-size: 14px;
+  padding: 11px 16px;
+  font-size: 15px;
   color: #0f172a;
   background-color: #fff;
   border: 1.5px solid #cbd5e1;
@@ -186,22 +268,138 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+.formInput.numFont {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+}
+
 .formInput.uppercase {
   text-transform: uppercase;
 }
 
+/* Selected Bank Summary */
+.selectedBankSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.bankLogoThumb {
+  width: 44px;
+  height: 26px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+  padding: 2px 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.selectedBankText {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.selectedBankText strong {
+  color: #0f172a;
+}
+
+.binTag {
+  display: inline-block;
+  margin-left: 6px;
+  font-size: 11.5px;
+  font-family: monospace;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
 .fieldHelp {
-  font-size: 12px;
+  font-size: 13px;
   color: #64748b;
   line-height: 1.4;
 }
 
-.fieldHelp code {
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
+/* ─── SYNTAX BOX (CÚ PHÁP MẪU NỘI DUNG CK) ────────────────────────────────── */
+.syntaxBox {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.syntaxRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13.5px;
+}
+
+.syntaxLabel {
+  color: #64748b;
+  font-weight: 500;
+  min-width: 140px;
+}
+
+.syntaxPattern code {
+  background: #eff6ff;
+  color: #1d4ed8;
   font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.syntaxExample {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.syntaxExample strong {
+  font-family: monospace;
+  font-size: 15px;
   color: #0f172a;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.miniCopyBtn {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.miniCopyBtn:hover {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.syntaxHint {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 4px 0 0;
+  line-height: 1.4;
 }
 
 /* ─── SUBMIT BUTTON ──────────────────────────────────────────────────────── */
@@ -220,7 +418,7 @@
   color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
@@ -268,11 +466,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 6px;
 }
 
 .previewTitle {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -283,13 +482,25 @@
   color: #16a34a;
   border: 1px solid #bbf7d0;
   font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
+  font-weight: 700;
+  padding: 3px 10px;
   border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.waitBadge {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
 }
 
 .previewDesc {
-  font-size: 13px;
+  font-size: 13.5px;
   color: #64748b;
   margin: 0 0 20px;
   line-height: 1.4;
@@ -318,10 +529,16 @@
   margin-bottom: 16px;
 }
 
+.qrBankLogo {
+  width: 32px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .bankShort {
   font-weight: 700;
   color: #1e293b;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .napasTag {
@@ -335,15 +552,15 @@
 
 .qrImgWrap {
   background: #fff;
-  padding: 12px;
+  padding: 14px;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
   margin-bottom: 20px;
 }
 
 .previewImg {
-  width: 220px;
-  height: 220px;
+  width: 230px;
+  height: 230px;
   display: block;
   object-fit: contain;
 }
@@ -353,17 +570,20 @@
   background: #fff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  padding: 12px 16px;
+  padding: 14px 16px;
   margin-bottom: 16px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .infoRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 13px;
-  padding: 4px 0;
+  font-size: 13.5px;
+  padding: 3px 0;
 }
 
 .infoLabel {
@@ -374,17 +594,60 @@
   color: #0f172a;
 }
 
+.infoWithCopy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copyIconBtn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.copyIconBtn:hover {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.copyIcon {
+  width: 15px;
+  height: 15px;
+}
+
 .infoVal.numVal {
   font-family: monospace;
-  font-size: 14px;
+  font-size: 15px;
   color: #2563eb;
+}
+
+.infoVal.codeVal {
+  font-family: monospace;
+  font-size: 14px;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.infoVal.amountVal {
+  font-weight: 700;
+  color: #059669;
 }
 
 .testNotice {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: #059669;
   background: #ecfdf5;
   padding: 10px 14px;
@@ -394,14 +657,86 @@
   line-height: 1.4;
 }
 
+/* ─── QR EMPTY STATE (Checklist) ─────────────────────────────────────────── */
 .qrEmptyBox {
-  padding: 40px 10px;
+  padding: 32px 12px;
+  color: #64748b;
+  width: 100%;
+}
+
+.emptyIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
   color: #94a3b8;
 }
 
 .icon.large {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
+  width: 32px;
+  height: 32px;
 }
 
+.emptyTitle {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 6px;
+}
+
+.emptyDesc {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 18px;
+}
+
+.infoChecklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #64748b;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.checkItem.done {
+  color: #059669;
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+}
+
+.checkIcon {
+  font-size: 13px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #94a3b8;
+}
+
+.checkItem.done .checkIcon {
+  background: #059669;
+  color: #fff;
+}

@@ -33,10 +33,12 @@ public class PaymentSettingResponse {
     @Schema(description = "Tiền tố nội dung chuyển khoản", example = "HP")
     private String transferPrefix;
 
-    @Schema(description = "Đường dẫn ảnh VietQR mẫu để kiểm tra", example = "https://img.vietqr.io/image/970422-0988111222-compact2.png?amount=50000&addInfo=TEST%20EDUPAY")
+    @Schema(description = "Cú pháp mẫu nội dung chuyển khoản", example = "HP9A01210")
+    private String sampleTransferContent;
+
+    @Schema(description = "Đường dẫn ảnh VietQR mẫu để kiểm tra", example = "https://img.vietqr.io/image/970422-0988111222-compact2.png?amount=50000&addInfo=HP9A01210&accountName=LE%20HOAI%20NAM")
     private String vietQrSampleUrl;
 
     @Schema(description = "Trạng thái đã cấu hình hay chưa", example = "true")
     private boolean configured;
 }
-
