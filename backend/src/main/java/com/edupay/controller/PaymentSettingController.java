@@ -2,6 +2,7 @@ package com.edupay.controller;
 
 import com.edupay.dto.ApiResponse;
 import com.edupay.dto.request.PaymentSettingRequest;
+import com.edupay.dto.response.BankResponse;
 import com.edupay.dto.response.PaymentSettingResponse;
 import com.edupay.service.PaymentSettingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/settings/payment")
@@ -33,5 +36,11 @@ public class PaymentSettingController {
         PaymentSettingResponse data = paymentSettingService.savePaymentSetting(request);
         return ResponseEntity.ok(ApiResponse.ok(data, "Lưu cấu hình tài khoản ngân hàng thành công"));
     }
-}
 
+    @GetMapping("/banks")
+    @Operation(summary = "Lấy danh sách các ngân hàng hỗ trợ VietQR", description = "Gọi VietQR API v2 lấy danh sách 54+ ngân hàng chuẩn Napas247 (kèm fallback dự phòng)")
+    public ResponseEntity<ApiResponse<List<BankResponse>>> getSupportedBanks() {
+        List<BankResponse> banks = paymentSettingService.getSupportedBanks();
+        return ResponseEntity.ok(ApiResponse.ok(banks, "Lấy danh sách ngân hàng thành công"));
+    }
+}

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models/api-response.model';
-import { PaymentSetting, PaymentSettingRequest } from '../models/payment-setting.models';
+import { BankInfo, PaymentSetting, PaymentSettingRequest } from '../models/payment-setting.models';
 
 @Injectable({
   providedIn: 'root'
@@ -19,5 +19,8 @@ export class PaymentSettingService {
   savePaymentSetting(payload: PaymentSettingRequest): Observable<ApiResponse<PaymentSetting>> {
     return this.http.put<ApiResponse<PaymentSetting>>(this.apiUrl, payload);
   }
-}
 
+  getBanks(): Observable<ApiResponse<BankInfo[]>> {
+    return this.http.get<ApiResponse<BankInfo[]>>(`${this.apiUrl}/banks`);
+  }
+}
