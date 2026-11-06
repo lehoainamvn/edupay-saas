@@ -78,6 +78,19 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Rate Limiting: Bucket4j Token-Bucket (in-memory, no Redis needed) -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j-core</artifactId>
+            <version>8.10.1</version>
+        </dependency>
+
+        <!-- AOP for Audit Trail (@Aspect) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
         <!-- Excel Processing (Apache POI) -->
         <dependency>
             <groupId>org.apache.poi</groupId>

@@ -1,14 +1,15 @@
 package com.edupay.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import com.edupay.entity.converter.EncryptedStringConverter;
+import jakarta.persistence.*;
 import lombok.*;
 
 /**
  * Entity đại diện cho Cấu hình Ngân hàng nhận tiền VietQR của Giáo viên (bảng payment_settings).
  * Kế thừa BaseEntity để đảm bảo cô lập Multi-Tenant (tenant_id).
+ *
+ * Bảo mật: accountNumber và accountName được mã hóa AES-256-GCM trước khi lưu DB.
+ * Length tăng lên 500/600 để chứa ciphertext (IV + encrypted data, Base64 encoded).
  */
 @Entity
 @Table(name = "payment_settings", uniqueConstraints = {
@@ -27,10 +28,14 @@ public class PaymentSetting extends BaseEntity {
     @Column(name = "bank_name", nullable = false, length = 100)
     private String bankName;
 
-    @Column(name = "account_number", nullable = false, length = 50)
+    /** Số tài khoản ngân hàng — mã hóa AES-256-GCM trước khi lưu DB */
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "account_number", nullable = false, length = 500)
     private String accountNumber;
 
-    @Column(name = "account_name", nullable = false, length = 255)
+    /** Tên chủ tài khoản ngân hàng — mã hóa AES-256-GCM trước khi lưu DB */
+    @Convert(converter = EncryptedStringConverter.class)
+    @Column(name = "account_name", nullable = false, length = 600)
     private String accountName;
 
     @Column(name = "transfer_prefix", length = 50)
