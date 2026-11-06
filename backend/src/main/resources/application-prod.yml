@@ -52,3 +52,5 @@ app:
     secret: ${JWT_SECRET}        # Đọc từ biến môi trường server
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}  # VD: https://edupay.vn,https://www.edupay.vn
+  encryption:
+    key: ${APP_ENCRYPTION_KEY}

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -32,12 +33,14 @@ public class JwtTokenProvider {
         this.accessExpirationMs = accessExpirationMs;
     }
 
-    /** Sinh Access Token chứa userId, tenantId, roles */
+    /** Sinh Access Token chứa userId, tenantId, roles, và JTI để hỗ trợ blacklist */
     public String generateAccessToken(UUID userId, UUID tenantId, List<String> roles) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessExpirationMs);
+        String jti = UUID.randomUUID().toString();
 
         return Jwts.builder()
+                .id(jti)
                 .subject(userId.toString())
                 .claim("tenantId", tenantId.toString())
                 .claim("roles", roles)
@@ -45,6 +48,16 @@ public class JwtTokenProvider {
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    /** Lấy JTI (JWT ID) từ claims đã được validate */
+    public String getJti(Claims claims) {
+        return claims.getId();
+    }
+
+    /** Lấy thời điểm hết hạn từ claims */
+    public Instant getExpiry(Claims claims) {
+        return claims.getExpiration().toInstant();
     }
 
     /** Xác thực token và trả về Claims nếu hợp lệ */

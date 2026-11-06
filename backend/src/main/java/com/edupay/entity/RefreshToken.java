@@ -60,7 +60,11 @@ public class RefreshToken {
         return Instant.now().isAfter(this.expiresAt);
     }
 
+    public boolean isRevoked() {
+        return Boolean.TRUE.equals(this.revoked);
+    }
+
     public boolean isValid() {
-        return !this.revoked && !isExpired();
+        return !isRevoked() && !isExpired();
     }
 }

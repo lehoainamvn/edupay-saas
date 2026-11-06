@@ -42,3 +42,5 @@ app:
     secret: dev-secret-key-minimum-32-characters-long-for-hs256-algo-edupay
   cors:
     allowed-origins: http://localhost:4200,http://localhost:3000
+  encryption:
+    key: ${APP_ENCRYPTION_KEY:MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=}
