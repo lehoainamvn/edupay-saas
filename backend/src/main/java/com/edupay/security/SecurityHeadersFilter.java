@@ -50,7 +50,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
 
         // ─── Cross-Origin isolation headers ──────────────────────────────────
         response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-        response.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+        response.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 
         filterChain.doFilter(request, response);
     }

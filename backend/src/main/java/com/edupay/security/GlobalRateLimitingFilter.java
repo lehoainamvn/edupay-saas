@@ -67,6 +67,12 @@ public class GlobalRateLimitingFilter extends OncePerRequestFilter {
             }
         }
 
+        // Bỏ qua CORS Preflight OPTIONS requests để không chặn preflight
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String clientIp = resolveClientIp(request);
 
         // ─── Auth endpoints: giới hạn chặt hơn ────────────────────────────

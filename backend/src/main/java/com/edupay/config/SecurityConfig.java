@@ -116,8 +116,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Thay thế allowedOriginPatterns("*") bằng danh sách origins được cấu hình
-        List<String> allowedOrigins = Arrays.asList(corsAllowedOrigins.split(","));
+        // Xử lý danh sách origins được cấu hình, tự động trim khoảng trắng và bỏ qua rỗng
+        List<String> allowedOrigins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
         config.setAllowedOrigins(allowedOrigins);
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

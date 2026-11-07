@@ -1,6 +1,7 @@
 package com.edupay.security;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -43,6 +44,7 @@ public class AesGcmEncryptor {
         this(base64Key, "dev");
     }
 
+    @Autowired
     public AesGcmEncryptor(@Value("${app.encryption.key}") String base64Key,
                            @Value("${spring.profiles.active:dev}") String activeProfile) {
         if ("prod".equalsIgnoreCase(activeProfile) && DEV_FALLBACK_KEY.equals(base64Key)) {
