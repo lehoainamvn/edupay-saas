@@ -1,0 +1,399 @@
+<app-navbar mode="app"></app-navbar>
+
+<div class="page">
+  <!-- ─── HEADER ──────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="titleWrap">
+      <div class="kicker">CẤU HÌNH HỆ THỐNG</div>
+      <h1 class="title">Tham Số Vận Hành</h1>
+      <p class="subtitle">
+        Tùy chỉnh các quy tắc tính học phí, nhắc nợ phụ huynh và bảo mật tài khoản. Cài đặt được áp dụng ngay sau khi lưu.
+      </p>
+    </div>
+
+    <div class="headerActions">
+      <button
+        type="button"
+        class="btnSecondary"
+        (click)="reloadCache()"
+        [disabled]="reloadingCache() || loading()"
+        title="Làm mới toàn bộ tham số từ Database vào RAM"
+      >
+        <svg
+          class="syncIcon"
+          [class.spinning]="reloadingCache()"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+        <span>{{ reloadingCache() ? 'Đang làm mới...' : 'Làm mới Cache' }}</span>
+      </button>
+
+      <button
+        type="button"
+        class="btnGhost"
+        (click)="openConfirmReset()"
+        [disabled]="loading() || resetting()"
+        title="Đưa tham số về giá trị đề xuất ban đầu"
+      >
+        Khôi phục mặc định
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── SLEEK FILTER & SEARCH TOOLBAR ─────────────────────────────────── -->
+  <nav class="toolbar" aria-label="Bộ lọc và tìm kiếm tham số">
+    <div class="groupTabs">
+      @for (grp of groups; track grp.code) {
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="selectedGroup() === grp.code"
+          (click)="selectGroup(grp.code)"
+        >
+          <span>{{ grp.label }}</span>
+          <span class="tabBadge">{{ counts()[grp.code] }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="searchWrap">
+      <svg class="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input
+        type="text"
+        class="searchInput"
+        placeholder="Tìm nhanh tham số..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        aria-label="Tìm kiếm tham số cấu hình"
+      />
+      @if (searchQuery()) {
+        <button
+          type="button"
+          class="searchClear"
+          (click)="searchQuery.set('')"
+          aria-label="Xóa từ khóa tìm kiếm"
+        >
+          ✕
+        </button>
+      }
+    </div>
+  </nav>
+
+  <!-- ─── MAIN SETTINGS SECTIONS ────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="loadingCard">
+      <div class="spinner"></div>
+      <p>Đang tải danh sách tham số cấu hình...</p>
+    </div>
+  } @else if (groupSections().length === 0) {
+    <div class="emptyCard">
+      <div class="emptyIcon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <line x1="8" y1="11" x2="14" y2="11"></line>
+        </svg>
+      </div>
+      <h3 class="emptyTitle">Không tìm thấy tham số phù hợp</h3>
+      <p class="emptyDesc">
+        Không có quy tắc nào khớp với từ khóa "{{ searchQuery() }}" trong nhóm đã chọn.
+      </p>
+      <button
+        type="button"
+        class="btnSecondary"
+        (click)="searchQuery.set(''); selectGroup('ALL')"
+      >
+        Xóa tìm kiếm & Xem tất cả
+      </button>
+    </div>
+  } @else {
+    <div class="sectionsStack">
+      @for (section of groupSections(); track section.code) {
+        <section class="sectionCard">
+          <div class="sectionHeader">
+            <div class="sectionTitleWrap">
+              <span class="sectionBadge" [class]="section.code.toLowerCase()">
+                {{ section.badge }}
+              </span>
+              <h2 class="sectionTitle">{{ section.title }}</h2>
+              <p class="sectionDesc">{{ section.description }}</p>
+            </div>
+            <span class="sectionCount">{{ section.items.length }} quy tắc</span>
+          </div>
+
+          <div class="itemsList">
+            @for (param of section.items; track param.paramKey) {
+              <div class="settingRow" [class.isExpanded]="expandedKey() === param.paramKey">
+                <!-- Row Main: Info + Control -->
+                <div class="rowMain">
+                  <!-- Info Left -->
+                  <div class="rowInfo">
+                    <strong class="paramName">{{ param.displayName }}</strong>
+                    <p class="paramDesc">{{ getCleanDescription(param) }}</p>
+                  </div>
+
+                  <!-- Control Right -->
+                  <div class="rowControl">
+                    @if (param.dataType === 'BOOLEAN') {
+                      <!-- 1. BOOLEAN TOGGLE SWITCH -->
+                      <button
+                        type="button"
+                        class="switchBtn"
+                        [class.active]="param.paramValue === 'true'"
+                        [disabled]="savingKey() === param.paramKey"
+                        (click)="toggleBoolean(param)"
+                        [title]="param.paramValue === 'true' ? 'Bấm để Tắt' : 'Bấm để Bật'"
+                        [attr.aria-label]="'Bật tắt ' + param.displayName"
+                      >
+                        <span class="switchTrack">
+                          <span class="switchThumb"></span>
+                        </span>
+                        <span class="switchLabel">
+                          {{ param.paramValue === 'true' ? 'BẬT' : 'TẮT' }}
+                        </span>
+                      </button>
+                    } @else if (param.dataType === 'NUMBER') {
+                      <!-- 2. NUMBER STEPPER -->
+                      <div class="stepperWrap">
+                        <button
+                          type="button"
+                          class="stepBtn minus"
+                          (click)="stepNumber(param, -1, getNumberBounds(param.paramKey).min, getNumberBounds(param.paramKey).max)"
+                          [disabled]="savingKey() === param.paramKey"
+                          title="Giảm 1 đơn vị"
+                          aria-label="Giảm"
+                        >
+                          −
+                        </button>
+
+                        <div
+                          class="stepDisplay"
+                          (click)="toggleExpand(param.paramKey, param.paramValue)"
+                          title="Bấm để chỉnh sửa chi tiết"
+                        >
+                          <span class="stepNum">{{ param.paramValue }}</span>
+                          <span class="stepUnit">{{ getNumberBounds(param.paramKey).unit }}</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="stepBtn plus"
+                          (click)="stepNumber(param, 1, getNumberBounds(param.paramKey).min, getNumberBounds(param.paramKey).max)"
+                          [disabled]="savingKey() === param.paramKey"
+                          title="Tăng 1 đơn vị"
+                          aria-label="Tăng"
+                        >
+                          +
+                        </button>
+                      </div>
+                    } @else if (param.paramKey === 'TUITION_OVERDUE_POLICY') {
+                      <!-- 3. POLICY CHOICE -->
+                      <div class="segmentedWrap">
+                        <button
+                          type="button"
+                          class="segBtn"
+                          [class.active]="param.paramValue === 'WARN_ONLY'"
+                          (click)="setChoice(param, 'WARN_ONLY')"
+                          [disabled]="savingKey() === param.paramKey"
+                        >
+                          Chỉ nhắc nhở
+                        </button>
+                        <button
+                          type="button"
+                          class="segBtn"
+                          [class.active]="param.paramValue === 'SUSPEND_ATTENDANCE'"
+                          (click)="setChoice(param, 'SUSPEND_ATTENDANCE')"
+                          [disabled]="savingKey() === param.paramKey"
+                        >
+                          Tạm dừng điểm danh
+                        </button>
+                      </div>
+                    } @else {
+                      <!-- 4. TEXT / TEMPLATE -->
+                      <div class="textValueWrap">
+                        <span class="textPreview" [title]="param.paramValue">
+                          {{ param.paramValue }}
+                        </span>
+                        <button
+                          type="button"
+                          class="btnEditSmall"
+                          (click)="toggleExpand(param.paramKey, param.paramValue)"
+                          [attr.aria-expanded]="expandedKey() === param.paramKey"
+                        >
+                          {{ expandedKey() === param.paramKey ? 'Đóng' : 'Chỉnh sửa' }}
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Inline Expanded Editor (For Text / Template / Direct number input) -->
+                @if (expandedKey() === param.paramKey) {
+                  <div class="inlineEditDrawer">
+                    <!-- Template variables helper -->
+                    @if (param.paramKey === 'NOTIFICATION_TEMPLATE_INVOICE') {
+                      <div class="templateToolbar">
+                        <span class="toolLabel">Bấm để chèn thông tin tự động:</span>
+                        <div class="toolPills">
+                          <button
+                            type="button"
+                            class="varPill"
+                            (click)="insertPlaceholder(param.paramKey, '{studentName}')"
+                            title="Tự động điền họ tên học sinh"
+                          >
+                            + Tên học sinh
+                          </button>
+                          <button
+                            type="button"
+                            class="varPill"
+                            (click)="insertPlaceholder(param.paramKey, '{month}')"
+                            title="Tự động điền tháng học phí"
+                          >
+                            + Tháng học phí
+                          </button>
+                          <button
+                            type="button"
+                            class="varPill"
+                            (click)="insertPlaceholder(param.paramKey, '{amount}')"
+                            title="Tự động điền số tiền cần đóng"
+                          >
+                            + Số tiền
+                          </button>
+                          <button
+                            type="button"
+                            class="varPill"
+                            (click)="insertPlaceholder(param.paramKey, '{invoiceUrl}')"
+                            title="Tự động điền link thanh toán VietQR"
+                          >
+                            + Link VietQR
+                          </button>
+                        </div>
+                      </div>
+
+                      <textarea
+                        class="inlineTextarea"
+                        rows="3"
+                        [ngModel]="getDraft(param.paramKey, param.paramValue)"
+                        (ngModelChange)="updateDraft(param.paramKey, $event)"
+                        placeholder="Nhập nội dung mẫu tin nhắn..."
+                      ></textarea>
+                    } @else if (param.dataType === 'NUMBER') {
+                      <div class="inlineNumberWrap">
+                        <label class="inlineLabel" for="numberInput-{{ param.paramKey }}">
+                          Nhập giá trị số ({{ getNumberBounds(param.paramKey).unit }}):
+                        </label>
+                        <input
+                          id="numberInput-{{ param.paramKey }}"
+                          type="number"
+                          class="inlineInput smallNum"
+                          [ngModel]="getDraft(param.paramKey, param.paramValue)"
+                          (ngModelChange)="updateDraft(param.paramKey, $event)"
+                          [min]="getNumberBounds(param.paramKey).min"
+                          [max]="getNumberBounds(param.paramKey).max"
+                        />
+                        <span class="boundsHint">
+                          Giới hạn hợp lệ: {{ getNumberBounds(param.paramKey).min }} - {{ getNumberBounds(param.paramKey).max }} {{ getNumberBounds(param.paramKey).unit }}
+                        </span>
+                      </div>
+                    } @else {
+                      <div class="inlineTextWrap">
+                        <label class="inlineLabel" for="textInput-{{ param.paramKey }}">
+                          Giá trị mới:
+                        </label>
+                        <input
+                          id="textInput-{{ param.paramKey }}"
+                          type="text"
+                          class="inlineInput"
+                          [ngModel]="getDraft(param.paramKey, param.paramValue)"
+                          (ngModelChange)="updateDraft(param.paramKey, $event)"
+                          placeholder="Nhập giá trị mới..."
+                        />
+                      </div>
+                    }
+
+                    <div class="inlineActions">
+                      <button
+                        type="button"
+                        class="btnGhostSmall"
+                        (click)="cancelDraft(param)"
+                        [disabled]="savingKey() === param.paramKey"
+                      >
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        class="btnPrimarySmall"
+                        (click)="saveDraft(param)"
+                        [disabled]="savingKey() === param.paramKey"
+                      >
+                        {{ savingKey() === param.paramKey ? 'Đang lưu...' : 'Lưu thay đổi' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
+
+<!-- ─── CONFIRM RESET MODAL ──────────────────────────────────────────────── -->
+@if (confirmResetOpen()) {
+  <div class="modalBackdrop" (click)="closeConfirmReset()">
+    <div
+      class="modalDialog"
+      (click)="$event.stopPropagation()"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="resetModalTitle"
+    >
+      <div class="modalHeader">
+        <h2 id="resetModalTitle" class="modalTitle">Khôi phục tham số mặc định?</h2>
+        <button
+          type="button"
+          class="modalCloseBtn"
+          (click)="closeConfirmReset()"
+          aria-label="Đóng cửa sổ xác nhận"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="modalBody">
+        <p class="confirmText">
+          Toàn bộ các tham số về học phí, thông báo và bảo mật sẽ được đưa về giá trị khuyến nghị ban đầu của EduPay.
+          In-memory Cache sẽ được đồng bộ lại ngay tức thì.
+        </p>
+      </div>
+
+      <div class="modalFooter">
+        <button
+          type="button"
+          class="btnSecondary"
+          (click)="closeConfirmReset()"
+          [disabled]="resetting()"
+        >
+          Hủy bỏ
+        </button>
+        <button
+          type="button"
+          class="btnDanger"
+          (click)="confirmReset()"
+          [disabled]="resetting()"
+        >
+          {{ resetting() ? 'Đang khôi phục...' : 'Xác nhận khôi phục' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -62,9 +62,10 @@ public class AuthController {
 
     @PostMapping("/logout-all")
     @Operation(summary = "Đăng xuất tất cả thiết bị",
-               description = "Thu hồi toàn bộ Refresh Token của tài khoản. Yêu cầu đăng nhập lại trên mọi thiết bị.")
-    public ResponseEntity<ApiResponse<Void>> logoutAll() {
-        authService.logoutAll();
+               description = "Thu hồi toàn bộ Refresh Token và blacklist Access Token hiện tại. Yêu cầu đăng nhập lại trên mọi thiết bị.")
+    public ResponseEntity<ApiResponse<Void>> logoutAll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        authService.logoutAll(authHeader);
         return ResponseEntity.ok(ApiResponse.ok(null, "Đã đăng xuất khỏi tất cả thiết bị"));
     }
 }

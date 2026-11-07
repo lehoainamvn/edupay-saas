@@ -66,6 +66,14 @@ export const routes: Routes = [
       import('./features/settings/settings.component').then((m) => m.SettingsComponent),
   },
   {
+    path: 'system-config',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/system-config/system-config.component').then(
+        (m) => m.SystemConfigComponent
+      ),
+  },
+  {
     path: 'p/:hash', // Public invoice link cho Phụ huynh (không cần login)
     loadComponent: () =>
       import('./features/public-invoice/public-invoice.component').then(

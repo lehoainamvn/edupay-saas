@@ -7,6 +7,7 @@ import com.edupay.dto.response.PaymentSettingResponse;
 import com.edupay.entity.PaymentSetting;
 import com.edupay.repository.PaymentSettingRepository;
 import com.edupay.security.SecuritySanitizer;
+import com.edupay.security.annotation.AuditAction;
 import com.edupay.service.PaymentSettingService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -63,6 +64,7 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
 
     @Override
     @Transactional
+    @AuditAction(action = "PAYMENT_SETTING_UPDATED", resourceType = "PAYMENT_SETTING")
     public PaymentSettingResponse savePaymentSetting(PaymentSettingRequest request) {
         UUID tenantId = TenantContext.getTenantId();
 

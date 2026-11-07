@@ -19,6 +19,6 @@ public interface AuthService {
     /** Đăng xuất — revoke refresh token hiện tại */
     void logout(String refreshToken);
 
-    /** Đăng xuất tất cả thiết bị — revoke toàn bộ refresh tokens của user */
-    void logoutAll();
+    /** Đăng xuất tất cả thiết bị — revoke toàn bộ refresh tokens, blacklist access token hiện tại */
+    void logoutAll(String accessTokenHeader);
 }
