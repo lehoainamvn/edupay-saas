@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     /** Tìm user owner theo SĐT (dùng cho Login — phone là unique trong tenants) */
     Optional<User> findByPhoneAndIsOwnerTrue(String phone);
 
+    /** Tìm user theo SĐT (hỗ trợ cả Owner lẫn Teacher/Staff) */
+    Optional<User> findFirstByPhoneOrderByCreatedAtDesc(String phone);
+
     /** Tìm user theo ID + tenantId (an toàn, chống IDOR) */
     Optional<User> findByIdAndTenantId(UUID id, UUID tenantId);
 

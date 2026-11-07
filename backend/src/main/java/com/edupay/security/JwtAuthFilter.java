@@ -7,8 +7,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,14 +24,23 @@ import java.util.stream.Collectors;
 
 /**
  * Filter chạy 1 lần mỗi request.
- * Đọc Bearer token → validate → set SecurityContext + TenantContext.
+ * Đọc Bearer token → validate → kiểm tra TokenBlacklist → set SecurityContext + TenantContext.
  */
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklist tokenBlacklist;
+    private final String activeProfile;
+
+    public JwtAuthFilter(JwtTokenProvider jwtTokenProvider,
+                         @Autowired(required = false) TokenBlacklist tokenBlacklist,
+                         @Value("${spring.profiles.active:dev}") String activeProfile) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenBlacklist = tokenBlacklist != null ? tokenBlacklist : new TokenBlacklist();
+        this.activeProfile = activeProfile != null ? activeProfile : "dev";
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -40,6 +50,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = extractToken(request);
 
             if (StringUtils.hasText(token) && token.startsWith("dev_mock_jwt_token")) {
+                // CHẶN BẢO MẬT: Cấm tuyệt đối dev mock token trên môi trường production
+                if ("prod".equalsIgnoreCase(activeProfile)) {
+                    log.error("CẢNH BÁO BẢO MẬT: Chặn truy cập trái phép bằng dev_mock_jwt_token trên môi trường PRODUCTION! URI={}",
+                            request.getRequestURI());
+                    return;
+                }
+
                 UUID userId   = UUID.fromString("c0000000-0000-0000-0000-000000000001");
                 UUID tenantId = UUID.fromString("a0000000-0000-0000-0000-000000000001");
                 TenantContext.setTenantId(tenantId);
@@ -50,6 +67,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 log.debug("Authenticated via dev mock token userId={}, tenantId={}", userId, tenantId);
             } else if (StringUtils.hasText(token) && jwtTokenProvider.isTokenValid(token)) {
                 Claims claims = jwtTokenProvider.validateAndGetClaims(token);
+
+                // ─── Kiểm tra JWT Blacklist (token đã bị thu hồi khi logout) ───
+                String jti = jwtTokenProvider.getJti(claims);
+                if (jti != null && tokenBlacklist.isBlacklisted(jti)) {
+                    log.warn("JWT bị từ chối — token đã bị thu hồi (blacklisted): jti={}", jti);
+                    return;
+                }
 
                 UUID userId   = jwtTokenProvider.getUserId(claims);
                 UUID tenantId = jwtTokenProvider.getTenantId(claims);
@@ -84,8 +108,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private String extractToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+            String token = bearerToken.substring(7).trim();
+            return token.isEmpty() ? null : token;
         }
         return null;
     }
 }
+

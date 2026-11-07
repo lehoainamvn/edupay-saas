@@ -1,7 +1,8 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, Input, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { RbacService } from '../../../core/services/rbac.service';
 
 @Component({
   selector: 'app-navbar',
@@ -33,12 +34,21 @@ import { AuthService } from '../../../core/services/auth.service';
             <a routerLink="/" fragment="parents" (click)="closeMobileMenu()">Cổng Phụ Huynh</a>
             <a routerLink="/" fragment="faq" (click)="closeMobileMenu()">Câu hỏi thường gặp</a>
           } @else {
-            <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Tổng quan</a>
-            <a routerLink="/classes" routerLinkActive="active" (click)="closeMobileMenu()">Lớp học</a>
-            <a routerLink="/students" routerLinkActive="active" (click)="closeMobileMenu()">Học sinh</a>
-            <a routerLink="/attendance" routerLinkActive="active" (click)="closeMobileMenu()">Điểm danh 1 chạm</a>
-            <a routerLink="/billing" routerLinkActive="active" (click)="closeMobileMenu()">Học phí VietQR</a>
-            <a routerLink="/settings" routerLinkActive="active" (click)="closeMobileMenu()">Cài đặt VietQR</a>
+            @if (navMenus().length > 0) {
+              @for (item of navMenus(); track item.code) {
+                <a [routerLink]="item.route" routerLinkActive="active" (click)="closeMobileMenu()">
+                  {{ item.name }}
+                </a>
+              }
+            } @else {
+              <a routerLink="/dashboard" routerLinkActive="active" (click)="closeMobileMenu()">Tổng quan</a>
+              <a routerLink="/classes" routerLinkActive="active" (click)="closeMobileMenu()">Lớp học</a>
+              <a routerLink="/students" routerLinkActive="active" (click)="closeMobileMenu()">Học sinh</a>
+              <a routerLink="/attendance" routerLinkActive="active" (click)="closeMobileMenu()">Điểm danh 1 chạm</a>
+              <a routerLink="/billing" routerLinkActive="active" (click)="closeMobileMenu()">Học phí VietQR</a>
+              <a routerLink="/settings" routerLinkActive="active" (click)="closeMobileMenu()">Cài đặt VietQR</a>
+              <a routerLink="/system-config" routerLinkActive="active" (click)="closeMobileMenu()">Tham số hệ thống</a>
+            }
           }
         </div>
 
@@ -346,13 +356,23 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   private authService = inject(AuthService);
+  private rbacService = inject(RbacService);
   private router = inject(Router);
 
   @Input() mode: 'public' | 'app' = 'app';
 
   readonly mobileMenuOpen = signal<boolean>(false);
+  readonly navMenus = this.rbacService.menus;
+
+  ngOnInit(): void {
+    if (this.mode === 'app' && !this.rbacService.isLoaded()) {
+      this.rbacService.loadNavigation().subscribe({
+        error: () => {}
+      });
+    }
+  }
 
   readonly userName = () => {
     const user = this.authService.currentUser();
@@ -377,6 +397,7 @@ export class NavbarComponent {
 
   logout(event: Event): void {
     event.stopPropagation();
+    this.rbacService.clear();
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }

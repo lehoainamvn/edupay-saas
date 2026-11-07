@@ -52,4 +52,19 @@ public class User extends BaseEntity {
 
     @Column(name = "last_login_at")
     private Instant lastLoginAt;
+
+    // ─── Brute-force protection ──────────────────────────────────────────────
+
+    /** Số lần đăng nhập sai liên tiếp. Reset về 0 khi đăng nhập thành công. */
+    @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
+    private int failedLoginAttempts = 0;
+
+    /**
+     * Thời điểm tài khoản được mở khóa tự động.
+     * Null = tài khoản không bị khóa.
+     * Giá trị tương lai = tài khoản đang bị khóa đến thời điểm này.
+     */
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
 }

@@ -10,6 +10,7 @@ import com.edupay.exception.BusinessException;
 import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.repository.*;
 import com.edupay.security.SecuritySanitizer;
+import com.edupay.security.annotation.AuditAction;
 import com.edupay.service.BillingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -167,6 +168,7 @@ public class BillingServiceImpl implements BillingService {
 
     @Override
     @Transactional
+    @AuditAction(action = "INVOICE_GENERATED", resourceType = "INVOICE")
     public List<InvoiceResponse> generateInvoices(InvoiceBatchGenerateRequest request) {
         UUID tenantId = TenantContext.getTenantId();
         validateMonthFormat(request.getBillingMonth());
@@ -327,6 +329,7 @@ public class BillingServiceImpl implements BillingService {
 
     @Override
     @Transactional
+    @AuditAction(action = "INVOICE_PAID", resourceType = "INVOICE")
     public InvoiceResponse markAsPaid(UUID invoiceId, InvoicePaymentManualRequest request) {
         UUID tenantId = TenantContext.getTenantId();
         Invoice invoice = invoiceRepository.findByIdAndTenantId(invoiceId, tenantId)
