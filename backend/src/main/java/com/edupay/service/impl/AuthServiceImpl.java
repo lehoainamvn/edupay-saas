@@ -11,6 +11,7 @@ import com.edupay.exception.BusinessException;
 import com.edupay.exception.DuplicateResourceException;
 import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.repository.RefreshTokenRepository;
+import com.edupay.repository.RoleRepository;
 import com.edupay.repository.UserRepository;
 import com.edupay.security.JwtTokenProvider;
 import com.edupay.security.SecuritySanitizer;
@@ -39,6 +40,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
@@ -130,8 +132,8 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        // 1. Tìm user owner theo SĐT (kèm cơ chế chống Timing Attack / User Enumeration)
-        User user = userRepository.findByPhoneAndIsOwnerTrue(request.getPhone())
+        // 1. Tìm user theo SĐT (kèm cơ chế chống Timing Attack / User Enumeration)
+        User user = userRepository.findFirstByPhoneOrderByCreatedAtDesc(request.getPhone())
                 .orElse(null);
 
         if (user == null) {
@@ -182,7 +184,8 @@ public class AuthServiceImpl implements AuthService {
         // 7. Phát hành token
         log.info("Đăng nhập thành công — phone={}, userId={}", request.getPhone(), user.getId());
         auditLogService.logInfo(user.getTenantId(), user.getId(), "LOGIN_SUCCESS", "USER", user.getId().toString(), null, null);
-        return buildAuthResponse(user, user.getTenantId(), List.of("OWNER"), subscriptionPlan, subscriptionStatus);
+        List<String> roles = getUserRoles(user);
+        return buildAuthResponse(user, user.getTenantId(), roles, subscriptionPlan, subscriptionStatus);
     }
 
     // ─── REFRESH TOKEN ────────────────────────────────────────────────────────
@@ -215,7 +218,8 @@ public class AuthServiceImpl implements AuthService {
         // 4. Phát hành Access Token + Refresh Token mới
         User user = stored.getUser();
         Object[] tenantInfo = getTenantInfo(stored.getTenantId());
-        return buildAuthResponse(user, stored.getTenantId(), List.of("OWNER"),
+        List<String> roles = getUserRoles(user);
+        return buildAuthResponse(user, stored.getTenantId(), roles,
                 (String) tenantInfo[0], (String) tenantInfo[1]);
     }
 
@@ -325,6 +329,17 @@ public class AuthServiceImpl implements AuthService {
                         .subscriptionStatus(subscriptionStatus)
                         .build())
                 .build();
+    }
+
+    private List<String> getUserRoles(User user) {
+        List<String> roleCodes = roleRepository.findRoleCodesByUserIdAndTenantId(user.getId(), user.getTenantId());
+        if (roleCodes == null || roleCodes.isEmpty()) {
+            if (Boolean.TRUE.equals(user.getIsOwner())) {
+                return List.of("OWNER");
+            }
+            return List.of("VIEWER");
+        }
+        return roleCodes;
     }
 
     @SuppressWarnings("unchecked")
