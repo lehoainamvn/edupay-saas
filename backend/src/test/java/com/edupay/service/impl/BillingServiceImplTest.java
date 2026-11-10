@@ -46,6 +46,12 @@ class BillingServiceImplTest {
     @Mock
     private PaymentSettingRepository paymentSettingRepository;
 
+    @Mock
+    private com.edupay.service.VietQRService vietQrService;
+
+    @Mock
+    private PaymentTransactionRepository paymentTransactionRepository;
+
     @InjectMocks
     private BillingServiceImpl billingService;
 

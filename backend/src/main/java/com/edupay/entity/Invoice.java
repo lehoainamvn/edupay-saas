@@ -16,7 +16,8 @@ import java.util.UUID;
         @Index(name = "idx_invoices_tenant", columnList = "tenant_id"),
         @Index(name = "idx_invoices_hash", columnList = "public_hash"),
         @Index(name = "idx_invoices_code", columnList = "transfer_code"),
-        @Index(name = "idx_invoices_student_month", columnList = "tenant_id, student_id, billing_month")
+        @Index(name = "idx_invoices_student_month", columnList = "tenant_id, student_id, billing_month"),
+        @Index(name = "idx_invoices_status", columnList = "status")
 })
 @Getter
 @Setter
@@ -71,5 +72,10 @@ public class Invoice extends BaseEntity {
 
     @Column(name = "note", columnDefinition = "TEXT")
     private String note;
-}
 
+    @Column(name = "confirmed_by")
+    private UUID confirmedBy;
+
+    @Column(name = "confirmed_at")
+    private Instant confirmedAt;
+}

@@ -1286,3 +1286,232 @@
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* BATCH REMINDER & ZALO ACTION STYLES                                        */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.invoicesTopBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.batchRemindBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.batchRemindBtn:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+}
+
+.actionBtn.zaloBtn {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.actionBtn.zaloBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* Modal Nhắc nợ hàng loạt */
+.batchRemindBox {
+  max-width: 600px;
+}
+
+.batchSummaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.batchSummaryItem {
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.bsLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.bsVal {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.bsVal.amber {
+  color: var(--amber-ink);
+}
+
+.bsVal.blue {
+  color: var(--blue);
+}
+
+.batchActionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.btnSecondarySm {
+  height: 36px;
+  padding: 0 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btnSecondarySm:hover {
+  background: var(--soft);
+  border-color: var(--muted);
+}
+
+.batchHint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.batchListWrap {
+  max-height: 360px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.batchItemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+
+.batchItemRow:last-child {
+  border-bottom: none;
+}
+
+.batchItemRow:hover {
+  background: #f8fafc;
+}
+
+.batchItemRow.reminded {
+  background: #f0fdf4;
+  border-left: 3px solid var(--green);
+}
+
+.batchStudentInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.batchOrder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--soft);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.batchName {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.batchNick {
+  font-size: 12px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.batchSub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.batchFee {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.batchItemActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnActionMini {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.15s;
+}
+
+.btnActionMini.copy {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btnActionMini.copy.copied {
+  background: var(--green-soft);
+  border-color: var(--green);
+  color: var(--green-ink);
+}
+
+.btnActionMini.zalo {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.btnActionMini.zalo:hover {
+  background: #dbeafe;
+}

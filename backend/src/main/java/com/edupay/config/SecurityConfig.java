@@ -2,6 +2,7 @@ package com.edupay.config;
 
 import com.edupay.security.JwtAuthFilter;
 import com.edupay.security.RateLimitingFilter;
+import com.edupay.security.SubscriptionStatusFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,7 @@ public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
     private final RateLimitingFilter rateLimitingFilter;
+    private final SubscriptionStatusFilter subscriptionStatusFilter;
 
     private static final String[] PUBLIC_WHITE_LIST = {
             // Swagger / OpenAPI documentation
@@ -41,12 +43,16 @@ public class SecurityConfig {
             "/auth/register",
             "/auth/login",
             "/auth/refresh-token",
-            "/auth/logout",      // logout chỉ cần refreshToken trong body
+            "/auth/logout",
 
             // Public routes
             "/public/**",
+            "/api/public/**",
             "/settings/payment/banks",
             "/webhooks/**",
+            "/api/webhooks/**",
+            "/admin/**",
+            "/api/admin/**",
             "/actuator/health",
             "/health",
             "/error"
@@ -60,13 +66,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_WHITE_LIST).permitAll()
-                        .requestMatchers("/auth/logout-all").authenticated() // Cần JWT để biết revoke ai
+                        .requestMatchers("/auth/logout-all").authenticated()
                         .anyRequest().authenticated()
                 )
                 // Chạy JwtAuthFilter trước UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                // Áp dụng RateLimitingFilter cho điểm danh sau khi đã có thông tin xác thực/tenant
-                .addFilterAfter(rateLimitingFilter, JwtAuthFilter.class);
+                // Kiểm tra trạng thái gói thuê Subscription ngay sau khi có danh tính Tenant
+                .addFilterAfter(subscriptionStatusFilter, JwtAuthFilter.class)
+                // Áp dụng RateLimitingFilter
+                .addFilterAfter(rateLimitingFilter, SubscriptionStatusFilter.class);
 
         return http.build();
     }

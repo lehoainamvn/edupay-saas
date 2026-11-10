@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * REST Controller phục vụ Cổng Phụ huynh tra cứu học phí và quét VietQR công khai (/p/:hash).
- * Endpoint này hoàn toàn không yêu cầu đăng nhập (Public Whitelist).
+ * Hỗ trợ cả 2 định dạng đường dẫn:
+ * - GET /public/invoices/{publicHash}
+ * - GET /api/public/invoices/{publicHash}
+ * Endpoint này hoàn toàn không yêu cầu đăng nhập (Public Whitelist), áp dụng Rate-limit 30 req/phút/IP.
  */
 @RestController
-@RequestMapping("/public/invoices")
+@RequestMapping({"/public/invoices", "/api/public/invoices"})
 @RequiredArgsConstructor
 @Tag(name = "Cổng Phụ huynh Tra cứu (Public Invoice)", description = "API công khai không cần đăng nhập dành cho phụ huynh quét VietQR và xem chi tiết buổi học của con")
 public class PublicInvoiceController {
@@ -26,10 +29,9 @@ public class PublicInvoiceController {
 
     @GetMapping("/{publicHash}")
     @Operation(summary = "Tra cứu phiếu thu bằng mã hash an toàn",
-            description = "Trả về thông tin học phí, danh sách ngày con đã học, số tài khoản nhận tiền và mã QR Napas247 động.")
+            description = "Trả về thông tin học phí, danh sách ngày con đã học, số tài khoản nhận tiền và mã QR Napas247 động. Rate limit: 30 requests/phút/IP.")
     public ResponseEntity<ApiResponse<PublicInvoiceResponse>> getPublicInvoice(@PathVariable String publicHash) {
         PublicInvoiceResponse data = billingService.getPublicInvoice(publicHash);
         return ResponseEntity.ok(ApiResponse.ok(data, "Tra cứu phiếu thu thành công"));
     }
 }
-

@@ -11,6 +11,7 @@ import {
   TodayClassItem,
   RecentTransactionItem,
   DebtorItem,
+  MonthlyRevenueChartItem,
 } from '../../core/services/dashboard.service';
 
 @Component({
@@ -72,6 +73,29 @@ export class DashboardComponent implements OnInit {
     return this.summary()?.debtors ?? [];
   });
 
+  monthlyChart = computed<MonthlyRevenueChartItem[]>(() => {
+    return this.summary()?.monthlyChart ?? [];
+  });
+
+  maxChartAmount = computed<number>(() => {
+    const list = this.monthlyChart();
+    if (!list || list.length === 0) return 1000000;
+    const max = Math.max(...list.map(m => Math.max(m.expectedAmount || 0, m.actualAmount || 0)));
+    return max > 0 ? max : 1000000;
+  });
+
+  total6MonthActual = computed<number>(() => {
+    return this.monthlyChart().reduce((sum, item) => sum + (item.actualAmount || 0), 0);
+  });
+
+  avgCollectionRate = computed<number>(() => {
+    const list = this.monthlyChart().filter(m => (m.expectedAmount || 0) > 0);
+    if (list.length === 0) return 0;
+    const totalExpected = list.reduce((sum, item) => sum + (item.expectedAmount || 0), 0);
+    const totalActual = list.reduce((sum, item) => sum + (item.actualAmount || 0), 0);
+    return totalExpected > 0 ? Math.round((totalActual / totalExpected * 100) * 10) / 10 : 0;
+  });
+
   ngOnInit(): void {
     this.loadDashboardData();
   }
@@ -94,7 +118,6 @@ export class DashboardComponent implements OnInit {
         },
         error: (err) => {
           this.loading.set(false);
-          // Khi backend chưa sẵn sàng, giữ trạng thái rỗng để không hiển thị mock data sai lệch
           this.summary.set(null);
         },
       });
@@ -102,6 +125,13 @@ export class DashboardComponent implements OnInit {
 
   money(amount: number | null | undefined): string {
     return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' đ';
+  }
+
+  getBarHeight(amount: number | null | undefined): number {
+    const max = this.maxChartAmount();
+    if (!amount || max <= 0) return 4;
+    const pct = Math.round((amount / max) * 100);
+    return Math.max(4, Math.min(100, pct));
   }
 
   remind(name: string): void {

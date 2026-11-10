@@ -62,12 +62,23 @@ export interface BankSettingInfo {
   bankBin: string;
 }
 
+export interface MonthlyRevenueChartItem {
+  month: string;          // "2026-10"
+  label: string;          // "Thg 10"
+  expectedAmount: number; // Doanh thu dự kiến
+  actualAmount: number;   // Thực thu đã nộp
+  paidCount: number;      // Số phiếu đã nộp
+  unpaidCount: number;    // Số phiếu chưa nộp
+  collectionRate: number; // Tỷ lệ thu hồi %
+}
+
 export interface DashboardSummary {
   kpis: DashboardKpis;
   todayClasses: TodayClassItem[];
   recentTransactions: RecentTransactionItem[];
   debtors: DebtorItem[];
   bankSettings?: BankSettingInfo;
+  monthlyChart?: MonthlyRevenueChartItem[];
 }
 
 @Injectable({
@@ -81,4 +92,3 @@ export class DashboardService {
     return this.http.get<ApiResponse<DashboardSummary>>(this.apiUrl);
   }
 }
-
