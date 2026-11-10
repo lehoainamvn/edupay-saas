@@ -166,6 +166,63 @@
           }
         </article>
 
+        
+        <!-- Panel 2: Biểu đồ doanh thu 6 tháng gần nhất -->
+        <article class="panel chartPanel">
+          <div class="panelHeader">
+            <div>
+              <span class="panelEyebrow">XU HƯỚNG TÀI CHÍNH</span>
+              <h2>Biểu đồ doanh thu 6 tháng gần nhất</h2>
+            </div>
+            <div class="chartLegend">
+              <span class="legendItem expected"><i class="dot blue"></i> Dự kiến</span>
+              <span class="legendItem actual"><i class="dot green"></i> Thực thu</span>
+            </div>
+          </div>
+
+          <div class="chartSummaryBar">
+            <div class="summaryStat">
+              <span class="statLabel">Tổng thực thu 6 tháng:</span>
+              <strong class="statValue greenText">{{ money(total6MonthActual()) }}</strong>
+            </div>
+            <div class="summaryStat">
+              <span class="statLabel">Tỷ lệ thu hồi TB:</span>
+              <strong class="statValue blueText">{{ avgCollectionRate() }}%</strong>
+            </div>
+          </div>
+
+          @if (monthlyChart().length > 0) {
+            <div class="barChartContainer">
+              <div class="barsGrid">
+                @for (m of monthlyChart(); track m.month) {
+                  <div class="barGroup">
+                    <div class="barsTrack">
+                      <!-- Expected Bar -->
+                      <div class="bar expectedBar" 
+                           [style.height.%]="getBarHeight(m.expectedAmount)">
+                        <span class="barTooltip">Dự kiến: {{ money(m.expectedAmount) }}</span>
+                      </div>
+                      <!-- Actual Bar -->
+                      <div class="bar actualBar" 
+                           [style.height.%]="getBarHeight(m.actualAmount)">
+                        <span class="barTooltip">Thực thu: {{ money(m.actualAmount) }} ({{ m.collectionRate }}%)</span>
+                      </div>
+                    </div>
+                    <div class="barFooter">
+                      <span class="barMonth">{{ m.label }}</span>
+                      <span class="barRate" [class.highRate]="m.collectionRate >= 80">{{ m.collectionRate }}%</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="emptyStateBox small">
+              <p class="emptySub">Chưa có dữ liệu lịch sử đối soát học phí 6 tháng.</p>
+            </div>
+          }
+        </article>
+
         <!-- Panel 2: Giao dịch VietQR đối soát tự động -->
         <article class="panel paymentPanel">
           <div class="panelHeader">

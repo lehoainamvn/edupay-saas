@@ -21,8 +21,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Filter giới hạn tần suất yêu cầu (Rate Limiting) chuyên biệt cho chức năng Điểm danh (/attendance/**).
- * Bảo vệ chống tấn công Brute-force, DoS và Spam gửi batch điểm danh liên tục.
+ * Filter giới hạn tần suất yêu cầu (Rate Limiting) chuyên biệt:
+ * 1. Chức năng Điểm danh (/attendance/**): tối đa 60 requests / 1 phút (theo Tenant hoặc IP).
+ * 2. Cổng tra cứu Phiếu thu công khai (/public/invoices/**, /api/public/invoices/**): tối đa 30 requests / 1 phút / IP.
+ * Bảo vệ chống tấn công Brute-force, DoS và dò mã hash hóa đơn.
  */
 @Slf4j
 @Component
@@ -31,10 +33,12 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
 
-    // Giới hạn an toàn: tối đa 60 requests / 1 phút cho mỗi client (Tenant hoặc IP)
-    private static final int MAX_REQUESTS_PER_WINDOW = 60;
+    private static final int MAX_ATTENDANCE_REQUESTS = 60;
+    private static final int MAX_PUBLIC_INVOICE_REQUESTS = 30; // 30 req/phút/IP theo yêu cầu
     private static final long WINDOW_DURATION_MS = 60_000L; // 1 phút
+
     private static final String ATTENDANCE_PATH = "/attendance";
+    private static final String PUBLIC_INVOICE_PATH = "/public/invoices";
 
     private final Map<String, RequestCounter> requestCounts = new ConcurrentHashMap<>();
 
@@ -45,21 +49,52 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String requestUri = request.getRequestURI();
 
-        // CHỈ áp dụng riêng cho các endpoint của chức năng Điểm danh (/attendance/**)
-        if (!requestUri.contains(ATTENDANCE_PATH)) {
+        // 1. Kiểm tra Rate Limiting cho Cổng Phụ huynh tra cứu phiếu thu (/public/invoices/**, /api/public/invoices/**)
+        if (requestUri.contains(PUBLIC_INVOICE_PATH)) {
+            String ipKey = "public_inv:" + resolveClientIp(request);
+            if (isRateLimitExceeded(ipKey, MAX_PUBLIC_INVOICE_REQUESTS)) {
+                log.warn("Rate limit vượt ngưỡng cho Cổng phụ huynh tra cứu: ip={} uri={}", ipKey, requestUri);
+                handleRateLimitExceeded(
+                        response,
+                        "RATE_LIMIT_EXCEEDED",
+                        "Bạn đã gửi quá nhiều yêu cầu tra cứu phiếu thu (tối đa 30 lần/phút). Vui lòng thử lại sau 1 phút."
+                );
+                return;
+            }
             filterChain.doFilter(request, response);
             return;
         }
 
-        String clientKey = resolveClientKey(request);
-
-        if (isRateLimitExceeded(clientKey)) {
-            log.warn("Rate limit vượt ngưỡng cho chức năng điểm danh: client={} uri={}", clientKey, requestUri);
-            handleRateLimitExceeded(response);
+        // 2. Kiểm tra Rate Limiting cho Chức năng Điểm danh (/attendance/**)
+        if (requestUri.contains(ATTENDANCE_PATH)) {
+            String clientKey = "attendance:" + resolveClientKey(request);
+            if (isRateLimitExceeded(clientKey, MAX_ATTENDANCE_REQUESTS)) {
+                log.warn("Rate limit vượt ngưỡng cho chức năng điểm danh: client={} uri={}", clientKey, requestUri);
+                handleRateLimitExceeded(
+                        response,
+                        "RATE_LIMIT_EXCEEDED",
+                        "Bạn đã thực hiện quá nhiều yêu cầu điểm danh trong thời gian ngắn (tối đa 60 lần/phút). Vui lòng thử lại sau 1 phút."
+                );
+                return;
+            }
+            filterChain.doFilter(request, response);
             return;
         }
 
+        // Các route khác tiếp tục bình thường
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr();
     }
 
     private String resolveClientKey(HttpServletRequest request) {
@@ -67,16 +102,10 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         if (tenantId != null) {
             return "tenant:" + tenantId;
         }
-
-        // Fallback theo địa chỉ IP nếu chưa có context tenant
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return "ip:" + forwardedFor.split(",")[0].trim();
-        }
-        return "ip:" + request.getRemoteAddr();
+        return "ip:" + resolveClientIp(request);
     }
 
-    private boolean isRateLimitExceeded(String clientKey) {
+    private boolean isRateLimitExceeded(String clientKey, int maxRequests) {
         long now = System.currentTimeMillis();
 
         RequestCounter counter = requestCounts.compute(clientKey, (key, existing) -> {
@@ -92,24 +121,20 @@ public class RateLimitingFilter extends OncePerRequestFilter {
             cleanupExpiredCounters(now);
         }
 
-        return counter.count > MAX_REQUESTS_PER_WINDOW;
+        return counter.count > maxRequests;
     }
 
     private void cleanupExpiredCounters(long now) {
         requestCounts.entrySet().removeIf(entry -> now - entry.getValue().windowStartTime >= WINDOW_DURATION_MS);
     }
 
-    private void handleRateLimitExceeded(HttpServletResponse response) throws IOException {
+    private void handleRateLimitExceeded(HttpServletResponse response, String errorCode, String message) throws IOException {
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setHeader("Retry-After", "60");
 
-        ApiResponse<Void> apiResponse = ApiResponse.error(
-                "RATE_LIMIT_EXCEEDED",
-                "Bạn đã thực hiện quá nhiều yêu cầu điểm danh trong thời gian ngắn. Vui lòng thử lại sau 1 phút."
-        );
-
+        ApiResponse<Void> apiResponse = ApiResponse.error(errorCode, message);
         response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
     }
 
@@ -123,4 +148,3 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         }
     }
 }
-

@@ -81,12 +81,16 @@ public class DashboardServiceImpl implements DashboardService {
         // 5. Bank Settings
         DashboardSummaryResponse.BankSettingDto bankSettings = loadBankSettings(tenantId);
 
+        // 6. Monthly Revenue Chart (6 months)
+        List<DashboardSummaryResponse.MonthlyRevenueChartDto> monthlyChart = loadMonthlyRevenueChart(tenantId);
+
         return DashboardSummaryResponse.builder()
                 .kpis(kpis)
                 .todayClasses(todayClasses)
                 .recentTransactions(recentTransactions)
                 .debtors(debtors)
                 .bankSettings(bankSettings)
+                .monthlyChart(monthlyChart)
                 .build();
     }
 
@@ -224,6 +228,59 @@ public class DashboardServiceImpl implements DashboardService {
         String[] parts = fullName.trim().split("\\s+");
         if (parts.length == 1) return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
         return ("" + parts[parts.length - 2].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+
+    private List<DashboardSummaryResponse.MonthlyRevenueChartDto> loadMonthlyRevenueChart(UUID tenantId) {
+        List<DashboardSummaryResponse.MonthlyRevenueChartDto> chart = new ArrayList<>();
+        YearMonth current = YearMonth.now();
+        List<YearMonth> months = new ArrayList<>();
+        for (int i = 5; i >= 0; i--) {
+            months.add(current.minusMonths(i));
+        }
+
+        Map<String, Map<String, Object>> monthDataMap = new HashMap<>();
+        String sql = "SELECT billing_month, " +
+                "COALESCE(SUM(total_amount), 0) as expected_amount, " +
+                "COALESCE(SUM(CASE WHEN status = 'PAID' THEN total_amount ELSE 0 END), 0) as actual_amount, " +
+                "COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paid_count, " +
+                "COUNT(CASE WHEN status = 'PENDING' THEN 1 END) as unpaid_count " +
+                "FROM invoices " +
+                "WHERE tenant_id = ? AND billing_month >= ? " +
+                "GROUP BY billing_month";
+
+        String earliestMonth = months.get(0).toString();
+        jdbcTemplate.query(sql, rs -> {
+            String bm = rs.getString("billing_month");
+            Map<String, Object> row = new HashMap<>();
+            row.put("expected", rs.getDouble("expected_amount"));
+            row.put("actual", rs.getDouble("actual_amount"));
+            row.put("paid", rs.getLong("paid_count"));
+            row.put("unpaid", rs.getLong("unpaid_count"));
+            monthDataMap.put(bm, row);
+        }, tenantId, earliestMonth);
+
+        for (YearMonth ym : months) {
+            String monthKey = ym.toString();
+            String label = "Thg " + ym.getMonthValue();
+            Map<String, Object> data = monthDataMap.get(monthKey);
+            double expected = data != null ? (Double) data.getOrDefault("expected", 0.0) : 0.0;
+            double actual = data != null ? (Double) data.getOrDefault("actual", 0.0) : 0.0;
+            long paid = data != null ? (Long) data.getOrDefault("paid", 0L) : 0L;
+            long unpaid = data != null ? (Long) data.getOrDefault("unpaid", 0L) : 0L;
+            double rate = expected > 0 ? Math.round((actual / expected * 100.0) * 10.0) / 10.0 : 0.0;
+
+            chart.add(DashboardSummaryResponse.MonthlyRevenueChartDto.builder()
+                    .month(monthKey)
+                    .label(label)
+                    .expectedAmount(expected)
+                    .actualAmount(actual)
+                    .paidCount(paid)
+                    .unpaidCount(unpaid)
+                    .collectionRate(rate)
+                    .build());
+        }
+
+        return chart;
     }
 }
 

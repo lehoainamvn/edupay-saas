@@ -1,0 +1,374 @@
+<app-navbar mode="app"></app-navbar>
+
+<div class="adminApp">
+  <main class="adminContainer">
+    <!-- SuperAdmin Header -->
+    <header class="adminHeader">
+      <div class="headerLeft">
+        <span class="adminKicker"><i></i> NỀN TẢNG SAAS · SUPERADMIN PLATFORM</span>
+        <h1>Quản lý Giáo viên & Đăng ký gói EduPay</h1>
+        <p>Giám sát doanh thu định kỳ MRR, trạng thái thuê của các giáo viên và điều khiển gia hạn dịch vụ tự động.</p>
+      </div>
+      <div class="headerActions">
+        <button type="button" class="refreshBtn" (click)="loadData()" [disabled]="loading()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+          </svg>
+          <span>Làm mới</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Toast Notification Banner -->
+    @if (successMessage()) {
+      <div class="toastBanner success">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="m8 12 2.5 2.5L16 9" />
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+    }
+
+    <!-- Platform Stats 4-Card Strip -->
+    <section class="statsGrid" aria-label="Chỉ số nền tảng SuperAdmin">
+      <!-- Card 1: MRR -->
+      <article class="statCard">
+        <div class="statHeader">
+          <span class="iconBox blue">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </span>
+          <b>Doanh thu định kỳ (MRR)</b>
+        </div>
+        <strong class="statValue blueText">{{ formatMoney(stats()?.mrr) }}</strong>
+        <span class="statSub">Doanh thu thu về đều đặn mỗi tháng</span>
+      </article>
+
+      <!-- Card 2: Giáo viên mới -->
+      <article class="statCard">
+        <div class="statHeader">
+          <span class="iconBox green">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="9" r="3" />
+              <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6" />
+              <path d="M19 8v6M16 11h6" />
+            </svg>
+          </span>
+          <b>Giáo viên mới tháng này</b>
+        </div>
+        <strong class="statValue greenText">+{{ stats()?.newTeachersThisMonth ?? 0 }} GV</strong>
+        <span class="statSub">Đăng ký và kích hoạt trong tháng</span>
+      </article>
+
+      <!-- Card 3: Tỷ lệ gia hạn -->
+      <article class="statCard">
+        <div class="statHeader">
+          <span class="iconBox purple">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
+            </svg>
+          </span>
+          <b>Tỷ lệ gia hạn gói</b>
+        </div>
+        <strong class="statValue purpleText">{{ stats()?.renewalRate ?? 0 }}%</strong>
+        <span class="statSub">Giáo viên tiếp tục gia hạn sau khi hết hạn</span>
+      </article>
+
+      <!-- Card 4: Tổng số giáo viên -->
+      <article class="statCard">
+        <div class="statHeader">
+          <span class="iconBox emerald">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="9" r="3" />
+              <circle cx="17" cy="10" r="2.5" />
+              <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6M15 15c3.5 0 5.5 1.7 6 5" />
+            </svg>
+          </span>
+          <b>Giáo viên đang hoạt động</b>
+        </div>
+        <strong class="statValue">{{ stats()?.activeTenants ?? 0 }}/{{ stats()?.totalTenants ?? 0 }}</strong>
+        <span class="statSub">{{ stats()?.suspendedTenants ?? 0 }} bị tạm khóa · {{ stats()?.trialTenants ?? 0 }} dùng thử</span>
+      </article>
+    </section>
+
+    <!-- Filter & Search Toolbar -->
+    <section class="tableToolbar">
+      <!-- Status Tabs -->
+      <div class="tabsGroup">
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="currentTab() === 'ALL'"
+          (click)="setTab('ALL')"
+        >
+          Tất cả ({{ tenants().length }})
+        </button>
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="currentTab() === 'ACTIVE'"
+          (click)="setTab('ACTIVE')"
+        >
+          Đang hoạt động ({{ stats()?.activeTenants ?? 0 }})
+        </button>
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="currentTab() === 'SUSPENDED'"
+          (click)="setTab('SUSPENDED')"
+        >
+          Tạm khóa ({{ stats()?.suspendedTenants ?? 0 }})
+        </button>
+        <button
+          type="button"
+          class="tabBtn"
+          [class.active]="currentTab() === 'EXPIRED'"
+          (click)="setTab('EXPIRED')"
+        >
+          Hết hạn
+        </button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="searchBox">
+        <svg class="icon searchIcon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.35-4.35" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Tìm theo tên giáo viên, số điện thoại, email..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="clearSearch" (click)="searchQuery.set('')">✕</button>
+        }
+      </div>
+    </section>
+
+    <!-- Tenants Table View -->
+    <section class="tenantsCard">
+      @if (loading()) {
+        <div class="loadingBox">
+          <div class="spinner"></div>
+          <p>Đang tải danh sách giáo viên thuê nền tảng...</p>
+        </div>
+      } @else if (filteredTenants().length === 0) {
+        <div class="emptyState">
+          <p class="emptyTitle">Không tìm thấy giáo viên nào</p>
+          <p class="emptySub">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.</p>
+        </div>
+      } @else {
+        <div class="tableResponsive">
+          <table class="tenantTable">
+            <thead>
+              <tr>
+                <th>Giáo viên thuê</th>
+                <th>Liên hệ</th>
+                <th>Quy mô lớp/học sinh</th>
+                <th>Gói dịch vụ</th>
+                <th>Hạn sử dụng</th>
+                <th>Trạng thái</th>
+                <th class="actionsCol">Thao tác quản trị</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of filteredTenants(); track t.id) {
+                <tr [class.suspendedRow]="t.subscriptionStatus === 'SUSPENDED'" [class.expiredRow]="t.isExpired">
+                  <!-- Name & Initials -->
+                  <td>
+                    <div class="teacherCell">
+                      <span class="avatar">{{ getInitials(t.name) }}</span>
+                      <div>
+                        <strong class="teacherName">{{ t.name }}</strong>
+                        <span class="joinedDate">Tham gia: {{ formatDate(t.createdAt) }}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Contact -->
+                  <td>
+                    <div class="contactCell">
+                      <b>{{ t.phone || 'Chưa cập nhật' }}</b>
+                      <small>{{ t.email || '—' }}</small>
+                    </div>
+                  </td>
+
+                  <!-- Scale -->
+                  <td>
+                    <div class="scaleCell">
+                      <span class="scalePill"><b>{{ t.totalClasses }}</b> lớp</span>
+                      <span class="scalePill"><b>{{ t.totalStudents }}</b> học sinh</span>
+                    </div>
+                  </td>
+
+                  <!-- Plan -->
+                  <td>
+                    <span class="planBadge" [ngClass]="t.subscriptionPlan?.toLowerCase() || 'standard'">
+                      {{ t.subscriptionPlan === 'ANNUAL' ? 'Gói 1 Năm' : (t.subscriptionPlan === 'TRIAL' ? 'Dùng thử' : 'Gói Tháng') }}
+                    </span>
+                  </td>
+
+                  <!-- Expiry Date -->
+                  <td>
+                    <div class="expiryCell">
+                      <strong [class.dangerText]="t.isExpired">{{ formatDate(t.subscriptionEndsAt) }}</strong>
+                      @if (t.isExpired) {
+                        <span class="badgeOverdue">Đã hết hạn</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td>
+                    @if (t.subscriptionStatus === 'ACTIVE' && !t.isExpired) {
+                      <span class="statusBadge active">
+                        <i class="dot"></i> Hoạt động
+                      </span>
+                    } @else if (t.subscriptionStatus === 'SUSPENDED') {
+                      <span class="statusBadge suspended">
+                        <i class="dot"></i> Tạm khóa
+                      </span>
+                    } @else {
+                      <span class="statusBadge expired">
+                        <i class="dot"></i> Hết hạn
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Action Buttons -->
+                  <td class="actionsCol">
+                    <div class="actionButtons">
+                      <!-- Quick +1 Month -->
+                      <button
+                        type="button"
+                        class="btnAction btnExtend"
+                        (click)="quickExtend(t, '1_MONTH')"
+                        [disabled]="actionLoading() === t.id"
+                        title="Gia hạn thêm 30 ngày"
+                      >
+                        +1 Tháng
+                      </button>
+
+                      <!-- Quick +1 Year -->
+                      <button
+                        type="button"
+                        class="btnAction btnExtendYear"
+                        (click)="quickExtend(t, '1_YEAR')"
+                        [disabled]="actionLoading() === t.id"
+                        title="Gia hạn thêm 365 ngày"
+                      >
+                        +1 Năm
+                      </button>
+
+                      <!-- Suspend / Unlock -->
+                      <button
+                        type="button"
+                        class="btnAction btnToggle"
+                        [class.btnUnlock]="t.subscriptionStatus === 'SUSPENDED'"
+                        (click)="toggleTenantStatus(t)"
+                        [disabled]="actionLoading() === t.id"
+                      >
+                        {{ t.subscriptionStatus === 'ACTIVE' ? 'Khóa' : 'Mở khóa' }}
+                      </button>
+
+                      <!-- Custom Extend Modal -->
+                      <button
+                        type="button"
+                        class="btnAction btnMore"
+                        (click)="openExtendModal(t)"
+                        title="Tùy chọn gia hạn..."
+                      >
+                        ···
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </main>
+
+  <!-- Extend Subscription Modal -->
+  @if (selectedTenantForExtend(); as tenant) {
+    <div class="modalBackdrop" (click)="closeExtendModal()">
+      <div class="modalCard" (click)="$event.stopPropagation()">
+        <header class="modalHeader">
+          <div>
+            <span class="modalKicker">GIA HẠN GÓI DỊCH VỤ</span>
+            <h3>Gia hạn cho: {{ tenant.name }}</h3>
+          </div>
+          <button type="button" class="closeBtn" (click)="closeExtendModal()">✕</button>
+        </header>
+
+        <div class="modalBody">
+          <div class="formGroup">
+            <label>Thời gian gia hạn</label>
+            <div class="radioGroup">
+              <label class="radioOption" [class.selected]="extendDuration() === '1_MONTH'">
+                <input
+                  type="radio"
+                  name="duration"
+                  value="1_MONTH"
+                  [ngModel]="extendDuration()"
+                  (ngModelChange)="extendDuration.set($event)"
+                />
+                <div>
+                  <strong>+1 Tháng (30 ngày)</strong>
+                  <small>Gói tiêu chuẩn tháng</small>
+                </div>
+              </label>
+
+              <label class="radioOption" [class.selected]="extendDuration() === '1_YEAR'">
+                <input
+                  type="radio"
+                  name="duration"
+                  value="1_YEAR"
+                  [ngModel]="extendDuration()"
+                  (ngModelChange)="extendDuration.set($event)"
+                />
+                <div>
+                  <strong>+1 Năm (365 ngày)</strong>
+                  <small>Tiết kiệm 20%</small>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div class="formGroup">
+            <label>Ghi chú đối soát nội bộ</label>
+            <textarea
+              rows="3"
+              placeholder="VD: Giáo viên đã chuyển khoản qua STK ngân hàng MBBank..."
+              [ngModel]="extendNote()"
+              (ngModelChange)="extendNote.set($event)"
+            ></textarea>
+          </div>
+
+          <div class="expiryInfoNote">
+            <span>ℹ️</span>
+            <p>Hạn hiện tại: <b>{{ formatDate(tenant.subscriptionEndsAt) }}</b>. Thời gian mới sẽ được tự động cộng dồn tiếp nối thời hạn cũ.</p>
+          </div>
+        </div>
+
+        <footer class="modalFooter">
+          <button type="button" class="btnSecondary" (click)="closeExtendModal()">Hủy</button>
+          <button
+            type="button"
+            class="btnPrimary"
+            (click)="submitModalExtend()"
+            [disabled]="actionLoading() === tenant.id"
+          >
+            {{ actionLoading() === tenant.id ? 'Đang xử lý...' : 'Xác nhận gia hạn' }}
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

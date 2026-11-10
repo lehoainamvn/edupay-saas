@@ -58,6 +58,8 @@ export class BillingComponent implements OnInit {
   readonly showQrModal = signal<boolean>(false);
   readonly activeQrInvoice = signal<Invoice | null>(null);
   readonly showMarkPaidModal = signal<boolean>(false);
+  readonly showBatchRemindModal = signal<boolean>(false);
+  readonly remindedStudentIds = signal<Set<string>>(new Set<string>());
   readonly activePayInvoice = signal<Invoice | null>(null);
   readonly copiedField = signal<string | null>(null);
   private copyResetTimer: ReturnType<typeof setTimeout> | null = null;
@@ -94,6 +96,14 @@ export class BillingComponent implements OnInit {
     const list = this.invoices();
     if (filter === 'ALL') return list;
     return list.filter((inv) => inv.status === filter);
+  });
+
+  readonly pendingInvoices = computed(() => {
+    return this.invoices().filter((inv) => inv.status === 'PENDING');
+  });
+
+  readonly pendingTotalAmount = computed(() => {
+    return this.pendingInvoices().reduce((sum, inv) => sum + (inv.totalAmount || 0), 0);
   });
 
   // ─── LIFECYCLE ──────────────────────────────────────────────────────────────
@@ -310,17 +320,68 @@ export class BillingComponent implements OnInit {
     });
   }
 
-  copyZaloMessage(invoice: Invoice, event?: Event, fieldKey?: string): void {
-    if (event) event.stopPropagation();
+  buildZaloPersonalMessage(invoice: Invoice): string {
     const fullUrl = `${window.location.origin}/p/${invoice.publicHash}`;
     const formattedAmount = this.formatCurrency(invoice.totalAmount);
     const monthVN = this.formatMonthVN(invoice.billingMonth);
     const nicknamePart = invoice.nickname ? ` (${invoice.nickname})` : '';
-    const text = `Dạ em gửi phiếu báo học phí ${monthVN} của bé ${invoice.studentName}${nicknamePart} ạ:\n- Số buổi học: ${invoice.attendedCount} buổi\n- Tổng học phí: ${formattedAmount}\n- Link xem chi tiết và quét mã QR chuyển khoản:\n${fullUrl}\nEm cảm ơn ba mẹ!`;
+    return `Dạ em gửi phiếu báo học phí ${monthVN} của bé ${invoice.studentName}${nicknamePart} ạ:\n- Số buổi học: ${invoice.attendedCount} buổi\n- Tổng học phí: ${formattedAmount}\n- Link xem chi tiết và quét mã VietQR chuyển khoản:\n${fullUrl}\nEm cảm ơn ba mẹ!`;
+  }
 
+  copyZaloMessage(invoice: Invoice, event?: Event, fieldKey?: string): void {
+    if (event) event.stopPropagation();
+    const text = this.buildZaloPersonalMessage(invoice);
     navigator.clipboard.writeText(text).then(() => {
       this.triggerCopiedFeedback(fieldKey);
-      this.toastService.success('Đã sao chép mẫu tin nhắn Zalo kèm link phiếu thu!');
+      this.toastService.success(`Đã sao chép tin nhắn Zalo bé ${invoice.studentName}!`);
+    });
+  }
+
+  openZalo(invoice: Invoice, event?: Event): void {
+    if (event) event.stopPropagation();
+    const phone = (invoice.parentPhone || '').replace(/[^0-9]/g, '');
+    const text = this.buildZaloPersonalMessage(invoice);
+
+    navigator.clipboard.writeText(text).then(() => {
+      this.remindedStudentIds.update((set) => new Set(set).add(invoice.id));
+      if (phone) {
+        window.open(`https://zalo.me/${phone}`, '_blank');
+        this.toastService.success(`Đã copy tin nhắn & mở Zalo PH em ${invoice.studentName}! (Bấm Ctrl+V để gửi)`);
+      } else {
+        window.open('https://chat.zalo.me/', '_blank');
+        this.toastService.success('Đã copy tin nhắn & mở Zalo Web!');
+      }
+    });
+  }
+
+  openBatchRemindModal(): void {
+    if (this.pendingInvoices().length === 0) {
+      this.toastService.info('Không có học sinh nào đang nợ học phí trong kỳ này!');
+      return;
+    }
+    this.showBatchRemindModal.set(true);
+  }
+
+  closeBatchRemindModal(): void {
+    this.showBatchRemindModal.set(false);
+  }
+
+  copyAllPendingRemindList(): void {
+    const list = this.pendingInvoices();
+    if (list.length === 0) return;
+
+    const monthVN = this.formatMonthVN(this.selectedMonth());
+    const header = `DANH SÁCH NHẮC HỌC PHÍ ${monthVN.toUpperCase()} - ${this.currentClass()?.name || ''}\n`;
+    const lines = list.map((inv, idx) => {
+      const nick = inv.nickname ? ` (${inv.nickname})` : '';
+      const url = `${window.location.origin}/p/${inv.publicHash}`;
+      return `${idx + 1}. ${inv.studentName}${nick} - ${this.formatCurrency(inv.totalAmount)} - Link: ${url}`;
+    });
+    const totalLine = `\nTổng cộng: ${list.length} học sinh | ${this.formatCurrency(this.pendingTotalAmount())}`;
+
+    const content = header + lines.join('\n') + totalLine;
+    navigator.clipboard.writeText(content).then(() => {
+      this.toastService.success('Đã sao chép toàn bộ danh sách nhắc nợ kèm link phiếu thu!');
     });
   }
 

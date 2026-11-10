@@ -47,6 +47,8 @@ public class BillingServiceImpl implements BillingService {
     private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
     private final PaymentSettingRepository paymentSettingRepository;
+    private final com.edupay.repository.PaymentTransactionRepository paymentTransactionRepository;
+    private final com.edupay.service.VietQRService vietQrService;
 
     @Override
     public BillingPreviewResponse getBillingPreview(UUID classId, String billingMonth) {
@@ -198,7 +200,7 @@ public class BillingServiceImpl implements BillingService {
         }
 
         List<Invoice> invoicesToSave = new ArrayList<>();
-        String monthSuffix = request.getBillingMonth().replace("-", "").substring(2); // VD: '2026-10' -> '2610'
+        // Chuẩn bị danh sách phiếu thu xuất hàng loạt
 
         for (InvoiceItemGenerateRequest itemReq : request.getItems()) {
             Student student = studentMap.get(itemReq.getStudentId());
@@ -222,8 +224,8 @@ public class BillingServiceImpl implements BillingService {
             }
 
             String publicHash = generateUniquePublicHash();
-            String transferCode = generateUniqueTransferCode(
-                    paymentSetting.getTransferPrefix(), classEntity.getName(), student, monthSuffix);
+            String transferCode = vietQrService.generateTransferCode(
+                    paymentSetting.getTransferPrefix(), request.getBillingMonth(), classEntity.getName(), student);
 
             Invoice invoice = Invoice.builder()
                     .classId(request.getClassId())
@@ -338,6 +340,7 @@ public class BillingServiceImpl implements BillingService {
 
         invoice.setStatus(InvoiceStatus.PAID);
         invoice.setPaidAt(Instant.now());
+        invoice.setConfirmedAt(Instant.now());
         invoice.setPaidMethod(request.getPaidMethod() != null ? request.getPaidMethod().toUpperCase() : "CASH");
         if (request.getNote() != null && !request.getNote().isBlank()) {
             String sanitized = SecuritySanitizer.sanitizeNote(request.getNote());
@@ -346,6 +349,23 @@ public class BillingServiceImpl implements BillingService {
 
         Invoice saved = invoiceRepository.save(invoice);
         log.info("Đã gạch nợ thành công cho phiếu thu {} qua hình thức {}", saved.getId(), saved.getPaidMethod());
+
+        // Ghi log giao dịch thanh toán vào payment_transactions
+        try {
+            com.edupay.entity.PaymentTransaction tx = com.edupay.entity.PaymentTransaction.builder()
+                    .invoiceId(saved.getId())
+                    .referenceNumber("MANUAL-" + saved.getId().toString().substring(0, 8) + "-" + System.currentTimeMillis())
+                    .amount(saved.getTotalAmount())
+                    .bankBrandName("TIEN_MAT_HOAC_MANUAL")
+                    .paymentSource("MANUAL_" + saved.getPaidMethod())
+                    .transactionContent("Gạch nợ thủ công: " + (request.getNote() != null ? request.getNote() : "Thành công"))
+                    .transactionTime(Instant.now())
+                    .build();
+            tx.setTenantId(tenantId);
+            paymentTransactionRepository.save(tx);
+        } catch (Exception ex) {
+            log.warn("Không thể lưu payment_transaction cho invoice [{}]: {}", saved.getId(), ex.getMessage());
+        }
 
         ClassEntity classEntity = findClassOrThrow(saved.getClassId(), tenantId);
         Student student = studentRepository.findByIdAndTenantId(saved.getStudentId(), tenantId)
@@ -385,7 +405,7 @@ public class BillingServiceImpl implements BillingService {
                 .map(Attendance::getLessonDate)
                 .toList();
 
-        String vietQrUrl = buildVietQrUrl(
+        String vietQrUrl = vietQrService.generateVietQrUrl(
                 paymentSetting.getBankBin(),
                 paymentSetting.getAccountNumber(),
                 paymentSetting.getAccountName(),
@@ -420,7 +440,7 @@ public class BillingServiceImpl implements BillingService {
     // ─── PRIVATE HELPER METHODS ──────────────────────────────────────────────────
 
     private InvoiceResponse toInvoiceResponse(Invoice inv, ClassEntity clazz, Student student, PaymentSetting setting) {
-        String vietQrUrl = buildVietQrUrl(
+        String vietQrUrl = vietQrService.generateVietQrUrl(
                 setting.getBankBin(),
                 setting.getAccountNumber(),
                 setting.getAccountName(),

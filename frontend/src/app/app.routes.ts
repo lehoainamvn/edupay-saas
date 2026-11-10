@@ -66,6 +66,24 @@ export const routes: Routes = [
       import('./features/settings/settings.component').then((m) => m.SettingsComponent),
   },
   {
+    path: 'admin',
+    canActivate: [authGuard],
+    children: [
+      {
+        path: '',
+        redirectTo: 'platform',
+        pathMatch: 'full',
+      },
+      {
+        path: 'platform',
+        loadComponent: () =>
+          import('./features/admin/admin-dashboard.component').then(
+            (m) => m.AdminDashboardComponent
+          ),
+      },
+    ],
+  },
+  {
     path: 'p/:hash', // Public invoice link cho Phụ huynh (không cần login)
     loadComponent: () =>
       import('./features/public-invoice/public-invoice.component').then(

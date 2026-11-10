@@ -96,4 +96,46 @@ class RateLimitingFilterTest {
         // Chỉ được gọi 60 lần trong filterChain, lần thứ 61 bị ngắt sớm
         verify(filterChain, times(60)).doFilter(any(), any());
     }
+
+    @Test
+    @DisplayName("Cho phép yêu cầu hợp lệ dưới ngưỡng 30 req/phút cho cổng tra cứu /public/invoices/**")
+    void doFilter_PublicInvoice_Within30Reqs_Proceeds() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/public/invoices/abc123hash");
+        request.setRemoteAddr("203.113.130.1");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        rateLimitingFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, times(1)).doFilter(request, response);
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    @DisplayName("Trả về 429 Too Many Requests khi gửi vượt ngưỡng 30 req/phút/IP cho /public/invoices/**")
+    void doFilter_PublicInvoice_Exceeds30Reqs_Returns429() throws ServletException, IOException {
+        String testIp = "203.113.130.99";
+
+        // Gửi 30 requests đầu tiên
+        for (int i = 0; i < 30; i++) {
+            MockHttpServletRequest req = new MockHttpServletRequest("GET", "/public/invoices/testHash");
+            req.setRemoteAddr(testIp);
+            MockHttpServletResponse res = new MockHttpServletResponse();
+            rateLimitingFilter.doFilterInternal(req, res, filterChain);
+            assertEquals(200, res.getStatus());
+        }
+
+        // Request thứ 31 vượt ngưỡng
+        MockHttpServletRequest req31 = new MockHttpServletRequest("GET", "/public/invoices/testHash");
+        req31.setRemoteAddr(testIp);
+        MockHttpServletResponse res31 = new MockHttpServletResponse();
+
+        rateLimitingFilter.doFilterInternal(req31, res31, filterChain);
+
+        assertEquals(429, res31.getStatus());
+        assertEquals("60", res31.getHeader("Retry-After"));
+        assertTrue(res31.getContentAsString().contains("RATE_LIMIT_EXCEEDED"));
+        assertTrue(res31.getContentAsString().contains("tối đa 30"));
+
+        verify(filterChain, times(30)).doFilter(any(), any());
+    }
 }

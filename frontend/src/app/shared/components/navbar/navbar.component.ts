@@ -39,6 +39,7 @@ import { AuthService } from '../../../core/services/auth.service';
             <a routerLink="/attendance" routerLinkActive="active" (click)="closeMobileMenu()">Điểm danh 1 chạm</a>
             <a routerLink="/billing" routerLinkActive="active" (click)="closeMobileMenu()">Học phí VietQR</a>
             <a routerLink="/settings" routerLinkActive="active" (click)="closeMobileMenu()">Cài đặt VietQR</a>
+            <a routerLink="/admin/platform" routerLinkActive="active" (click)="closeMobileMenu()">SuperAdmin</a>
           }
         </div>
 

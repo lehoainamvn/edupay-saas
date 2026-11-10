@@ -19,6 +19,7 @@ public class DashboardSummaryResponse {
     private List<RecentTransactionDto> recentTransactions;
     private List<DebtorDto> debtors;
     private BankSettingDto bankSettings;
+    private List<MonthlyRevenueChartDto> monthlyChart;
 
     @Data
     @Builder
@@ -37,6 +38,20 @@ public class DashboardSummaryResponse {
         private Long attendedCount;
         private Long permittedLeaveCount;
         private Long unpermittedLeaveCount;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MonthlyRevenueChartDto {
+        private String month;          // VD: "2026-10"
+        private String label;          // VD: "Thg 10"
+        private Double expectedAmount; // Doanh thu dự kiến
+        private Double actualAmount;   // Thực thu đã nộp
+        private Long paidCount;        // Số phiếu đã nộp
+        private Long unpaidCount;      // Số phiếu chưa nộp
+        private Double collectionRate; // Tỷ lệ thu hồi %
     }
 
     @Data
@@ -98,4 +113,3 @@ public class DashboardSummaryResponse {
         private String bankBin;
     }
 }
-
