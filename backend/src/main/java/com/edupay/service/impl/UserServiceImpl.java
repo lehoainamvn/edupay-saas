@@ -120,11 +120,18 @@ public class UserServiceImpl implements UserService {
 
     private UUID getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() != null) {
-            try {
-                return UUID.fromString((String) auth.getPrincipal());
-            } catch (Exception e) {
-                log.warn("Principal is not a valid UUID: {}", auth.getPrincipal());
+        if (auth != null && auth.isAuthenticated()) {
+            if (auth.getPrincipal() != null) {
+                try {
+                    return UUID.fromString(auth.getPrincipal().toString());
+                } catch (Exception ignored) {
+                }
+            }
+            if (auth.getName() != null) {
+                try {
+                    return UUID.fromString(auth.getName());
+                } catch (Exception ignored) {
+                }
             }
         }
         // Fallback for dev mode

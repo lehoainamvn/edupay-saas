@@ -26,6 +26,7 @@ import java.util.UUID;
 public class TenantContextFilter extends OncePerRequestFilter {
 
     public static final UUID DEV_DEFAULT_TENANT_ID = UUID.fromString("a0000000-0000-0000-0000-000000000001");
+    public static final UUID DEV_DEFAULT_USER_ID = UUID.fromString("c0000000-0000-0000-0000-000000000001");
 
     @Value("${spring.profiles.active:dev}")
     private String activeProfile;
