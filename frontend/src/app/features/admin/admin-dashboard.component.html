@@ -1,5 +1,3 @@
-<app-navbar mode="app"></app-navbar>
-
 <div class="adminApp">
   <main class="adminContainer">
     <!-- SuperAdmin Header -->
@@ -207,7 +205,7 @@
 
                   <!-- Plan -->
                   <td>
-                    <span class="planBadge" [ngClass]="t.subscriptionPlan?.toLowerCase() || 'standard'">
+                    <span class="planBadge" [ngClass]="t.subscriptionPlan.toLowerCase() || 'standard'">
                       {{ t.subscriptionPlan === 'ANNUAL' ? 'Gói 1 Năm' : (t.subscriptionPlan === 'TRIAL' ? 'Dùng thử' : 'Gói Tháng') }}
                     </span>
                   </td>

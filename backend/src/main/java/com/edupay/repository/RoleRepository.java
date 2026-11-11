@@ -27,5 +27,37 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
             @Param("userId") UUID userId,
             @Param("tenantId") UUID tenantId
     );
+
+    @Query(value = """
+            SELECT DISTINCT r.code
+            FROM roles r
+            JOIN user_roles ur ON ur.role_id = r.id
+            WHERE ur.user_id = :userId
+            """, nativeQuery = true)
+    List<String> findRoleCodesByUserId(@Param("userId") UUID userId);
+
+    @Query(value = """
+            SELECT COUNT(DISTINCT ur.user_id)
+            FROM user_roles ur
+            WHERE ur.role_id = :roleId
+            """, nativeQuery = true)
+    long countUsersByRoleId(@Param("roleId") UUID roleId);
+
+    @Query(value = """
+            SELECT p.code
+            FROM permissions p
+            JOIN role_permissions rp ON rp.permission_id = p.id
+            WHERE rp.role_id = :roleId
+            ORDER BY p.code ASC
+            """, nativeQuery = true)
+    List<String> findPermissionCodesByRoleId(@Param("roleId") UUID roleId);
+
+    @Query(value = """
+            SELECT DISTINCT ur.user_id
+            FROM user_roles ur
+            JOIN roles r ON r.id = ur.role_id
+            WHERE UPPER(r.code) = UPPER(:roleCode)
+            """, nativeQuery = true)
+    List<UUID> findUserIdsByRoleCode(@Param("roleCode") String roleCode);
 }
 

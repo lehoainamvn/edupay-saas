@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { permissionGuard } from './core/guards/permission.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -89,7 +90,11 @@ export const routes: Routes = [
   },
   {
     path: 'admin',
-    canActivate: [authGuard],
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () =>
+      import('./features/admin/layout/admin-layout.component').then(
+        (m) => m.AdminLayoutComponent
+      ),
     children: [
       {
         path: '',
@@ -101,6 +106,27 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/admin/admin-dashboard.component').then(
             (m) => m.AdminDashboardComponent
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/admin-users.component').then(
+            (m) => m.AdminUsersComponent
+          ),
+      },
+      {
+        path: 'roles',
+        loadComponent: () =>
+          import('./features/admin/roles/admin-roles.component').then(
+            (m) => m.AdminRolesComponent
+          ),
+      },
+      {
+        path: 'system-config',
+        loadComponent: () =>
+          import('./features/system-config/system-config.component').then(
+            (m) => m.SystemConfigComponent
           ),
       },
     ],

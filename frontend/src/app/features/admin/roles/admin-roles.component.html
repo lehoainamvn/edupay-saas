@@ -1,0 +1,127 @@
+<div class="roles-page">
+  <!-- ─── PAGE HEADER ─── -->
+  <div class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">Quản lý Phân quyền & Vai trò (RBAC)</h1>
+      <p class="page-desc">Thiết lập ma trận quyền hạn cho từng vai trò trên toàn hệ thống. Kiểm soát chặt chẽ quyền truy cập và thao tác dữ liệu.</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <span>Đang tải ma trận quyền hạn...</span>
+    </div>
+  } @else {
+    <div class="rbac-layout">
+      <!-- ─── LEFT: ROLES SELECTOR LIST ─── -->
+      <div class="roles-sidebar">
+        <div class="sidebar-box-header">
+          <h3>Danh sách Vai trò</h3>
+          <span class="role-count-tag">{{ roles().length }} vai trò</span>
+        </div>
+
+        <div class="roles-list">
+          @for (role of roles(); track role.id) {
+            <div class="role-card"
+                 [class.active]="selectedRole()?.id === role.id"
+                 (click)="selectRole(role)">
+              <div class="role-card-top">
+                <span class="role-name">{{ role.name }}</span>
+                <span class="role-badge" [ngClass]="getRoleBadgeClass(role.code)">{{ role.code }}</span>
+              </div>
+              <p class="role-desc">{{ role.description || 'Không có mô tả' }}</p>
+              <div class="role-meta">
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                  <b>{{ role.userCount }}</b> người dùng
+                </span>
+                <span class="meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                  </svg>
+                  <b>{{ role.permissions ? role.permissions.length : 0 }}</b> quyền
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ─── RIGHT: PERMISSIONS MATRIX ─── -->
+      <div class="matrix-panel">
+        @if (selectedRole()) {
+          <div class="matrix-header-card">
+            <div class="matrix-title-info">
+              <div class="title-row">
+                <h2>Phân quyền cho vai trò: <span class="highlight-name">{{ selectedRole()?.name }}</span></h2>
+                <span class="role-badge" [ngClass]="getRoleBadgeClass(selectedRole()?.code || '')">
+                  {{ selectedRole()?.code }}
+                </span>
+              </div>
+              <p class="role-intro">{{ selectedRole()?.description }}</p>
+            </div>
+
+            <div class="matrix-actions">
+              <div class="quick-checks">
+                <button type="button" class="btn btn-text" (click)="selectAllPermissions()">Chọn tất cả</button>
+                <span class="divider">|</span>
+                <button type="button" class="btn btn-text" (click)="deselectAllPermissions()">Bỏ chọn tất cả</button>
+              </div>
+
+              <button class="btn btn-primary" (click)="savePermissions()" [disabled]="isSaving()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                @if (isSaving()) {
+                  <span>Đang lưu...</span>
+                } @else {
+                  <span>Lưu ma trận quyền ({{ selectedPermissions().size }})</span>
+                }
+              </button>
+            </div>
+          </div>
+
+          <!-- Groups of Permissions -->
+          <div class="groups-container">
+            @for (group of permissionGroups(); track group.resource) {
+              <div class="group-card">
+                <div class="group-header">
+                  <label class="group-checkbox-label">
+                    <input type="checkbox"
+                           [checked]="isGroupAllChecked(group)"
+                           (change)="toggleGroup(group)" />
+                    <span class="group-name">{{ group.resourceName }}</span>
+                  </label>
+                  <span class="group-count">
+                    {{ group.permissions.length }} quyền
+                  </span>
+                </div>
+
+                <div class="permissions-grid">
+                  @for (perm of group.permissions; track perm.code) {
+                    <label class="perm-item" [class.perm-selected]="isPermissionGranted(perm.code)">
+                      <input type="checkbox"
+                             [checked]="isPermissionGranted(perm.code)"
+                             (change)="togglePermission(perm.code)" />
+                      <div class="perm-text">
+                        <span class="perm-title">{{ perm.name }}</span>
+                        <code class="perm-code">{{ perm.code }}</code>
+                      </div>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-selection">
+            <p>Vui lòng chọn một vai trò ở danh sách bên trái để chỉnh sửa ma trận quyền.</p>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

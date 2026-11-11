@@ -1,0 +1,441 @@
+:host {
+  display: block;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+}
+
+.roles-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ─── PAGE HEADER ─── */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.page-desc {
+  font-size: 14px;
+  color: #475569;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ─── LAYOUT GRID (340px 1fr) ─── */
+.rbac-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ─── ROLES SIDEBAR ─── */
+.roles-sidebar {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-box-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f8fafc;
+}
+
+.sidebar-box-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.role-count-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.roles-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-card {
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.role-card:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.role-card.active {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+
+.role-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.role-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.role-desc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.role-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.meta-item svg {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+/* Role Badges */
+.role-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+}
+
+.badge-superadmin {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.badge-owner {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.badge-teacher {
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-viewer {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* ─── MATRIX PANEL (RIGHT) ─── */
+.matrix-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.matrix-header-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.title-row h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.highlight-name {
+  color: #2563eb;
+}
+
+.role-intro {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0;
+}
+
+.matrix-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.quick-checks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-text {
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-text:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+}
+
+.btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── GROUPS CONTAINER ─── */
+.groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.group-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.group-header {
+  padding: 14px 20px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.group-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.group-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+.group-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.group-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.permissions-grid {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.perm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.perm-item:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.perm-item.perm-selected {
+  border-color: #93c5fd;
+  background-color: #f0f7ff;
+}
+
+.perm-item input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #2563eb;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.perm-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.perm-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.35;
+}
+
+.perm-code {
+  font-size: 11.5px;
+  color: #64748b;
+  background-color: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+/* Loading & Empty states */
+.loading-state, .empty-selection {
+  padding: 60px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .rbac-layout {
+    grid-template-columns: 1fr;
+  }
+}

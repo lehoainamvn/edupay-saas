@@ -1,0 +1,114 @@
+<div class="admin-shell" [class.sidebar-collapsed]="isSidebarCollapsed()">
+  <!-- Backdrop for mobile drawer -->
+  @if (isMobileSidebarOpen()) {
+    <div class="mobile-backdrop" (click)="toggleMobileSidebar()"></div>
+  }
+
+  <!-- ─── SIDEBAR CHUYÊN BIỆT ADMIN (SLATE NAVY #0f172a) ─── -->
+  <aside class="admin-sidebar" [class.mobile-open]="isMobileSidebarOpen()">
+    <!-- Brand / Console Header -->
+    <div class="sidebar-header">
+      <div class="brand-badge">
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+      </div>
+      @if (!isSidebarCollapsed()) {
+        <div class="brand-text">
+          <span class="brand-title">EduPay Admin</span>
+          <span class="brand-subtitle">Platform Console</span>
+        </div>
+      }
+      <button class="collapse-btn" (click)="toggleSidebar()" title="Thu gọn / Mở rộng Sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Menu Items -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-title" *ngIf="!isSidebarCollapsed()">QUẢN TRỊ NỀN TẢNG</div>
+      @for (item of navItems; track item.route) {
+        <a [routerLink]="item.route"
+           routerLinkActive="active"
+           class="nav-item"
+           [title]="item.label">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" [attr.d]="item.icon" />
+          </svg>
+          @if (!isSidebarCollapsed()) {
+            <span class="nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </nav>
+
+    <!-- Sidebar Footer / Bottom Actions -->
+    <div class="sidebar-footer">
+      <button class="switch-desk-btn" (click)="goToTeacherPortal()" title="Chuyển sang Giao diện Giáo viên">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        @if (!isSidebarCollapsed()) {
+          <span>Về trang Dạy học</span>
+        }
+      </button>
+
+      <div class="admin-profile-card">
+        <div class="admin-avatar">
+          {{ userInfo?.fullName ? userInfo?.fullName?.substring(0, 2)?.toUpperCase() : 'AD' }}
+        </div>
+        @if (!isSidebarCollapsed()) {
+          <div class="admin-info">
+            <span class="admin-name">{{ userInfo?.fullName || 'SuperAdmin' }}</span>
+            <span class="admin-role-badge">SUPER_ADMIN</span>
+          </div>
+          <button class="logout-btn" (click)="logout()" title="Đăng xuất">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+            </svg>
+          </button>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN CONTENT CONTAINER ─── -->
+  <div class="admin-main">
+    <!-- Topbar -->
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="mobile-toggle-btn" (click)="toggleMobileSidebar()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+        <div class="breadcrumbs">
+          <span class="crumb-root">Cổng Quản trị SuperAdmin</span>
+          <span class="crumb-separator">/</span>
+          <span class="crumb-active">{{ currentTitle() }}</span>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="system-status-indicator">
+          <span class="status-dot"></span>
+          <span class="status-text">Platform Live</span>
+        </div>
+
+        <button class="quick-desk-btn" (click)="goToTeacherPortal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+          <span>Trang Dạy học</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Page Body Outlet -->
+    <main class="admin-body">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
