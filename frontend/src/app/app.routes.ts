@@ -81,12 +81,8 @@ export const routes: Routes = [
   },
   {
     path: 'system-config',
-    canActivate: [authGuard, permissionGuard],
-    data: { permission: 'system:config:read' },
-    loadComponent: () =>
-      import('./features/system-config/system-config.component').then(
-        (m) => m.SystemConfigComponent
-      ),
+    redirectTo: 'admin/system-config',
+    pathMatch: 'full',
   },
   {
     path: 'admin',

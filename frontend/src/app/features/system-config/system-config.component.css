@@ -5,22 +5,20 @@
 
 :host {
   display: block;
-  min-height: 100vh;
-  background-color: #f8fafc;
   color: #0f172a;
 }
 
 /* ─── PAGE CONTAINER ──────────────────────────────────────────────────────── */
 .page {
-  max-width: 1080px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 28px 20px 96px;
+  padding: 0 0 40px;
   box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
   .page {
-    padding: 20px 16px 80px;
+    padding: 0 0 30px;
   }
 }
 

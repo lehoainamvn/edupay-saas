@@ -1,7 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NavbarComponent } from '../../shared/components/navbar/navbar.component';
 import { SystemParameterService } from '../../core/services/system-parameter.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
@@ -22,7 +21,7 @@ export interface GroupSection {
 @Component({
   selector: 'app-system-config',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './system-config.component.html',
   styleUrls: ['./system-config.component.css']
 })

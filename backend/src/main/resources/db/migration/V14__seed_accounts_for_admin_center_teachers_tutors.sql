@@ -232,3 +232,4 @@ SELECT
 FROM roles r
 WHERE r.code = 'OWNER' AND r.tenant_id IS NULL
 ON CONFLICT (user_id, role_id) DO NOTHING;
+
