@@ -9,6 +9,9 @@ export interface ClassItem {
   defaultFee: number;
   isActive: boolean;
   studentCount: number;
+  scheduleDays?: string;
+  startTime?: string;
+  endTime?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -18,4 +21,7 @@ export interface ClassRequestPayload {
   description?: string;
   feeType: FeeType;
   defaultFee: number;
+  scheduleDays?: string;
+  startTime?: string;
+  endTime?: string;
 }

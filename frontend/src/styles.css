@@ -8,21 +8,56 @@
 /* ─── DESIGN SYSTEM VARIABLES ────────────────────────────────────────────── */
 :root {
   --font-base: 16px;
+  --font-family-main: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
   --page-max-width: 1280px;
   --page-padding-desktop: 28px 24px 96px;
   --page-padding-tablet: 24px 20px 88px;
   --page-padding-mobile: 20px 16px 80px;
 
-  --canvas: #f8fafc;
+  /* Cỡ chữ & Phân cấp chuẩn cho người dùng 22 - 45 tuổi */
+  --font-h1: 26px;
+  --font-h1-weight: 700;
+  --font-h2: 18px;
+  --font-h2-weight: 700;
+  --font-h3: 15.5px;
+  --font-h3-weight: 600;
+  --font-body: 14px;
+  --font-meta: 13px;
+  --font-badge: 11.5px;
+  --font-kpi: 24px;
+  --font-kpi-weight: 700;
+
+  /* Chiều cao dòng chuẩn tiếng Việt */
+  --lh-tight: 1.25;
+  --lh-heading: 1.35;
+  --lh-body: 1.5;
+
+  /* Màu sắc văn bản 3 cấp độ */
   --ink: #0f172a;
+  --ink-heading: #111827;
+  --ink-body: #334155;
   --muted: #64748b;
+  --subtle: #94a3b8;
+
+  /* Màu chủ đạo & tài chính */
+  --canvas: #f8fafc;
   --border: #e2e8f0;
   --blue: #2563eb;
   --blue-hover: #1d4ed8;
-  --green: #10b981;
-  --amber: #f59e0b;
+  --blue-soft: #eff6ff;
+  --green: #059669;
+  --green-soft: #ecfdf5;
+  --amber: #d97706;
+  --amber-soft: #fffbeb;
   --red: #ef4444;
   --white: #ffffff;
+
+  /* Kích thước điều khiển chuẩn */
+  --navbar-height: 60px;
+  --btn-height-primary: 46px;
+  --btn-height-mini: 34px;
+  --input-height: 44px;
 }
 
 /* ─── ROOT TYPOGRAPHY (CHÍNH SÁCH FONT-SIZE 16PX TOÀN HỆ THỐNG) ─────────── */

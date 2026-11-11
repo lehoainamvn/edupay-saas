@@ -41,4 +41,13 @@ public class ClassRequest {
     @DecimalMin(value = "0.0", inclusive = true, message = "Đơn giá học phí mặc định không được nhỏ hơn 0")
     @Schema(description = "Đơn giá học phí mặc định (VNĐ)", example = "150000")
     private BigDecimal defaultFee;
+
+    @Schema(description = "Các thứ trong tuần lớp học diễn ra, cách nhau bằng dấu phẩy", example = "MONDAY,WEDNESDAY,FRIDAY")
+    private String scheduleDays;
+
+    @Schema(description = "Giờ bắt đầu học (HH:mm)", example = "17:30")
+    private String startTime;
+
+    @Schema(description = "Giờ kết thúc học (HH:mm)", example = "19:00")
+    private String endTime;
 }

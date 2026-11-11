@@ -113,10 +113,56 @@ Trước khi gửi PR cho Leader duyệt, Dev tự tích kiểm tra:
 - [ ] Code không vi phạm luật Multi-tenant (đã lọc theo `tenant_id`).
 - [ ] Đã tái sử dụng tối đa các component và class có sẵn trong `shared/`, không tạo trùng lặp.
 - [ ] Không chèn emoji hay icon lạ do AI tự bịa vào giao diện (Clean Typography).
+- [ ] Tuân thủ tuyệt đối Bộ quy chuẩn Typography & Thiết kế cho độ tuổi 22 - 45 (Phần 9).
 - [ ] Mọi cấu hình route đều nằm duy nhất trong `frontend/src/app/app.routes.ts`.
 - [ ] Đã kết nối API thật và xử lý đầy đủ các trường hợp dữ liệu rỗng (Empty States).
-- [ ] Đã tái sử dụng tối đa các component và class có sẵn trong `shared/`, không tạo trùng lặp.
 - [ ] Không có file thừa, không có file `.env` hoặc secret keys bị commit.
 - [ ] Chạy build local thành công (không có lỗi compile / lint).
 - [ ] Tên nhánh và commit message tuân thủ đúng quy chuẩn.
 - [ ] Đã test giao diện trên kích thước màn hình điện thoại (Mobile Viewport 375px - 430px).
+
+---
+
+## PHẦN 9: BỘ QUY CHUẨN TYPOGRAPHY & THIẾT KẾ GIAO DIỆN ĐỘ TUỔI 22 - 45 (BẮT BUỘC TOÀN HỆ THỐNG)
+
+> **Mục tiêu:** Nhóm người dùng 22 - 45 tuổi (giáo viên, gia sư, chủ cơ sở) đòi hỏi sự hiện đại, gọn gàng, độ tương phản cao, dễ đọc, không gây mỏi mắt và tuyệt đối không bấm trượt trên thiết bị cảm ứng. Mọi màn hình mới hoặc khi chỉnh sửa giao diện **BẮT BUỘC** áp dụng chuẩn sau:
+
+### 1. Phông chữ chuẩn (Font Family)
+* **Font bắt buộc:** `'Be Vietnam Pro'` (fallback: `'Inter', -apple-system, BlinkMacSystemFont, sans-serif`).
+* **Lý do:** Đây là font thiết kế chuẩn quốc tế dành riêng cho tiếng Việt, cân bằng hoàn hảo các dấu thanh (*sắc, huyền, hỏi, ngã, nặng, mũ, ơ, ư*), không bị dính vào ký tự hoặc đẩy dòng lệch.
+* **Cấm:** Không dùng font Serif (chân), font trang trí viết tay hoặc font không hỗ trợ đầy đủ ký tự tiếng Việt.
+
+### 2. Bảng phân cấp cỡ chữ & Kiểu chữ (Typography Scale)
+
+| Thành phần giao diện | Cỡ chữ (Font Size) | Độ đậm (Font Weight) | Chiều cao dòng (Line Height) | Màu sắc (Color) | Ghi chú áp dụng |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Thanh Menu (Navbar)** | **14px** | 600 (SemiBold) | 1.4 | `#0f172a` (Active: `#2563eb`) | Chiều cao thanh Nav cố định `60px`. Tab text-only, khoảng cách `16px - 20px`. |
+| **Nhãn dẫn (Eyebrow / Kicker)** | **11px – 12px** | 700 (Bold) | 1.3 | `#2563eb` hoặc `#64748b` | Viết hoa toàn bộ (`uppercase`), `letter-spacing: 0.05em`. VD: `ĐIỂM DANH BUỔI HỌC` |
+| **Tiêu đề trang (H1)** | **24px – 26px** | 700 (Bold) | 1.25 – 1.3 | `#0f172a` / `#111827` | `letter-spacing: -0.02em`. VD: `Hôm nay, Lê Hoài Nam có 2 ca dạy.` |
+| **Tiêu đề phân khu (H2)** | **17px – 18px** | 700 (Bold) | 1.35 | `#111827` | `letter-spacing: -0.015em`. VD: `Thời khóa biểu tuần`, `Ca dạy hôm nay` |
+| **Tiêu đề thẻ / Card (H3)** | **15px – 16px** | 600 (SemiBold) | 1.4 | `#111827` | VD: Tên lớp học, tiêu đề bảng `Giao dịch VietQR gần đây` |
+| **Nội dung chính (Body Text)** | **14px** | 400 (Regular) / 500 (Medium) | **1.5** | `#334155` | Tên học sinh, đoạn mô tả hướng dẫn, văn bản bảng dữ liệu |
+| **Nội dung phụ (Meta / Subtext)** | **12.5px – 13px** | 400 (Regular) | 1.45 | `#64748b` | Số điện thoại PH, ngày giờ, địa điểm phòng học, mã chuyển khoản |
+| **Nhãn trạng thái (Badge / Tag)** | **11px – 12px** | 600 (SemiBold) / 700 (Bold) | 1.2 | Xanh/Vàng/Đỏ tùy ngữ cảnh | Padding `2px 8px`, bo tròn `999px`. VD: `[T2] [T4] [T6]`, `● Lịch hôm nay`, `✓ Đã gạch nợ` |
+| **Chỉ số lớn & Tiền tệ (KPI)** | **22px – 26px** | 700 (Bold) | 1.2 | `#0f172a` (Xanh: `#059669`) | Các số tiền tổng hợp: `150.000 đ`, `24.500.000 đ` |
+
+### 3. Quy chuẩn Nút bấm (Button) & Ô nhập liệu (Input)
+* **Nút bấm chính (Primary Action):**
+  * Chiều cao: **`44px – 48px`** (đảm bảo Touch Target $\ge 44\text{px}$ cho cảm ứng điện thoại).
+  * Chữ nút: **`14px – 14.5px`**, SemiBold (600), màu trắng `#ffffff`.
+  * Bo góc: `8px – 10px`.
+* **Nút bấm phụ / Mini (Secondary / Mini Button):**
+  * Chiều cao: **`32px – 36px`**.
+  * Chữ nút: **`12.5px – 13px`**, SemiBold (600).
+* **Ô nhập liệu & Chọn ngày/tháng (Inputs & Pickers):**
+  * Chiều cao: **`42px – 48px`**.
+  * Chữ bên trong: **`14px – 14.5px`**, màu `#0f172a`.
+  * Bộ chọn tháng **BẮT BUỘC** hiển thị thuần tiếng Việt: `Tháng 11/2026 📅`, cấm hiển thị 2 ô thừa cạnh nhau hoặc tiếng Anh (`November 2026`).
+
+### 4. 3 Nguyên tắc Bất Di Bất Dịch
+1. **CẤM font < 11px:** Kể cả nhãn phụ hay chú thích nhỏ nhất cũng không được đặt cỡ chữ dưới 11px.
+2. **Hệ thống 3 cấp màu tương phản chuẩn:**
+   * Cấp 1 (Chính): `#0f172a` hoặc `#111827` (Đen than đậm) cho tiêu đề, tên học sinh, số tiền.
+   * Cấp 2 (Phụ): `#64748b` (Xám đá) cho nhãn mô tả, ngày giờ, số điện thoại.
+   * Cấp 3 (Hành động & Điểm nhấn): `#2563eb` (Xanh thương hiệu), `#059669` (Xanh lá thực thu), `#d97706` (Cam nợ phí).
+3. **Khoảng cách dòng (Line-height) tối thiểu 1.4 – 1.5:** Đảm bảo tiếng Việt có đủ không gian hiển thị các dấu thanh không bị đè dính lên dòng trên.

@@ -39,6 +39,15 @@ public class ClassResponse {
     @Schema(description = "Đơn giá học phí mặc định (VNĐ)", example = "150000")
     private BigDecimal defaultFee;
 
+    @Schema(description = "Các thứ trong tuần lớp học diễn ra", example = "MONDAY,WEDNESDAY,FRIDAY")
+    private String scheduleDays;
+
+    @Schema(description = "Giờ bắt đầu học", example = "17:30")
+    private String startTime;
+
+    @Schema(description = "Giờ kết thúc học", example = "19:00")
+    private String endTime;
+
     @Schema(description = "Trạng thái hoạt động (true = đang mở, false = đã lưu trữ/soft-delete)", example = "true")
     private Boolean isActive;
 

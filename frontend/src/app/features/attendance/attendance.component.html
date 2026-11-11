@@ -18,20 +18,143 @@
           </p>
         </div>
 
-        <!-- Class Selector Dropdown -->
+        <!-- Redesigned Custom Class Selector Dropdown -->
         @if (classes().length > 0) {
-          <div class="classSelectBox">
-            <label for="classSelect">Lớp đang chọn:</label>
-            <select
-              id="classSelect"
-              [ngModel]="selectedClassId()"
-              (ngModelChange)="onClassChange($event)"
-              class="classDropdown"
+          <div class="customClassSelectWrapper">
+            <span class="selectorLabel">Lớp đang điểm danh:</span>
+
+            <!-- Trigger Button -->
+            <button
+              type="button"
+              class="customClassTrigger"
+              [class.open]="isClassDropdownOpen()"
+              (click)="toggleClassDropdown()"
+              aria-haspopup="listbox"
+              [attr.aria-expanded]="isClassDropdownOpen()"
             >
-              @for (c of classes(); track c.id) {
-                <option [value]="c.id">{{ c.name }}</option>
-              }
-            </select>
+              <div class="triggerLeft">
+                <div class="triggerTitleRow">
+                  <strong class="triggerClassName">{{ selectedClass()?.name || 'Chọn lớp học' }}</strong>
+                  @if (isSelectedClassScheduledToday()) {
+                    <span class="todayIndicatorPill">
+                      <span class="liveDot"></span>
+                      <span>Lịch hôm nay</span>
+                    </span>
+                  } @else {
+                    <span class="otherDayIndicatorPill">Ngoài lịch</span>
+                  }
+                </div>
+
+                <div class="triggerMetaRow">
+                  <div class="schedBadges">
+                    @for (day of getScheduleDaysList(selectedClass()); track day) {
+                      <span class="dayPillSmall">{{ day }}</span>
+                    }
+                  </div>
+                  <span class="metaSep">•</span>
+                  <span class="triggerTime">{{ getClassTimeStr(selectedClass()) }}</span>
+                  <span class="metaSep">•</span>
+                  <span class="triggerCount">{{ selectedClass()?.studentCount || 0 }} HS</span>
+                </div>
+              </div>
+
+              <div class="triggerChevron">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+            </button>
+
+            <!-- Custom Floating Dropdown Menu -->
+            @if (isClassDropdownOpen()) {
+              <div class="customClassMenu" role="listbox">
+                <!-- Group 1: Lớp có lịch hôm nay -->
+                <div class="menuGroupHeader todayGroup">
+                  <span class="groupStar">★</span>
+                  <span>CÁC LỚP CÓ LỊCH HÔM NAY ({{ selectedDayOfWeekVi() }})</span>
+                </div>
+
+                @if (prioritizedClasses().today.length > 0) {
+                  @for (c of prioritizedClasses().today; track c.id) {
+                    <button
+                      type="button"
+                      class="menuClassItem"
+                      [class.selected]="c.id === selectedClassId()"
+                      (click)="selectClass(c)"
+                      role="option"
+                      [attr.aria-selected]="c.id === selectedClassId()"
+                    >
+                      <div class="itemLeft">
+                        <div class="itemTitleRow">
+                          <strong class="itemClassName">{{ c.name }}</strong>
+                          <span class="itemStudentCount">{{ c.studentCount }} HS</span>
+                        </div>
+                        <div class="itemMetaRow">
+                          <div class="schedBadges">
+                            @for (d of getScheduleDaysList(c); track d) {
+                              <span class="dayPillSmall highlightDay">{{ d }}</span>
+                            }
+                          </div>
+                          <span class="metaSep">•</span>
+                          <span class="itemTime">{{ getClassTimeStr(c) }}</span>
+                          <span class="metaSep">•</span>
+                          <span class="itemRoom">{{ getRoomStr(c) }}</span>
+                        </div>
+                      </div>
+
+                      @if (c.id === selectedClassId()) {
+                        <div class="itemCheck">✓</div>
+                      }
+                    </button>
+                  }
+                } @else {
+                  <div class="menuEmptyNotice">
+                    <span>Không có lớp nào có lịch cố định vào {{ selectedDayOfWeekVi() }}</span>
+                  </div>
+                }
+
+                <!-- Group 2: Các lớp khác trong tuần -->
+                @if (prioritizedClasses().others.length > 0) {
+                  <div class="menuDivider"></div>
+                  <div class="menuGroupHeader otherGroup">
+                    <span>CÁC LỚP KHÁC TRONG TUẦN (ĐIỂM DANH BÙ)</span>
+                  </div>
+
+                  @for (c of prioritizedClasses().others; track c.id) {
+                    <button
+                      type="button"
+                      class="menuClassItem"
+                      [class.selected]="c.id === selectedClassId()"
+                      (click)="selectClass(c)"
+                      role="option"
+                      [attr.aria-selected]="c.id === selectedClassId()"
+                    >
+                      <div class="itemLeft">
+                        <div class="itemTitleRow">
+                          <strong class="itemClassName">{{ c.name }}</strong>
+                          <span class="itemStudentCount">{{ c.studentCount }} HS</span>
+                        </div>
+                        <div class="itemMetaRow">
+                          <div class="schedBadges">
+                            @for (d of getScheduleDaysList(c); track d) {
+                              <span class="dayPillSmall">{{ d }}</span>
+                            }
+                          </div>
+                          <span class="metaSep">•</span>
+                          <span class="itemTime">{{ getClassTimeStr(c) }}</span>
+                          <span class="metaSep">•</span>
+                          <span class="itemRoom">{{ getRoomStr(c) }}</span>
+                        </div>
+                      </div>
+
+                      @if (c.id === selectedClassId()) {
+                        <div class="itemCheck">✓</div>
+                      }
+                    </button>
+                  }
+                }
+              </div>
+            }
           </div>
         }
       </div>
@@ -83,6 +206,73 @@
     <!-- TAB 1: DAILY ATTENDANCE (UC-13) -->
     @if (classes().length > 0 && activeTab() === 'daily') {
       <section class="dailySection">
+        <!-- Prominent Session Context Hero Banner -->
+        @if (selectedClass()) {
+          @if (isSelectedClassScheduledToday()) {
+            <div class="sessionHeroBanner todayHeroBanner">
+              <div class="bannerLeft">
+                <div class="bannerTopRow">
+                  <span class="liveSessionPill">
+                    <span class="livePulseDot"></span>
+                    <span>BUỔI HỌC HÔM NAY · ĐÚNG LỊCH</span>
+                  </span>
+                  <span class="bannerDateStr">{{ selectedDayOfWeekVi() }}, ngày {{ formatDateVi(selectedDate()) }}</span>
+                </div>
+                <h2 class="bannerClassName">{{ selectedClass()?.name }}</h2>
+                <div class="bannerMetaRow">
+                  <div class="schedulePillsGroup">
+                    <span class="schedulePrefix">Lịch học:</span>
+                    @for (day of getScheduleDaysList(selectedClass()); track day) {
+                      <span class="dayPillLarge">{{ day }}</span>
+                    }
+                  </div>
+                  <span class="bannerMetaSep">•</span>
+                  <span class="bannerMetaItem">Khung giờ: <b>{{ getClassTimeStr(selectedClass()) }}</b></span>
+                  <span class="bannerMetaSep">•</span>
+                  <span class="bannerMetaItem">Địa điểm: <b>{{ getRoomStr(selectedClass()) }}</b></span>
+                  <span class="bannerMetaSep">•</span>
+                  <span class="bannerMetaItem">Sĩ số: <b>{{ selectedClass()?.studentCount || 0 }} học sinh</b></span>
+                </div>
+              </div>
+
+              <div class="bannerRight">
+                <div class="readyPill">
+                  <span>✓ Sẵn sàng điểm danh</span>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="sessionHeroBanner makeupHeroBanner">
+              <div class="bannerLeft">
+                <div class="bannerTopRow">
+                  <span class="makeupSessionPill">
+                    <span>ℹ ĐIỂM DANH BUỔI HỌC BÙ / ĐỘT XUẤT</span>
+                  </span>
+                  <span class="bannerDateStr">{{ selectedDayOfWeekVi() }}, ngày {{ formatDateVi(selectedDate()) }}</span>
+                </div>
+                <h2 class="bannerClassName">{{ selectedClass()?.name }}</h2>
+                <div class="bannerMetaRow">
+                  <span class="makeupWarningText">
+                    Lớp có lịch cố định vào: <b>{{ getScheduleDaysText(selectedClass()) }}</b> (không phải {{ selectedDayOfWeekVi() }}). Hệ thống đang ghi nhận ca học ngoài lịch.
+                  </span>
+                </div>
+              </div>
+
+              @if (prioritizedClasses().today.length > 0) {
+                <div class="bannerRight">
+                  <button
+                    type="button"
+                    class="switchTodayClassBtn"
+                    (click)="selectClass(prioritizedClasses().today[0])"
+                  >
+                    <span>Chuyển sang lớp đúng lịch: <b>{{ prioritizedClasses().today[0].name }}</b> →</span>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        }
+
         <!-- Date Bar & Controls -->
         <div class="controlsCard">
           <div class="dateControls">
@@ -305,14 +495,43 @@
         <div class="controlsCard">
           <div class="dateControls">
             <div class="dateInputWrapper">
-              <label for="monthInput">Kỳ học (Tháng):</label>
-              <input
-                id="monthInput"
-                type="month"
-                [ngModel]="selectedMonth()"
-                (ngModelChange)="onMonthChange($event)"
-                class="dateInput"
-              />
+              <label class="filterLabel">Kỳ học (Tháng):</label>
+              <div class="vietnameseMonthPicker">
+                <button
+                  type="button"
+                  class="monthNavBtn"
+                  (click)="changeMonthOffset(-1)"
+                  title="Tháng trước"
+                >
+                  ‹
+                </button>
+                <div class="monthDisplayBox">
+                  <span class="monthText">{{ formatMonthVN(selectedMonth()) }}</span>
+                  <span class="calendarIcon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                  </span>
+                  <input
+                    type="month"
+                    class="hiddenNativeMonthInput"
+                    [ngModel]="selectedMonth()"
+                    (ngModelChange)="onMonthChange($event)"
+                    title="Chọn kỳ học"
+                  />
+                </div>
+                <button
+                  type="button"
+                  class="monthNavBtn"
+                  (click)="changeMonthOffset(1)"
+                  title="Tháng sau"
+                >
+                  ›
+                </button>
+              </div>
             </div>
             <div class="datePresets">
               <button

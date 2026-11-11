@@ -1,367 +1,398 @@
 <app-navbar mode="app"></app-navbar>
 
-<div class="dashboardApp">
-  <main class="dashboard">
-    <!-- Greeting & Priority Actions Header (Clean Typography - No AI Emojis) -->
-    <header class="greeting">
-      <div>
-        <span class="dashboardKicker"><i></i> BẢNG ĐIỀU HÀNH GIẢNG DẠY · THÁNG 10/2026</span>
-        <h1>Chào {{ teacherName() }}, hôm nay có {{ todayClasses().length }} ca dạy cần điểm danh!</h1>
-        <p>Thứ Năm, ngày 29/10/2026 · Hệ thống đã đối soát tự động <b>{{ kpis().paidCount }}/{{ kpis().totalStudents }} học sinh</b> qua VietQR Napas247.</p>
-      </div>
-      <a routerLink="/attendance" class="primaryButton">
-        <span>Điểm danh ca dạy hôm nay</span>
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12h14m-5-5 5 5-5 5" />
-        </svg>
-      </a>
+<!-- Toast thông báo nhanh -->
+@if (remindSuccessMessage()) {
+  <div class="toastAlert" role="alert">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ remindSuccessMessage() }}</span>
+  </div>
+}
+
+<div class="calmApp">
+  <main class="calmDesk">
+    <!-- A. Editorial Header (24px Inter Medium, #111827) -->
+    <header class="deskHeader">
+      @if (todayClasses().length > 0) {
+        <h1 class="greetingTitle">Hôm nay, {{ teacherName() }} có {{ todayClasses().length }} ca dạy.</h1>
+      } @else {
+        <h1 class="greetingTitle">Hôm nay, {{ teacherName() }} không có ca dạy nào.</h1>
+      }
+      <p class="greetingSub">
+        {{ currentDateStr() }} · Hệ thống đã đối soát tự động <b>{{ kpis().paidCount }}/{{ kpis().totalStudents }} học sinh</b> qua VietQR Napas247.
+      </p>
     </header>
 
-    <!-- 4 KPI Metrics Strip (Tabular Numerals) -->
-    <section class="kpiGrid" aria-label="Chỉ số tháng 10">
-      <!-- Card 1: Dự thu -->
-      <article class="kpiCard">
-        <div class="kpiHeader">
-          <span class="iconBox blue">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M4 6h14a2 2 0 0 1 2 2v11H4a2 2 0 0 1-2-2V7a3 3 0 0 1 3-3h12" />
-              <path d="M15 11h7v5h-7a2.5 2.5 0 0 1 0-5Z" />
-            </svg>
-          </span>
-          <b>Dự thu tháng này</b>
-        </div>
-        <strong class="kpiValue blueText">{{ money(kpis().expectedTuition) }}</strong>
-        <span class="neutralPill">● {{ kpis().totalStudents }} học sinh · {{ kpis().totalClasses }} lớp học</span>
-      </article>
-
-      <!-- Card 2: Đã thu -->
-      <article class="kpiCard">
-        <div class="kpiHeader">
-          <span class="iconBox green">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="m8 12 2.5 2.5L16 9" />
-            </svg>
-          </span>
-          <b>Đã thu thực tế</b>
-        </div>
-        <strong class="kpiValue greenText">{{ money(kpis().actualTuition) }}</strong>
-        <div class="progress">
-          <i [style.width.%]="kpis().progressPercent"></i>
-        </div>
-        <span class="kpiMeta">{{ kpis().progressPercent }}% tiến độ · {{ kpis().paidCount }} giao dịch VietQR</span>
-      </article>
-
-      <!-- Card 3: Chưa nộp -->
-      <article class="kpiCard">
-        <div class="kpiHeader">
-          <span class="iconBox amber">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 2" />
-            </svg>
-          </span>
-          <b>Chưa nộp / Đang chờ</b>
-        </div>
-        <strong class="kpiValue amberText">{{ money(kpis().unpaidTuition) }}</strong>
-        <div class="kpiFooter">
-          <span>{{ kpis().unpaidCount }} học sinh chưa nộp</span>
-          <a routerLink="/billing" class="remindLink">Nhắc nợ Zalo →</a>
-        </div>
-      </article>
-
-      <!-- Card 4: Chuyên cần -->
-      <article class="kpiCard">
-        <div class="kpiHeader">
-          <span class="iconBox blue">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="9" cy="9" r="3" />
-              <circle cx="17" cy="10" r="2.5" />
-              <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6M15 15c3.5 0 5.5 1.7 6 5" />
-            </svg>
-          </span>
-          <b>Tỷ lệ chuyên cần tháng</b>
-        </div>
-        <strong class="kpiValue">{{ kpis().attendanceRate }}%</strong>
-        <span class="kpiMeta">{{ kpis().attendedCount }} có mặt · {{ kpis().permittedLeaveCount }} có phép · {{ kpis().unpermittedLeaveCount }} vắng</span>
-      </article>
-    </section>
-
-    <!-- Main Workspace (8-col / 4-col) -->
-    <section class="dashboardGrid">
-      <!-- Main Column (Left - 8 cols) -->
-      <div class="mainColumn">
-        <!-- Panel 1: Lịch dạy hôm nay -->
-        <article class="panel todayPanel">
-          <div class="panelHeader">
-            <div>
-              <span class="panelEyebrow">LỊCH GIẢNG DẠY</span>
-              <h2>Ca dạy hôm nay</h2>
-            </div>
-            <a routerLink="/classes" class="linkButton">
-              <span>Xem lịch tuần</span>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 12h14m-5-5 5 5-5 5" />
-              </svg>
-            </a>
-          </div>
-
-          @if (todayClasses().length > 0) {
-            <div class="classList">
-              @for (item of todayClasses(); track item.id; let idx = $index) {
-                <div class="classRow">
-                  <div class="timeBlock">
-                    <strong>{{ item.time }}</strong>
-                    <span>{{ item.end }}</span>
-                  </div>
-                  <div class="timeline">
-                    <i></i>
-                    <span></span>
-                  </div>
-                  <div class="classInfo">
-                    <span class="status" [ngClass]="item.state">{{ item.text }}</span>
-                    <h3>{{ item.name }}</h3>
-                    <p>
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 5a3 3 0 0 1 3-3h5v18H7a3 3 0 0 0-3 2V5ZM20 5a3 3 0 0 0-3-3h-5v18h5a3 3 0 0 1 3 2V5Z" />
-                      </svg>
-                      {{ item.room }}
-                      <span>·</span>
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle cx="9" cy="9" r="3" />
-                        <circle cx="17" cy="10" r="2.5" />
-                        <path d="M3 20c.5-4 2.4-6 6-6s5.5 2 6 6M15 15c3.5 0 5.5 1.7 6 5" />
-                      </svg>
-                      {{ item.count }} học sinh
-                    </p>
-                  </div>
-                  @if (idx === 0) {
-                    <a routerLink="/attendance" class="attendanceButton">
-                      <span>Điểm danh ngay</span>
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 12h14m-5-5 5 5-5 5" />
-                      </svg>
-                    </a>
-                  } @else {
-                    <a routerLink="/classes" class="secondaryButton">
-                      <span>Xem lớp</span>
-                      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 12h14m-5-5 5 5-5 5" />
-                      </svg>
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-            <div class="emptySchedule">
-              <span>✓</span>
-              <p>Sau 21:00 không còn ca dạy nào. {{ teacherName() }} có thể nghỉ ngơi!</p>
-            </div>
-          } @else {
-            <div class="emptyStateBox">
-              <p class="emptyTitle">Chưa có ca dạy nào trong danh sách</p>
-              <p class="emptySub">Hãy tạo lớp học mới để hệ thống tự động sắp xếp lịch giảng dạy và danh sách điểm danh.</p>
-              <a routerLink="/classes" class="emptyActionBtn">+ Tạo lớp học mới</a>
-            </div>
-          }
-        </article>
-
-        
-        <!-- Panel 2: Biểu đồ doanh thu 6 tháng gần nhất -->
-        <article class="panel chartPanel">
-          <div class="panelHeader">
-            <div>
-              <span class="panelEyebrow">XU HƯỚNG TÀI CHÍNH</span>
-              <h2>Biểu đồ doanh thu 6 tháng gần nhất</h2>
-            </div>
-            <div class="chartLegend">
-              <span class="legendItem expected"><i class="dot blue"></i> Dự kiến</span>
-              <span class="legendItem actual"><i class="dot green"></i> Thực thu</span>
-            </div>
-          </div>
-
-          <div class="chartSummaryBar">
-            <div class="summaryStat">
-              <span class="statLabel">Tổng thực thu 6 tháng:</span>
-              <strong class="statValue greenText">{{ money(total6MonthActual()) }}</strong>
-            </div>
-            <div class="summaryStat">
-              <span class="statLabel">Tỷ lệ thu hồi TB:</span>
-              <strong class="statValue blueText">{{ avgCollectionRate() }}%</strong>
-            </div>
-          </div>
-
-          @if (monthlyChart().length > 0) {
-            <div class="barChartContainer">
-              <div class="barsGrid">
-                @for (m of monthlyChart(); track m.month) {
-                  <div class="barGroup">
-                    <div class="barsTrack">
-                      <!-- Expected Bar -->
-                      <div class="bar expectedBar" 
-                           [style.height.%]="getBarHeight(m.expectedAmount)">
-                        <span class="barTooltip">Dự kiến: {{ money(m.expectedAmount) }}</span>
-                      </div>
-                      <!-- Actual Bar -->
-                      <div class="bar actualBar" 
-                           [style.height.%]="getBarHeight(m.actualAmount)">
-                        <span class="barTooltip">Thực thu: {{ money(m.actualAmount) }} ({{ m.collectionRate }}%)</span>
-                      </div>
-                    </div>
-                    <div class="barFooter">
-                      <span class="barMonth">{{ m.label }}</span>
-                      <span class="barRate" [class.highRate]="m.collectionRate >= 80">{{ m.collectionRate }}%</span>
-                    </div>
-                  </div>
+    <!-- B. Daily Operational Hero: "Ca Dạy Hôm Nay" (Visual Focal Point) -->
+    <section class="operationalHero" aria-label="Ca Dạy Hôm Nay">
+      @if (todayClasses().length > 0) {
+        <div class="nextClassCard">
+          <!-- Next-Up Class Banner (#FFFFFF, 1px border #E5E7EB, Radius 12px, Padding 24px) -->
+          <div class="nextClassBanner">
+            <div class="classLeft">
+              <div class="classTime">{{ nextClass()?.time || '17:30' }} – {{ nextClass()?.end || '19:00' }}</div>
+              <div class="classTitleRow">
+                <h2 class="classTitle">{{ nextClass()?.name }}</h2>
+                <span class="classSep">•</span>
+                <span class="classMetaText">{{ formatRoom(nextClass()?.room) }}</span>
+                <span class="classSep">•</span>
+                <span class="classMetaText">{{ nextClass()?.count }} học sinh</span>
+              </div>
+              <div class="classNotice">
+                @if (kpis().permittedLeaveCount > 0) {
+                  <span class="noticeDot amberDot">●</span>
+                  <span>{{ kpis().permittedLeaveCount }} học sinh xin nghỉ có phép</span>
+                } @else {
+                  <span class="noticeDot greenDot">●</span>
+                  <span>Sĩ số đầy đủ, sẵn sàng điểm danh</span>
                 }
               </div>
             </div>
-          } @else {
-            <div class="emptyStateBox small">
-              <p class="emptySub">Chưa có dữ liệu lịch sử đối soát học phí 6 tháng.</p>
-            </div>
-          }
-        </article>
 
-        <!-- Panel 2: Giao dịch VietQR đối soát tự động -->
-        <article class="panel paymentPanel">
-          <div class="panelHeader">
-            <div>
-              <span class="panelEyebrow">ĐỐI SOÁT TỰ ĐỘNG</span>
-              <h2>Giao dịch VietQR gần đây</h2>
+            <div class="classRight">
+              <a routerLink="/attendance" class="attendanceHeroBtn">
+                <span>Bắt đầu điểm danh (1 chạm)</span>
+                <span class="btnArrow">→</span>
+              </a>
             </div>
-            <a routerLink="/billing" class="linkButton">
-              <span>Xem tất cả</span>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 12h14m-5-5 5 5-5 5" />
-              </svg>
-            </a>
           </div>
 
-          @if (recentTransactions().length > 0) {
-            <div class="paymentList">
-              @for (item of recentTransactions(); track item.id) {
-                <div class="paymentRow">
-                  <span class="avatar">{{ item.initials }}</span>
-                  <div class="paymentName">
-                    <b>{{ item.name }}</b>
-                    <small>{{ item.className }} · {{ item.time }}</small>
+          <!-- Later Class (Quiet row below) -->
+          @if (laterClasses().length > 0) {
+            <div class="laterClassesWrapper">
+              <div class="laterDivider"></div>
+              @for (later of laterClasses(); track later.id) {
+                <div class="laterClassRow">
+                  <div class="laterClassLeft">
+                    <strong class="laterTime">{{ later.time }}:</strong>
+                    <span class="laterName">{{ later.name }}</span>
+                    <span class="laterMeta">({{ later.count }} học sinh)</span>
+                    <span class="laterSep">•</span>
+                    <span class="laterStatus">Bắt đầu sau ca 1</span>
                   </div>
-                  <code>{{ item.code }}</code>
-                  <div class="paymentAmount">
-                    <strong>+{{ item.amount }}</strong>
-                    <span>✓ Đã gạch nợ</span>
-                  </div>
+                  <a routerLink="/attendance" class="laterLink">Điểm danh →</a>
                 </div>
               }
             </div>
-            <div class="bankStatus">
-              <span><i></i> Webhook ngân hàng đang hoạt động</span>
-              <b>Cập nhật lần cuối: 10:43</b>
+          }
+        </div>
+      } @else {
+        <!-- Zero State when 0 classes today -->
+        <div class="nextClassCard emptyCard">
+          @if (allClasses().length === 0) {
+            <div class="emptyCardContent">
+              <h3>Chào mừng {{ teacherName() }}! Bạn chưa tạo lớp học nào</h3>
+              <p>Tạo lớp học đầu tiên để hệ thống tự động sắp xếp lịch dạy và kích hoạt điểm danh 1 chạm.</p>
+              <a routerLink="/classes" class="attendanceHeroBtn">
+                <span>+ Tạo lớp học đầu tiên ngay</span>
+                <span class="btnArrow">→</span>
+              </a>
             </div>
           } @else {
-            <div class="emptyStateBox">
-              <p class="emptyTitle">Chưa có giao dịch VietQR nào phát sinh</p>
-              <p class="emptySub">Khi phụ huynh quét mã thanh toán học phí, hệ thống Napas247 sẽ tự động đối soát và gạch nợ tại đây.</p>
-              <a routerLink="/billing" class="emptyActionBtn">Xem cổng học phí VietQR</a>
+            <div class="emptyCardContent">
+              <div class="emptyDayBadge">
+                <span class="badgeDot"></span>
+                <span>Hôm nay nghỉ giảng dạy</span>
+              </div>
+              <h3>Hôm nay ({{ currentWeekdayName() }}), Thầy/Cô không có lịch dạy</h3>
+              @if (upcomingNextClass(); as upcoming) {
+                <div class="upcomingTeaser">
+                  <span class="upcomingLabel">Ca dạy tiếp theo:</span>
+                  <strong class="upcomingDay">{{ upcoming.dayLabel }} {{ upcoming.classItem.time }}–{{ upcoming.classItem.end }}</strong>
+                  <span class="upcomingClass">• {{ upcoming.classItem.name }} ({{ upcoming.classItem.count }} HS)</span>
+                </div>
+              }
+              <p class="emptySubText">Thầy/Cô có thể nghỉ ngơi, chuẩn bị bài giảng hoặc xem điểm danh các buổi trước.</p>
+              <div class="emptyActions">
+                <a routerLink="/attendance" class="secondaryOutlineBtn">
+                  <span>Điểm danh ca đột xuất / bù →</span>
+                </a>
+                <a routerLink="/classes" class="secondaryOutlineBtn">
+                  <span>Quản lý lịch học →</span>
+                </a>
+              </div>
             </div>
           }
-        </article>
+        </div>
+      }
+    </section>
+
+    <!-- C. Financial Health Strip (Single Slim Bar, No Giant Cards) -->
+    <section class="financialHealthStrip" aria-label="Sức khỏe tài chính">
+      <div class="stripContainer">
+        <!-- Section 1: Dự thu -->
+        <div class="stripSection">
+          <span class="stripLabel">Dự thu {{ currentMonthLabel() }}</span>
+          <strong class="stripValue">{{ money(kpis().expectedTuition) }}</strong>
+        </div>
+
+        <div class="stripHairline"></div>
+
+        <!-- Section 2: Thực thu (VietQR) -->
+        <div class="stripSection">
+          <span class="stripLabel">Thực thu (VietQR)</span>
+          <div class="stripValueWithBadge">
+            <strong class="stripValue greenMoney">{{ money(kpis().actualTuition) }}</strong>
+            <span class="rateBadge">Đạt {{ collectionRate() }}%</span>
+          </div>
+        </div>
+
+        <div class="stripHairline"></div>
+
+        <!-- Section 3: Chờ thu -->
+        <div class="stripSection">
+          <span class="stripLabel">Chờ thu</span>
+          <strong class="stripValue amberMoney">{{ money(kpis().unpaidTuition) }}</strong>
+        </div>
+
+        <div class="stripHairline"></div>
+
+        <!-- Section 4: Action -->
+        <div class="stripSection actionSection">
+          @if (kpis().unpaidCount > 0) {
+            <a routerLink="/billing" class="actionTextLink">
+              <span>Nhắc {{ kpis().unpaidCount }} học sinh chưa nộp</span>
+              <span class="linkArrow">→</span>
+            </a>
+          } @else {
+            <span class="allPaidPill">✓ Đã hoàn tất học phí</span>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- D. Weekly 7-Day Timetable Matrix (Thời khóa biểu tuần này) -->
+    <section class="weeklyScheduleSection" aria-label="Thời khóa biểu tuần">
+      <div class="sectionHeaderRow">
+        <div>
+          <h2 class="sectionTitle">Thời khóa biểu trong tuần</h2>
+          <p class="sectionSub">Lịch giảng dạy cố định từ Thứ Hai đến Chủ Nhật · Nhấp vào lớp để điểm danh</p>
+        </div>
+        <a routerLink="/classes" class="sectionHeaderLink">Quản lý lớp học →</a>
       </div>
 
-      <!-- Side Column (Right - 4 cols) -->
-      <aside class="sideColumn">
-        <!-- Widget 1: Phụ huynh chưa nộp & cần xử lý -->
-        <article class="panel debtPanel">
-          <div class="panelHeader">
-            <div>
-              <span class="panelEyebrow redLabel">CẦN XỬ LÝ</span>
-              <h2>Phụ huynh chưa nộp</h2>
+      <div class="weekGrid">
+        @for (day of weekDays; track day.code) {
+          <div class="dayColumn" [class.isToday]="day.code === todayDayCode()">
+            <div class="dayColHeader">
+              <span class="dayShort">{{ day.short }}</span>
+              <span class="dayFull">{{ day.label }}</span>
+              @if (day.code === todayDayCode()) {
+                <span class="todayBadge">Hôm nay</span>
+              }
             </div>
-            <span class="countBadge">{{ debtors().length }}</span>
-          </div>
-          <p class="panelDesc">Tạo tin nhắn lịch sự kèm phiếu thu để gửi qua Zalo.</p>
 
-          @if (debtors().length > 0) {
-            <div class="debtorList">
-              @for (item of debtors(); track item.id) {
-                <div class="debtor">
-                  <span class="avatar warm">{{ item.initials }}</span>
-                  <div>
-                    <b>{{ item.name }}</b>
-                    <small>{{ item.parent }}</small>
-                    <em [class.overdue]="item.danger">{{ item.due }}</em>
-                  </div>
-                  <strong>{{ item.amount }}</strong>
-                  <button
-                    type="button"
-                    [class.sent]="isReminded(item.name)"
-                    (click)="remind(item.name)"
-                  >
-                    {{ isReminded(item.name) ? '✓ Đã tạo' : 'Nhắc Zalo' }}
-                  </button>
+            <div class="dayClassesList">
+              @if (getClassesForDay(day.code).length > 0) {
+                @for (c of getClassesForDay(day.code); track c.id) {
+                  <a routerLink="/attendance" class="dayClassCard">
+                    <span class="pillTime">{{ c.time }}</span>
+                    <strong class="pillName" [title]="c.name">{{ c.name }}</strong>
+                    <span class="pillMeta">{{ c.count }} học sinh</span>
+                  </a>
+                }
+              } @else {
+                <div class="dayEmptyState">
+                  <span>Nghỉ</span>
                 </div>
               }
             </div>
-            <a routerLink="/billing" class="wideSecondary">
-              <span>Xem tất cả danh sách nợ</span>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 12h14m-5-5 5 5-5 5" />
-              </svg>
-            </a>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- E. Dual Operational Workbenches (2 cột làm việc bên dưới) -->
+    <section class="operationalWorkbenches" aria-label="Khu vực vận hành">
+      <!-- Cột trái: Giao dịch VietQR Napas247 tự động gần đây -->
+      <div class="workbenchCard">
+        <div class="cardHeader">
+          <div class="cardTitleGroup">
+            <h3 class="cardTitle">Giao dịch VietQR gần đây</h3>
+            <span class="liveIndicatorBadge">
+              <span class="liveDot"></span>
+              <span>Đối soát tự động 24/7</span>
+            </span>
+          </div>
+          <a routerLink="/billing" class="cardActionLink">Xem tất cả →</a>
+        </div>
+
+        <div class="cardBody">
+          @if (recentTransactions().length > 0) {
+            <div class="transactionList">
+              @for (tx of recentTransactions(); track tx.id) {
+                <div class="transactionRow">
+                  <div class="txAvatar">{{ tx.initials || 'QR' }}</div>
+                  <div class="txInfo">
+                    <div class="txNameRow">
+                      <strong class="txStudentName">{{ tx.name }}</strong>
+                      <span class="txClassName">• {{ tx.className }}</span>
+                    </div>
+                    <div class="txCodeRow">
+                      <span class="txCode">{{ tx.code }}</span>
+                      <span class="txTime">{{ tx.time }}</span>
+                    </div>
+                  </div>
+                  <div class="txAmountGroup">
+                    <strong class="txAmount">+{{ tx.amount }}</strong>
+                    <span class="txStatusBadge">✓ Đã gạch nợ</span>
+                  </div>
+                </div>
+              }
+            </div>
           } @else {
-            <div class="emptyStateBox">
-              <p class="emptyTitle">Không có phụ huynh nợ học phí</p>
-              <p class="emptySub">Tất cả học sinh đã hoàn tất nghĩa vụ học phí trong kỳ này.</p>
+            <div class="emptyWorkbench">
+              <div class="emptyIconCircle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                  <line x1="2" y1="10" x2="22" y2="10"></line>
+                </svg>
+              </div>
+              <h4>Chưa có giao dịch phát sinh hôm nay</h4>
+              <p>Hệ thống tự động lắng nghe Webhook ngân hàng Napas247. Khi phụ huynh chuyển khoản quét mã VietQR, biên nhận sẽ hiển thị tức thì tại đây.</p>
+              <a routerLink="/billing" class="cardBtnSmall">Xem sổ thu học phí</a>
             </div>
           }
-        </article>
+        </div>
+      </div>
 
-        <!-- Widget 2: Tạo phiếu thu nhanh -->
-        <article class="quickCard">
-          <div class="quickHead">
-            <span>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v6h-4M12 12h3" />
-              </svg>
-            </span>
+      <!-- Cột phải: Cần xử lý - Học sinh chưa nộp học phí & Nhắc Zalo 1 chạm -->
+      <div class="workbenchCard">
+        <div class="cardHeader">
+          <div class="cardTitleGroup">
+            <h3 class="cardTitle">Cần xử lý: Học sinh chưa nộp phí</h3>
+            @if (kpis().unpaidCount > 0) {
+              <span class="countBadge amberCount">{{ kpis().unpaidCount }}</span>
+            }
+          </div>
+          <a routerLink="/billing" class="cardActionLink">Quản lý nợ →</a>
+        </div>
+
+        <div class="cardBody">
+          @if (debtors().length > 0) {
+            <div class="debtorList">
+              @for (debtor of debtors(); track debtor.id) {
+                <div class="debtorRow">
+                  <div class="debtorAvatar">{{ debtor.initials || 'PH' }}</div>
+                  <div class="debtorInfo">
+                    <strong class="debtorName">{{ debtor.name }}</strong>
+                    <span class="debtorParent">{{ debtor.parent }}</span>
+                    <span class="debtorDue">{{ debtor.due }}</span>
+                  </div>
+                  <div class="debtorActionGroup">
+                    <strong class="debtorAmount">{{ debtor.amount }}</strong>
+                    <button
+                      type="button"
+                      class="zaloRemindBtn"
+                      [class.remindedBtn]="isReminded(debtor.name)"
+                      (click)="remindZalo(debtor)">
+                      @if (isReminded(debtor.name)) {
+                        <span>✓ Đã gửi</span>
+                      } @else {
+                        <span>Nhắc Zalo</span>
+                      }
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="emptyWorkbench">
+              <div class="emptyIconCircle greenCircle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              </div>
+              <h4>Tuyệt vời! Không có học sinh nợ phí</h4>
+              <p>Tất cả học sinh đã hoàn thành học phí trong kỳ học này. Giáo viên không cần gửi tin nhắn nhắc nhở.</p>
+              <a routerLink="/billing" class="cardBtnSmall secondaryBtn">Xem báo cáo học phí</a>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- F. Biểu đồ xu hướng tài chính 6 tháng gần nhất -->
+    @if (monthlyChart().length > 0) {
+      <section class="revenueChartSection" aria-label="Biểu đồ doanh thu 6 tháng">
+        <div class="chartCard">
+          <div class="chartHeaderRow">
             <div>
-              <b>Tạo phiếu thu nhanh</b>
-              <small>VietQR động Napas247</small>
+              <h3 class="chartTitle">Xu hướng tài chính 6 tháng gần nhất</h3>
+              <p class="chartSub">Đối chiếu doanh thu dự kiến và số tiền thực thu qua VietQR</p>
+            </div>
+            <div class="chartLegend">
+              <div class="legendItem">
+                <span class="legendColor expectedColor"></span>
+                <span>Dự kiến</span>
+              </div>
+              <div class="legendItem">
+                <span class="legendColor actualColor"></span>
+                <span>Thực thu VietQR</span>
+              </div>
+              <div class="chartSummaryPill">
+                <span>Tổng thực thu: <b>{{ money(total6MonthActual()) }}</b></span>
+                <span class="sepDot">•</span>
+                <span>Thu hồi TB: <b>{{ avgCollectionRate() }}%</b></span>
+              </div>
             </div>
           </div>
-          <p>Chọn học sinh, hệ thống tự tính số buổi và tạo mã QR đúng số tiền.</p>
-          <a routerLink="/billing" class="quickCardButton">
-            <span>Tạo phiếu thu mới</span>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 12h14m-5-5 5 5-5 5" />
-            </svg>
-          </a>
-        </article>
 
-        <!-- Widget 3: Gợi ý thông minh từ hệ thống -->
-        <article class="panel insightCard">
-          <div class="insightIcon">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7M10 20h4" />
-            </svg>
+          <!-- Các cột biểu đồ -->
+          <div class="chartBarsWrapper">
+            @for (item of monthlyChart(); track item.month) {
+              <div class="barColumn">
+                <div class="barPillGroup">
+                  <div
+                    class="bar expectedBar"
+                    [style.height.%]="getBarHeight(item.expectedAmount)"
+                    [title]="'Dự kiến: ' + money(item.expectedAmount)">
+                  </div>
+                  <div
+                    class="bar actualBar"
+                    [style.height.%]="getBarHeight(item.actualAmount)"
+                    [title]="'Thực thu: ' + money(item.actualAmount)">
+                  </div>
+                </div>
+                <span class="barMonthLabel">{{ item.label }}</span>
+                <span class="barRateLabel">{{ item.collectionRate }}%</span>
+              </div>
+            }
           </div>
-          <div>
-            <span>GỢI Ý TỪ EDUPAY</span>
-            <h3>Tháng 10 sắp kết thúc</h3>
-            <p>Hãy kiểm tra đầy đủ các buổi điểm danh trước khi gửi phiếu thu tháng 11.</p>
-            <a routerLink="/attendance" class="insightAction">Kiểm tra ngay →</a>
-          </div>
-        </article>
-      </aside>
-    </section>
+        </div>
+      </section>
+    }
+
+    <!-- G. Quiet Editorial Footnote Links -->
+    <footer class="deskFooter">
+      <a routerLink="/classes" class="quietFooterLink">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>Quản lý {{ kpis().totalClasses }} lớp học</span>
+      </a>
+      <span class="footerDot">•</span>
+      <a routerLink="/students" class="quietFooterLink">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>Danh sách {{ kpis().totalStudents }} học sinh</span>
+      </a>
+      <span class="footerDot">•</span>
+      <a routerLink="/billing" class="quietFooterLink">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+          <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+        <span>Đối soát học phí VietQR</span>
+      </a>
+    </footer>
   </main>
-
-  <!-- Mobile Floating Quick Attendance Button (Clean Typography) -->
-  <a routerLink="/attendance" class="mobileAttendance">
-    <span>Điểm danh ca dạy hôm nay</span>
-    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 12h14m-5-5 5 5-5 5" />
-    </svg>
-  </a>
 </div>

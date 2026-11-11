@@ -25,6 +25,7 @@ export interface TodayClassItem {
   time: string;
   end: string;
   room: string;
+  scheduleDays?: string;
   count: number;
   fee: number;
   feeType: string;
@@ -75,6 +76,7 @@ export interface MonthlyRevenueChartItem {
 export interface DashboardSummary {
   kpis: DashboardKpis;
   todayClasses: TodayClassItem[];
+  allClasses?: TodayClassItem[];
   recentTransactions: RecentTransactionItem[];
   debtors: DebtorItem[];
   bankSettings?: BankSettingInfo;

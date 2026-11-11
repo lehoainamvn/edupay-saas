@@ -12,6 +12,9 @@ export interface ClassCardVm {
   id: string;
   name: string;
   schedule: string;
+  scheduleDays?: string;
+  startTime?: string;
+  endTime?: string;
   notes?: string;
   feeType: 'session' | 'monthly';
   fee: number;
@@ -23,7 +26,10 @@ const INITIAL_CLASSES: ClassCardVm[] = [
   {
     id: 'd0000000-0000-0000-0000-000000000001',
     name: 'Toán nâng cao 8A',
-    schedule: 'Thứ 3, Thứ 6 · 18:00–19:30',
+    schedule: 'Thứ 3, Thứ 7 · 18:00–19:30',
+    scheduleDays: 'TUESDAY,SATURDAY',
+    startTime: '18:00',
+    endTime: '19:30',
     feeType: 'session',
     fee: 150000,
     students: 4,
@@ -33,6 +39,9 @@ const INITIAL_CLASSES: ClassCardVm[] = [
     id: 'd0000000-0000-0000-0000-000000000002',
     name: 'Luyện thi vào 10 — Nhóm Chuyên',
     schedule: 'Thứ 2, Thứ 5, Thứ 7 · 19:30–21:00',
+    scheduleDays: 'MONDAY,THURSDAY,SATURDAY',
+    startTime: '19:30',
+    endTime: '21:00',
     feeType: 'session',
     fee: 180000,
     students: 12,
@@ -42,6 +51,9 @@ const INITIAL_CLASSES: ClassCardVm[] = [
     id: 'd0000000-0000-0000-0000-000000000003',
     name: 'Toán Tư Duy Lớp 6B (Cơ bản)',
     schedule: 'Thứ 4, Chủ nhật · 17:30–19:00',
+    scheduleDays: 'WEDNESDAY,SUNDAY',
+    startTime: '17:30',
+    endTime: '19:00',
     feeType: 'monthly',
     fee: 1200000,
     students: 8,
@@ -84,11 +96,24 @@ export class ClassesComponent implements OnInit {
 
   readonly presets = [100000, 120000, 150000, 180000, 200000];
 
+  readonly weekdays = [
+    { code: 'MONDAY', label: 'T2', name: 'Thứ 2' },
+    { code: 'TUESDAY', label: 'T3', name: 'Thứ 3' },
+    { code: 'WEDNESDAY', label: 'T4', name: 'Thứ 4' },
+    { code: 'THURSDAY', label: 'T5', name: 'Thứ 5' },
+    { code: 'FRIDAY', label: 'T6', name: 'Thứ 6' },
+    { code: 'SATURDAY', label: 'T7', name: 'Thứ 7' },
+    { code: 'SUNDAY', label: 'CN', name: 'Chủ nhật' }
+  ];
+
+  readonly selectedDays = signal<string[]>(['MONDAY', 'WEDNESDAY', 'FRIDAY']);
+
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
     feeType: ['session' as 'session' | 'monthly', [Validators.required]],
     fee: [150000, [Validators.required, Validators.min(1000)]],
-    schedule: [''],
+    startTime: ['17:30'],
+    endTime: ['19:00'],
     notes: ['']
   });
 
@@ -167,14 +192,52 @@ export class ClassesComponent implements OnInit {
     this.feeFilter.set(value);
   }
 
+  toggleDay(code: string): void {
+    this.selectedDays.update(days =>
+      days.includes(code) ? days.filter(d => d !== code) : [...days, code]
+    );
+  }
+
+  isDaySelected(code: string): boolean {
+    return this.selectedDays().includes(code);
+  }
+
+  getSchedulePreview(): string {
+    const days = this.selectedDays();
+    if (days.length === 0) return 'Chưa chọn thứ trong tuần';
+    const dayLabels = this.weekdays
+      .filter(w => days.includes(w.code))
+      .map(w => w.name)
+      .join(', ');
+    const start = this.form.controls.startTime.value || '17:30';
+    const end = this.form.controls.endTime.value || '19:00';
+    return `${dayLabels} · ${start}–${end}`;
+  }
+
+  extractDaysFromText(text: string): string[] {
+    if (!text) return [];
+    const lower = text.toLowerCase();
+    const days: string[] = [];
+    if (lower.includes('thứ 2') || lower.includes('t2')) days.push('MONDAY');
+    if (lower.includes('thứ 3') || lower.includes('t3')) days.push('TUESDAY');
+    if (lower.includes('thứ 4') || lower.includes('t4')) days.push('WEDNESDAY');
+    if (lower.includes('thứ 5') || lower.includes('t5')) days.push('THURSDAY');
+    if (lower.includes('thứ 6') || lower.includes('t6')) days.push('FRIDAY');
+    if (lower.includes('thứ 7') || lower.includes('t7')) days.push('SATURDAY');
+    if (lower.includes('chủ nhật') || lower.includes('cn')) days.push('SUNDAY');
+    return days;
+  }
+
   openCreateModal(): void {
     this.editingItem.set(null);
     this.submitted.set(false);
+    this.selectedDays.set(['MONDAY', 'WEDNESDAY', 'FRIDAY']);
     this.form.reset({
       name: '',
       feeType: 'session',
       fee: 150000,
-      schedule: '',
+      startTime: '17:30',
+      endTime: '19:00',
       notes: ''
     });
     this.modalOpen.set(true);
@@ -183,11 +246,14 @@ export class ClassesComponent implements OnInit {
   openEditModal(item: ClassCardVm): void {
     this.editingItem.set(item);
     this.submitted.set(false);
+    const parsedDays = item.scheduleDays ? item.scheduleDays.split(',').map(s => s.trim()) : [];
+    this.selectedDays.set(parsedDays.length > 0 ? parsedDays : this.extractDaysFromText(item.schedule));
     this.form.reset({
       name: item.name,
       feeType: item.feeType,
       fee: item.fee,
-      schedule: item.schedule === 'Chưa thiết lập lịch học' ? '' : item.schedule,
+      startTime: item.startTime || '17:30',
+      endTime: item.endTime || '19:00',
       notes: item.notes || ''
     });
     this.modalOpen.set(true);
@@ -233,7 +299,10 @@ export class ClassesComponent implements OnInit {
       return;
     }
 
-    const scheduleText = raw.schedule.trim() || 'Chưa thiết lập lịch học';
+    const scheduleDaysStr = this.selectedDays().join(',');
+    const startTimeVal = raw.startTime || '17:30';
+    const endTimeVal = raw.endTime || '19:00';
+    const scheduleText = this.getSchedulePreview();
     const notesText = raw.notes.trim();
     const descriptionCombined = notesText
       ? `${scheduleText} · ${notesText}`
@@ -243,7 +312,10 @@ export class ClassesComponent implements OnInit {
       name: trimmedName,
       description: descriptionCombined,
       feeType: this.toBackendFeeType(raw.feeType),
-      defaultFee: feeValue
+      defaultFee: feeValue,
+      scheduleDays: scheduleDaysStr,
+      startTime: startTimeVal,
+      endTime: endTimeVal
     };
 
     const editing = this.editingItem();
@@ -256,13 +328,24 @@ export class ClassesComponent implements OnInit {
         .subscribe({
           next: res => {
             const updatedVm = res?.data
-              ? { ...this.mapApiToVm(res.data), schedule: scheduleText, notes: notesText, students: editing.students }
+              ? {
+                  ...this.mapApiToVm(res.data),
+                  schedule: scheduleText,
+                  scheduleDays: scheduleDaysStr,
+                  startTime: startTimeVal,
+                  endTime: endTimeVal,
+                  notes: notesText,
+                  students: editing.students
+                }
               : {
                   ...editing,
                   name: trimmedName,
                   feeType: raw.feeType,
                   fee: feeValue,
                   schedule: scheduleText,
+                  scheduleDays: scheduleDaysStr,
+                  startTime: startTimeVal,
+                  endTime: endTimeVal,
                   notes: notesText
                 };
             this.classes.update(xs =>
@@ -282,6 +365,9 @@ export class ClassesComponent implements OnInit {
                       feeType: raw.feeType,
                       fee: feeValue,
                       schedule: scheduleText,
+                      scheduleDays: scheduleDaysStr,
+                      startTime: startTimeVal,
+                      endTime: endTimeVal,
                       notes: notesText
                     }
                   : x
@@ -299,13 +385,23 @@ export class ClassesComponent implements OnInit {
         .subscribe({
           next: res => {
             const createdVm: ClassCardVm = res?.data
-              ? { ...this.mapApiToVm(res.data), schedule: scheduleText, notes: notesText }
+              ? {
+                  ...this.mapApiToVm(res.data),
+                  schedule: scheduleText,
+                  scheduleDays: scheduleDaysStr,
+                  startTime: startTimeVal,
+                  endTime: endTimeVal,
+                  notes: notesText
+                }
               : {
                   id: `cls-${Date.now()}`,
                   name: trimmedName,
                   feeType: raw.feeType,
                   fee: feeValue,
                   schedule: scheduleText,
+                  scheduleDays: scheduleDaysStr,
+                  startTime: startTimeVal,
+                  endTime: endTimeVal,
                   notes: notesText,
                   students: 0,
                   archived: false
@@ -322,6 +418,9 @@ export class ClassesComponent implements OnInit {
               feeType: raw.feeType,
               fee: feeValue,
               schedule: scheduleText,
+              scheduleDays: scheduleDaysStr,
+              startTime: startTimeVal,
+              endTime: endTimeVal,
               notes: notesText,
               students: 0,
               archived: false
@@ -367,6 +466,9 @@ export class ClassesComponent implements OnInit {
       id: item.id,
       name: item.name,
       schedule: item.description || 'Chưa thiết lập lịch học',
+      scheduleDays: item.scheduleDays,
+      startTime: item.startTime,
+      endTime: item.endTime,
       feeType: item.feeType === 'MONTHLY_PACKAGE' ? 'monthly' : 'session',
       fee: Number(item.defaultFee) || 0,
       students: Number(item.studentCount) || 0,

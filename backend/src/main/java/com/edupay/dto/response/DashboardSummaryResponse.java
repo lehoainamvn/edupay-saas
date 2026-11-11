@@ -16,6 +16,7 @@ public class DashboardSummaryResponse {
 
     private KpiMetrics kpis;
     private List<TodayClassDto> todayClasses;
+    private List<TodayClassDto> allClasses;
     private List<RecentTransactionDto> recentTransactions;
     private List<DebtorDto> debtors;
     private BankSettingDto bankSettings;
@@ -64,6 +65,7 @@ public class DashboardSummaryResponse {
         private String time;
         private String end;
         private String room;
+        private String scheduleDays;
         private Long count;
         private Double fee;
         private String feeType;

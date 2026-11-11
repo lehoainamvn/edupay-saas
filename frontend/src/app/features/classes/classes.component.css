@@ -98,16 +98,18 @@ button {
 
 .titleRow h1 {
   margin: 0;
-  font-size: clamp(30px, 3vw, 40px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1.12;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--ink);
 }
 
 .titleRow p {
   margin: 6px 0 0;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .create {
@@ -958,7 +960,8 @@ fieldset legend {
 
   .classGrid,
   .radioGrid,
-  .twoFields {
+  .twoFields,
+  .timeRow {
     grid-template-columns: 1fr;
   }
 
@@ -980,4 +983,90 @@ fieldset legend {
     justify-content: center;
     box-shadow: 0 14px 30px rgba(37, 99, 235, 0.32);
   }
+}
+
+/* Schedule Picker Section */
+.schedulePickerSection {
+  margin-top: 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.scheduleLabel {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+.weekdayPills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.weekdayPill {
+  min-width: 40px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.weekdayPill:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+.weekdayPill.selected {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.5fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.timeField, .notesField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timeField span, .notesField span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+.timeField input, .notesField input {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 13.5px;
+  color: #0f172a;
+}
+.scheduleLivePreview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+.scheduleLivePreview .previewDot {
+  font-size: 8px;
 }

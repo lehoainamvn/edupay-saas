@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
@@ -67,6 +67,156 @@ export class AttendanceComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   private toastTimer: ReturnType<typeof setTimeout> | null = null;
 
+  // Custom Class Dropdown State
+  readonly isClassDropdownOpen = signal<boolean>(false);
+
+  toggleClassDropdown(): void {
+    this.isClassDropdownOpen.update(v => !v);
+  }
+
+  closeClassDropdown(): void {
+    this.isClassDropdownOpen.set(false);
+  }
+
+  selectClass(c: ClassItem): void {
+    this.closeClassDropdown();
+    if (c.id !== this.selectedClassId()) {
+      this.onClassChange(c.id);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.customClassSelectWrapper')) {
+      this.closeClassDropdown();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeClassDropdown();
+  }
+
+  // Format Helper Methods
+  getScheduleDaysList(c: ClassItem | null | undefined): string[] {
+    if (!c) return [];
+    const sched = ((c.scheduleDays || '') + ' ' + (c.description || '')).toUpperCase();
+    const days: string[] = [];
+    if (sched.includes('MONDAY') || sched.includes('THỨ 2') || sched.includes('T2')) days.push('T2');
+    if (sched.includes('TUESDAY') || sched.includes('THỨ 3') || sched.includes('T3')) days.push('T3');
+    if (sched.includes('WEDNESDAY') || sched.includes('THỨ 4') || sched.includes('T4')) days.push('T4');
+    if (sched.includes('THURSDAY') || sched.includes('THỨ 5') || sched.includes('T5')) days.push('T5');
+    if (sched.includes('FRIDAY') || sched.includes('THỨ 6') || sched.includes('T6')) days.push('T6');
+    if (sched.includes('SATURDAY') || sched.includes('THỨ 7') || sched.includes('T7')) days.push('T7');
+    if (sched.includes('SUNDAY') || sched.includes('CHỦ NHẬT') || sched.includes('CN')) days.push('CN');
+    return days;
+  }
+
+  getScheduleDaysText(c: ClassItem | null | undefined): string {
+    const list = this.getScheduleDaysList(c);
+    return list.length > 0 ? list.join(' - ') : 'Chưa xếp lịch';
+  }
+
+  getClassTimeStr(c: ClassItem | null | undefined): string {
+    if (!c) return '17:30 – 19:00';
+    if (c.startTime && c.endTime) return `${c.startTime} – ${c.endTime}`;
+    if (c.startTime) return c.startTime;
+    return '17:30 – 19:00';
+  }
+
+  getRoomStr(c: ClassItem | null | undefined): string {
+    if (!c?.description) return 'Phòng học trực tiếp';
+    if (c.description.includes('·')) {
+      const parts = c.description.split('·').map(s => s.trim());
+      const last = parts[parts.length - 1];
+      if (!last.toLowerCase().includes('thứ') && !last.includes(':')) {
+        return last;
+      }
+    }
+    if (!c.description.toLowerCase().includes('thứ') && !c.description.includes(':')) {
+      return c.description;
+    }
+    return 'Phòng học trực tiếp';
+  }
+
+  formatDateVi(dateStr: string): string {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  }
+
+  // Helper to get DayOfWeek from a date string (YYYY-MM-DD)
+  getDayOfWeekFromDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr + 'T00:00:00');
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    return dayNames[date.getDay()];
+  }
+
+  isClassOnDate(c: ClassItem, dateStr: string): boolean {
+    if (!c || !dateStr) return false;
+    const dow = this.getDayOfWeekFromDate(dateStr);
+    const schedUpper = ((c.scheduleDays || '') + ' ' + (c.description || '')).toUpperCase();
+    
+    switch (dow) {
+      case 'MONDAY':
+        return schedUpper.includes('MONDAY') || schedUpper.includes('THỨ 2') || schedUpper.includes('T2');
+      case 'TUESDAY':
+        return schedUpper.includes('TUESDAY') || schedUpper.includes('THỨ 3') || schedUpper.includes('T3');
+      case 'WEDNESDAY':
+        return schedUpper.includes('WEDNESDAY') || schedUpper.includes('THỨ 4') || schedUpper.includes('T4');
+      case 'THURSDAY':
+        return schedUpper.includes('THURSDAY') || schedUpper.includes('THỨ 5') || schedUpper.includes('T5');
+      case 'FRIDAY':
+        return schedUpper.includes('FRIDAY') || schedUpper.includes('THỨ 6') || schedUpper.includes('T6');
+      case 'SATURDAY':
+        return schedUpper.includes('SATURDAY') || schedUpper.includes('THỨ 7') || schedUpper.includes('T7');
+      case 'SUNDAY':
+        return schedUpper.includes('SUNDAY') || schedUpper.includes('CHỦ NHẬT') || schedUpper.includes('CN');
+      default:
+        return false;
+    }
+  }
+
+  // Sorted classes: classes with schedule on selectedDate() are listed FIRST
+  readonly prioritizedClasses = computed(() => {
+    const list = this.classes();
+    const date = this.selectedDate();
+    const todayList = list.filter(c => this.isClassOnDate(c, date));
+    const otherList = list.filter(c => !this.isClassOnDate(c, date));
+    return {
+      today: todayList,
+      others: otherList,
+      all: [...todayList, ...otherList]
+    };
+  });
+
+  // Check if currently selected class is scheduled for selectedDate()
+  readonly isSelectedClassScheduledToday = computed(() => {
+    const c = this.selectedClass();
+    if (!c) return true;
+    return this.isClassOnDate(c, this.selectedDate());
+  });
+
+  // Vietnamese label for selected date's DayOfWeek
+  readonly selectedDayOfWeekVi = computed(() => {
+    const dow = this.getDayOfWeekFromDate(this.selectedDate());
+    const map: Record<string, string> = {
+      'MONDAY': 'Thứ Hai',
+      'TUESDAY': 'Thứ Ba',
+      'WEDNESDAY': 'Thứ Tư',
+      'THURSDAY': 'Thứ Năm',
+      'FRIDAY': 'Thứ Sáu',
+      'SATURDAY': 'Thứ Bảy',
+      'SUNDAY': 'Chủ Nhật'
+    };
+    return map[dow] || '';
+  });
+
   // Computed Properties
   readonly selectedClass = computed(() => {
     const cid = this.selectedClassId();
@@ -115,7 +265,9 @@ export class AttendanceComponent implements OnInit {
               if (paramClassId && res.data.some(c => c.id === paramClassId)) {
                 this.selectedClassId.set(paramClassId);
               } else if (!this.selectedClassId()) {
-                this.selectedClassId.set(res.data[0].id);
+                // TỰ ĐỘNG ƯU TIÊN: Chọn lớp có lịch học của ngày đang chọn lên trước!
+                const todayClass = res.data.find(c => this.isClassOnDate(c, this.selectedDate()));
+                this.selectedClassId.set(todayClass ? todayClass.id : res.data[0].id);
               }
               this.refreshActiveTab();
             });
@@ -375,8 +527,38 @@ export class AttendanceComponent implements OnInit {
   }
 
   onMonthChange(newMonth: string): void {
-    this.selectedMonth.set(newMonth);
-    this.loadMonthlyAttendance();
+    if (newMonth) {
+      this.selectedMonth.set(newMonth);
+      this.loadMonthlyAttendance();
+    }
+  }
+
+  formatMonthVN(monthStr: string | undefined | null): string {
+    if (!monthStr) return '';
+    const parts = monthStr.split('-');
+    if (parts.length === 2) {
+      const y = parts[0];
+      const m = parseInt(parts[1], 10);
+      return `Tháng ${m}/${y}`;
+    }
+    return monthStr;
+  }
+
+  changeMonthOffset(offset: number): void {
+    const current = this.selectedMonth();
+    if (!current) return;
+    const parts = current.split('-');
+    let y = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10) + offset;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    } else if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    const newMonth = `${y}-${String(m).padStart(2, '0')}`;
+    this.onMonthChange(newMonth);
   }
 
   selectMonthPreset(preset: 'thisMonth' | 'lastMonth'): void {
