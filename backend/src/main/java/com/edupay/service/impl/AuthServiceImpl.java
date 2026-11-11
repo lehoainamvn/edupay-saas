@@ -124,7 +124,7 @@ public class AuthServiceImpl implements AuthService {
         auditLogService.logInfo(tenantId, ownerId, "USER_REGISTERED", "USER", ownerId.toString(), null, null);
 
         // 5. Phát hành token
-        return buildAuthResponse(owner, tenantId, List.of("OWNER"), "TRIAL", "ACTIVE");
+        return buildAuthResponse(owner, tenantId, List.of("OWNER"), "TRIAL", "ACTIVE", "SOLO_TUTOR");
     }
 
     // ─── ĐĂNG NHẬP ───────────────────────────────────────────────────────────
@@ -180,12 +180,13 @@ public class AuthServiceImpl implements AuthService {
         Object[] tenantInfo = getTenantInfo(user.getTenantId());
         String subscriptionPlan   = (String) tenantInfo[0];
         String subscriptionStatus = (String) tenantInfo[1];
+        String tenantType         = tenantInfo.length > 2 && tenantInfo[2] != null ? (String) tenantInfo[2] : "SOLO_TUTOR";
 
         // 7. Phát hành token
         log.info("Đăng nhập thành công — phone={}, userId={}", request.getPhone(), user.getId());
         auditLogService.logInfo(user.getTenantId(), user.getId(), "LOGIN_SUCCESS", "USER", user.getId().toString(), null, null);
         List<String> roles = getUserRoles(user);
-        return buildAuthResponse(user, user.getTenantId(), roles, subscriptionPlan, subscriptionStatus);
+        return buildAuthResponse(user, user.getTenantId(), roles, subscriptionPlan, subscriptionStatus, tenantType);
     }
 
     // ─── REFRESH TOKEN ────────────────────────────────────────────────────────
@@ -219,8 +220,9 @@ public class AuthServiceImpl implements AuthService {
         User user = stored.getUser();
         Object[] tenantInfo = getTenantInfo(stored.getTenantId());
         List<String> roles = getUserRoles(user);
+        String tenantType = tenantInfo.length > 2 && tenantInfo[2] != null ? (String) tenantInfo[2] : "SOLO_TUTOR";
         return buildAuthResponse(user, stored.getTenantId(), roles,
-                (String) tenantInfo[0], (String) tenantInfo[1]);
+                (String) tenantInfo[0], (String) tenantInfo[1], tenantType);
     }
 
     // ─── LOGOUT ──────────────────────────────────────────────────────────────
@@ -297,7 +299,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private AuthResponse buildAuthResponse(User user, UUID tenantId, List<String> roles,
-                                           String subscriptionPlan, String subscriptionStatus) {
+                                           String subscriptionPlan, String subscriptionStatus, String tenantType) {
         // Tạo Access Token (bao gồm JTI)
         String accessToken = jwtTokenProvider.generateAccessToken(user.getId(), tenantId, roles);
         long expiresAt = Instant.now().plusMillis(accessExpirationMs).toEpochMilli();
@@ -327,6 +329,7 @@ public class AuthServiceImpl implements AuthService {
                         .roles(roles)
                         .subscriptionPlan(subscriptionPlan)
                         .subscriptionStatus(subscriptionStatus)
+                        .tenantType(tenantType != null ? tenantType : "SOLO_TUTOR")
                         .build())
                 .build();
     }
@@ -345,7 +348,7 @@ public class AuthServiceImpl implements AuthService {
     @SuppressWarnings("unchecked")
     private Object[] getTenantInfo(UUID tenantId) {
         Object result = entityManager.createNativeQuery(
-                        "SELECT subscription_plan, subscription_status FROM tenants WHERE id = :id")
+                        "SELECT subscription_plan, subscription_status, COALESCE(tenant_type, 'SOLO_TUTOR') FROM tenants WHERE id = :id")
                 .setParameter("id", tenantId)
                 .getSingleResult();
         return (Object[]) result;

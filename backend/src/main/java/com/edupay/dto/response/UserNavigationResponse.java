@@ -18,6 +18,7 @@ public class UserNavigationResponse {
     private String fullName;
     private String phone;
     private boolean isOwner;
+    private String tenantType;
     private List<String> roles;
     private Set<String> permissions;
     private Map<String, Boolean> features;

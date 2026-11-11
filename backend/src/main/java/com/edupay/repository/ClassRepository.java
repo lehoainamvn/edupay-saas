@@ -29,6 +29,13 @@ public interface ClassRepository extends JpaRepository<ClassEntity, UUID> {
     List<ClassEntity> findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(UUID tenantId);
 
     /**
+     * Lấy danh sách lớp được phân công cho 1 giáo viên cụ thể trong Tenant.
+     */
+    List<ClassEntity> findAllByTenantIdAndTeacherIdAndIsActiveTrueOrderByCreatedAtDesc(UUID tenantId, UUID teacherId);
+    List<ClassEntity> findAllByTenantIdAndTeacherIdOrderByIsActiveDescCreatedAtDesc(UUID tenantId, UUID teacherId);
+    long countByTenantIdAndTeacherIdAndIsActiveTrue(UUID tenantId, UUID teacherId);
+
+    /**
      * Lấy danh sách lớp theo danh sách ID thuộc Tenant.
      */
     List<ClassEntity> findAllByTenantIdAndIdIn(UUID tenantId, Collection<UUID> ids);

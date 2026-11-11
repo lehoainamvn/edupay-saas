@@ -49,6 +49,10 @@ public class Tenant {
     @Builder.Default
     private String subscriptionStatus = "ACTIVE"; // ACTIVE, EXPIRED, SUSPENDED
 
+    @Column(name = "tenant_type", length = 20)
+    @Builder.Default
+    private String tenantType = "SOLO_TUTOR"; // CENTER, SOLO_TUTOR
+
     @Column(name = "trial_ends_at")
     private Instant trialEndsAt;
 

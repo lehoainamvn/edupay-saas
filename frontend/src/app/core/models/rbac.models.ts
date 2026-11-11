@@ -14,6 +14,7 @@ export interface UserNavigation {
   fullName: string;
   phone: string;
   isOwner: boolean;
+  tenantType?: 'CENTER' | 'SOLO_TUTOR' | string;
   roles: string[];
   permissions: string[];
   features: Record<string, boolean>;

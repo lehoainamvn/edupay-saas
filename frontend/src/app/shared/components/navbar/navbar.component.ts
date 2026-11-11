@@ -89,56 +89,97 @@ import { RbacService } from '../../../core/services/rbac.service';
               </div>
             </div>
 
-            <!-- 3. Tài chính VietQR (Dropdown) -->
-            <div class="navDropdown" (mouseenter)="setDropdown('finance')" (mouseleave)="scheduleClose()">
-              <button
-                type="button"
-                class="dropdownTrigger"
-                [class.active]="isFinanceActive() || openDropdown() === 'finance'"
-                (click)="toggleDropdown('finance', $event)"
-              >
-                <span>Học phí VietQR</span>
-                <svg class="chevron" [class.rotated]="openDropdown() === 'finance'" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                </svg>
-              </button>
+            <!-- 2.5 Quản lý Trung tâm (Chỉ hiển thị cho Quản lý Trung tâm: Center Admin) -->
+            @if (isCenterAdmin()) {
+              <div class="navDropdown" (mouseenter)="setDropdown('center')" (mouseleave)="scheduleClose()">
+                <button
+                  type="button"
+                  class="dropdownTrigger"
+                  [class.active]="isCenterActive() || openDropdown() === 'center'"
+                  (click)="toggleDropdown('center', $event)"
+                >
+                  <span>Quản lý Trung tâm</span>
+                  <svg class="chevron" [class.rotated]="openDropdown() === 'center'" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                  </svg>
+                </button>
 
-              <div class="dropdownMenu" [class.show]="openDropdown() === 'finance'" (mouseenter)="cancelClose()" (mouseleave)="scheduleClose()">
-                <a routerLink="/billing" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
-                  <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                    <line x1="2" y1="10" x2="22" y2="10"></line>
-                  </svg>
-                  <div class="itemText">
-                    <strong class="itemTitle">Học phí & Đối soát</strong>
-                    <small class="itemDesc">Tạo phiếu thu & gạch nợ tự động</small>
-                  </div>
-                </a>
-                <a routerLink="/settings" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
-                  <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
-                  </svg>
-                  <div class="itemText">
-                    <strong class="itemTitle">Cài đặt nhận tiền VietQR</strong>
-                    <small class="itemDesc">Thiết lập tài khoản ngân hàng & QR</small>
-                  </div>
-                </a>
+                <div class="dropdownMenu" [class.show]="openDropdown() === 'center'" (mouseenter)="cancelClose()" (mouseleave)="scheduleClose()">
+                  <a routerLink="/center/teachers" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
+                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <div class="itemText">
+                      <strong class="itemTitle">Đội ngũ giáo viên</strong>
+                      <small class="itemDesc">Thêm, sửa & phân quyền nhân sự</small>
+                    </div>
+                  </a>
+                  <a routerLink="/classes" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
+                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <div class="itemText">
+                      <strong class="itemTitle">Phân công giảng dạy</strong>
+                      <small class="itemDesc">Gán giáo viên phụ trách các lớp</small>
+                    </div>
+                  </a>
+                </div>
               </div>
-            </div>
+            }
 
-            <!-- 4. SuperAdmin (Chỉ hiển thị cho người dùng có quyền Quản trị) -->
+            <!-- 3. Tài chính VietQR (Dropdown - Chỉ hiển thị cho Quản lý / Gia sư tự do, ẩn với Giáo viên phụ) -->
+            @if (canAccessFinance()) {
+              <div class="navDropdown" (mouseenter)="setDropdown('finance')" (mouseleave)="scheduleClose()">
+                <button
+                  type="button"
+                  class="dropdownTrigger"
+                  [class.active]="isFinanceActive() || openDropdown() === 'finance'"
+                  (click)="toggleDropdown('finance', $event)"
+                >
+                  <span>Học phí VietQR</span>
+                  <svg class="chevron" [class.rotated]="openDropdown() === 'finance'" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+
+                <div class="dropdownMenu" [class.show]="openDropdown() === 'finance'" (mouseenter)="cancelClose()" (mouseleave)="scheduleClose()">
+                  <a routerLink="/billing" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
+                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                      <line x1="2" y1="10" x2="22" y2="10"></line>
+                    </svg>
+                    <div class="itemText">
+                      <strong class="itemTitle">Học phí & Đối soát</strong>
+                      <small class="itemDesc">Tạo phiếu thu & gạch nợ tự động</small>
+                    </div>
+                  </a>
+                  <a routerLink="/settings" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
+                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="3" width="7" height="7"></rect>
+                      <rect x="14" y="14" width="7" height="7"></rect>
+                      <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <div class="itemText">
+                      <strong class="itemTitle">Cài đặt nhận tiền VietQR</strong>
+                      <small class="itemDesc">Thiết lập tài khoản ngân hàng & QR</small>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            }
+
+            <!-- 4. SuperAdmin (Chỉ hiển thị cho người dùng có quyền Quản trị tối cao) -->
             @if (isSuperAdmin()) {
               <a routerLink="/admin/platform" routerLinkActive="active" (click)="closeAll()" class="superAdminBtn">
                 <svg class="adminSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
-                <span>SuperAdmin</span>
-              </a>
-              <a routerLink="/system-config" routerLinkActive="active" (click)="closeAll()" class="navItemLink">
-                Tham số hệ thống
+                <span>Cổng Quản trị SuperAdmin</span>
               </a>
             }
           }
@@ -167,7 +208,7 @@ import { RbacService } from '../../../core/services/rbac.service';
                 </div>
                 <div class="userMeta">
                   <span class="userFullName">{{ userName() }}</span>
-                  <span class="userPlanBadge">{{ planBadge() }}</span>
+                  <span class="userPlanBadge">{{ userRoleBadge() }}</span>
                 </div>
                 <svg class="chevron" [class.rotated]="openDropdown() === 'profile'" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
@@ -189,7 +230,7 @@ import { RbacService } from '../../../core/services/rbac.service';
                   <div class="profileHeaderInfo">
                     <strong class="profileName">{{ userName() }}</strong>
                     <span class="profilePhone">{{ userPhone() || 'Chưa cập nhật SĐT' }}</span>
-                    <span class="profilePlanChip">{{ planName() }}</span>
+                    <span class="profilePlanChip">{{ userRoleTitle() }}</span>
                   </div>
                 </div>
 
@@ -920,6 +961,42 @@ export class NavbarComponent implements OnInit {
       return up.includes('ADMIN') || up.includes('SUPER_ADMIN');
     });
   });
+
+  readonly isCenterAdmin = computed(() => {
+    const user = this.authService.currentUser();
+    const type = user?.tenantType || this.rbacService.tenantType();
+    const isOwner = Boolean(user?.isOwner ?? this.rbacService.isOwner());
+    return isOwner && type === 'CENTER';
+  });
+
+  readonly isCenterTeacher = computed(() => {
+    const user = this.authService.currentUser();
+    const type = user?.tenantType || this.rbacService.tenantType();
+    const isOwner = Boolean(user?.isOwner ?? this.rbacService.isOwner());
+    return !isOwner && type === 'CENTER';
+  });
+
+  readonly canAccessFinance = computed(() => {
+    return !this.isCenterTeacher();
+  });
+
+  readonly userRoleBadge = computed(() => {
+    if (this.isSuperAdmin()) return 'SUPER_ADMIN';
+    if (this.isCenterAdmin()) return 'QUẢN LÝ TRUNG TÂM';
+    if (this.isCenterTeacher()) return 'GIÁO VIÊN TRUNG TÂM';
+    return 'GIA SƯ TỰ DO';
+  });
+
+  readonly userRoleTitle = computed(() => {
+    if (this.isSuperAdmin()) return 'Quản Trị Viên Tối Cao';
+    if (this.isCenterAdmin()) return 'Quản Lý Trung Tâm (Center Admin)';
+    if (this.isCenterTeacher()) return 'Giáo Viên Trực Thuộc Trung Tâm';
+    return 'Gia Sư Dạy Kèm Tự Do';
+  });
+
+  isCenterActive(): boolean {
+    return this.router.url.startsWith('/center');
+  }
 
   isTeachingActive(): boolean {
     const url = this.router.url;

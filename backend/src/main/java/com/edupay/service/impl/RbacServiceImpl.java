@@ -35,6 +35,7 @@ public class RbacServiceImpl implements RbacService {
     private final MenuRepository menuRepository;
     private final TenantFeatureFlagRepository tenantFeatureFlagRepository;
     private final UserFeatureFlagRepository userFeatureFlagRepository;
+    private final TenantRepository tenantRepository;
     private final AuditLogService auditLogService;
 
     @Override
@@ -48,6 +49,10 @@ public class RbacServiceImpl implements RbacService {
         UUID userId = getCurrentUserId();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng với ID: " + userId));
+
+        String tenantType = tenantRepository.findById(tenantId)
+                .map(com.edupay.entity.Tenant::getTenantType)
+                .orElse("SOLO_TUTOR");
 
         // 1. Lấy danh sách Roles
         List<String> roles = roleRepository.findRoleCodesByUserIdAndTenantId(userId, tenantId);
@@ -76,6 +81,7 @@ public class RbacServiceImpl implements RbacService {
                 .fullName(user.getFullName())
                 .phone(user.getPhone())
                 .isOwner(Boolean.TRUE.equals(user.getIsOwner()))
+                .tenantType(tenantType)
                 .roles(roles)
                 .permissions(permissions)
                 .features(features)

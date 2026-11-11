@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 public class PaymentSettingServiceImpl implements PaymentSettingService {
 
     private final PaymentSettingRepository paymentSettingRepository;
+    private final com.edupay.repository.UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     private static final String VIETQR_BANKS_API = "https://api.vietqr.io/v2/banks";
@@ -47,6 +48,7 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
 
     @Override
     public PaymentSettingResponse getPaymentSetting() {
+        checkOwnerPermission();
         UUID tenantId = TenantContext.getTenantId();
         Optional<PaymentSetting> opt = paymentSettingRepository.findByTenantId(tenantId);
 
@@ -66,6 +68,7 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
     @Transactional
     @AuditAction(action = "PAYMENT_SETTING_UPDATED", resourceType = "PAYMENT_SETTING")
     public PaymentSettingResponse savePaymentSetting(PaymentSettingRequest request) {
+        checkOwnerPermission();
         UUID tenantId = TenantContext.getTenantId();
 
         // 1. Chuẩn hóa dữ liệu đầu vào
@@ -267,5 +270,27 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
                 BankResponse.builder().id(55L).bin("971005").code("VTLMONEY").shortName("Viettel Money").name("Tổng Công ty Dịch vụ Số Viettel").logo("https://api.vietqr.io/img/VIETTELMONEY.png").transferSupported(true).lookupSupported(true).build(),
                 BankResponse.builder().id(56L).bin("971011").code("VNPTMONEY").shortName("VNPT Money").name("Tập đoàn Bưu chính Viễn thông Việt Nam").logo("https://api.vietqr.io/img/VNPTMONEY.png").transferSupported(true).lookupSupported(true).build()
         );
+    }
+
+    private void checkOwnerPermission() {
+        UUID userId = getCurrentUserId();
+        if (userId != null) {
+            userRepository.findById(userId).ifPresent(u -> {
+                if (!Boolean.TRUE.equals(u.getIsOwner())) {
+                    throw new com.edupay.exception.BusinessException("ACCESS_DENIED",
+                            "Chỉ Quản lý trung tâm mới có quyền xem và cấu hình tài khoản nhận tiền VietQR");
+                }
+            });
+        }
+    }
+
+    private UUID getCurrentUserId() {
+        try {
+            var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                return UUID.fromString(auth.getName());
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }

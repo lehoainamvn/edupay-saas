@@ -45,27 +45,36 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId) {
-        List<User> allUsers = userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
+        try {
+            List<User> allUsers = userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
-                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
+            Map<UUID, String> tenantMap = new HashMap<>();
+            for (Tenant t : tenantRepository.findAll()) {
+                if (t != null && t.getId() != null) {
+                    tenantMap.put(t.getId(), t.getName() != null ? t.getName() : "Không tên");
+                }
+            }
 
-        List<AdminUserResponse> filtered = allUsers.stream()
-                .filter(u -> matchesSearch(u, search))
-                .filter(u -> matchesStatus(u, status))
-                .filter(u -> tenantId == null || tenantId.equals(u.getTenantId()))
-                .map(u -> toAdminUserResponse(u, tenantMap))
-                .filter(u -> matchesRole(u, role))
-                .collect(Collectors.toList());
+            List<AdminUserResponse> filtered = allUsers.stream()
+                    .filter(u -> matchesSearch(u, search))
+                    .filter(u -> matchesStatus(u, status))
+                    .filter(u -> tenantId == null || tenantId.equals(u.getTenantId()))
+                    .map(u -> toAdminUserResponse(u, tenantMap))
+                    .filter(u -> matchesRole(u, role))
+                    .collect(Collectors.toList());
 
-        long totalElements = filtered.size();
-        int safePage = Math.max(0, page);
-        int safeSize = Math.max(1, size);
-        int fromIndex = Math.min(safePage * safeSize, (int) totalElements);
-        int toIndex = Math.min(fromIndex + safeSize, (int) totalElements);
+            long totalElements = filtered.size();
+            int safePage = Math.max(0, page);
+            int safeSize = Math.max(1, size);
+            int fromIndex = Math.min(safePage * safeSize, (int) totalElements);
+            int toIndex = Math.min(fromIndex + safeSize, (int) totalElements);
 
-        List<AdminUserResponse> pageContent = filtered.subList(fromIndex, toIndex);
-        return PageResponse.of(pageContent, totalElements, safePage, safeSize);
+            List<AdminUserResponse> pageContent = filtered.subList(fromIndex, toIndex);
+            return PageResponse.of(pageContent, totalElements, safePage, safeSize);
+        } catch (Exception e) {
+            log.error("Lỗi khi SuperAdmin lấy danh sách người dùng: ", e);
+            throw e;
+        }
     }
 
     @Override
@@ -276,12 +285,13 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private boolean matchesStatus(User user, String status) {
         if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) return true;
+        if (user.getStatus() == null) return false;
         return status.trim().equalsIgnoreCase(user.getStatus());
     }
 
     private boolean matchesRole(AdminUserResponse user, String role) {
         if (role == null || role.isBlank() || "ALL".equalsIgnoreCase(role)) return true;
-        if (user.getRoles() == null) return false;
-        return user.getRoles().stream().anyMatch(r -> r.equalsIgnoreCase(role.trim()));
+        if (user.getRoles() == null || user.getRoles().isEmpty()) return false;
+        return user.getRoles().stream().anyMatch(r -> r != null && r.equalsIgnoreCase(role.trim()));
     }
 }

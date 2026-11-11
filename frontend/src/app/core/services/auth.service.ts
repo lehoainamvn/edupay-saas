@@ -105,6 +105,10 @@ export class AuthService {
     const roles = userObj?.roles || res.roles || ['ROLE_TEACHER'];
     const plan = userObj?.subscriptionPlan || res.subscriptionPlan || 'Gói Thuê Tháng';
     const status = userObj?.subscriptionStatus || res.subscriptionStatus || 'ACTIVE';
+    const isOwner = userObj?.isOwner ?? false;
+    const email = userObj?.email;
+    const avatarUrl = userObj?.avatarUrl;
+    const tenantType = userObj?.tenantType || res.tenantType || 'SOLO_TUTOR';
 
     if (token) this.tokenService.setToken(token);
     if (refreshToken) this.tokenService.setRefreshToken(refreshToken);
@@ -115,9 +119,13 @@ export class AuthService {
       tenantId,
       fullName,
       phone,
+      email,
+      avatarUrl,
+      isOwner,
       roles,
       subscriptionPlan: plan,
       subscriptionStatus: status,
+      tenantType,
     };
 
     this.tokenService.setUserInfo(userInfo);

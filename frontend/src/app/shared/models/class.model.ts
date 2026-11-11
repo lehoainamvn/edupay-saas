@@ -12,6 +12,9 @@ export interface ClassItem {
   scheduleDays?: string;
   startTime?: string;
   endTime?: string;
+  teacherId?: string;
+  teacherName?: string;
+  teacherPhone?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -24,4 +27,5 @@ export interface ClassRequestPayload {
   scheduleDays?: string;
   startTime?: string;
   endTime?: string;
+  teacherId?: string;
 }

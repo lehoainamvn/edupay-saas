@@ -6,6 +6,8 @@ import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ClassService } from '../../core/services/class.service';
 import { ToastService } from '../../core/services/toast.service';
+import { RbacService } from '../../core/services/rbac.service';
+import { CenterTeacherService, CenterTeacherItem } from '../../core/services/center-teacher.service';
 import { ClassItem, ClassRequestPayload, FeeType } from '../../shared/models/class.model';
 
 export interface ClassCardVm {
@@ -20,6 +22,9 @@ export interface ClassCardVm {
   fee: number;
   students: number;
   archived: boolean;
+  teacherId?: string;
+  teacherName?: string;
+  teacherPhone?: string;
 }
 
 const INITIAL_CLASSES: ClassCardVm[] = [
@@ -82,6 +87,11 @@ export class ClassesComponent implements OnInit {
   private readonly classService = inject(ClassService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly rbacService = inject(RbacService);
+  private readonly centerTeacherService = inject(CenterTeacherService);
+
+  readonly isCenterAdmin = computed(() => this.rbacService.isCenterAdmin());
+  readonly teachersList = signal<CenterTeacherItem[]>([]);
 
   readonly classes = signal<ClassCardVm[]>(INITIAL_CLASSES);
   readonly status = signal<'active' | 'archived' | 'all'>('active');
@@ -114,6 +124,7 @@ export class ClassesComponent implements OnInit {
     fee: [150000, [Validators.required, Validators.min(1000)]],
     startTime: ['17:30'],
     endTime: ['19:00'],
+    teacherId: [''],
     notes: ['']
   });
 
@@ -157,6 +168,15 @@ export class ClassesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadClasses();
+    if (this.rbacService.isCenterAdmin()) {
+      this.centerTeacherService.getTeachers().subscribe({
+        next: (res) => {
+          if (res.data) {
+            this.teachersList.set(res.data.filter(t => t.status === 'ACTIVE'));
+          }
+        }
+      });
+    }
   }
 
   loadClasses(): void {
@@ -238,6 +258,7 @@ export class ClassesComponent implements OnInit {
       fee: 150000,
       startTime: '17:30',
       endTime: '19:00',
+      teacherId: '',
       notes: ''
     });
     this.modalOpen.set(true);
@@ -254,6 +275,7 @@ export class ClassesComponent implements OnInit {
       fee: item.fee,
       startTime: item.startTime || '17:30',
       endTime: item.endTime || '19:00',
+      teacherId: item.teacherId || '',
       notes: item.notes || ''
     });
     this.modalOpen.set(true);
@@ -315,7 +337,8 @@ export class ClassesComponent implements OnInit {
       defaultFee: feeValue,
       scheduleDays: scheduleDaysStr,
       startTime: startTimeVal,
-      endTime: endTimeVal
+      endTime: endTimeVal,
+      teacherId: raw.teacherId || undefined
     };
 
     const editing = this.editingItem();
@@ -472,7 +495,10 @@ export class ClassesComponent implements OnInit {
       feeType: item.feeType === 'MONTHLY_PACKAGE' ? 'monthly' : 'session',
       fee: Number(item.defaultFee) || 0,
       students: Number(item.studentCount) || 0,
-      archived: !item.isActive
+      archived: !item.isActive,
+      teacherId: item.teacherId,
+      teacherName: item.teacherName,
+      teacherPhone: item.teacherPhone
     };
   }
 

@@ -50,4 +50,7 @@ public class ClassRequest {
 
     @Schema(description = "Giờ kết thúc học (HH:mm)", example = "19:00")
     private String endTime;
+
+    @Schema(description = "ID giáo viên phụ trách lớp học (dành cho Trung tâm phân công)", example = "c0000000-0000-0000-0000-000000000003")
+    private java.util.UUID teacherId;
 }

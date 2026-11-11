@@ -54,6 +54,15 @@ public class ClassResponse {
     @Schema(description = "Số lượng học sinh đang theo học trong lớp", example = "4")
     private long studentCount;
 
+    @Schema(description = "ID giáo viên phụ trách")
+    private UUID teacherId;
+
+    @Schema(description = "Họ tên giáo viên phụ trách", example = "Nguyễn Thu Hà")
+    private String teacherName;
+
+    @Schema(description = "Số điện thoại giáo viên phụ trách", example = "0901112223")
+    private String teacherPhone;
+
     @Schema(description = "Thời gian tạo")
     private Instant createdAt;
 

@@ -181,6 +181,13 @@
                 </div>
               </div>
 
+              @if (item.teacherName) {
+                <div class="teacherRow">
+                  <span class="teacherLabel">Giáo viên:</span>
+                  <strong class="teacherName">{{ item.teacherName }}</strong>
+                </div>
+              }
+
               @if (item.archived) {
                 <div class="preserved">✓ Lịch sử điểm danh &amp; phiếu thu được bảo toàn</div>
               }
@@ -264,6 +271,19 @@
               <small class="errorText">Vui lòng nhập tên lớp học.</small>
             }
           </div>
+
+          @if (isCenterAdmin()) {
+            <div class="field">
+              <span>Giáo viên phụ trách</span>
+              <select formControlName="teacherId" class="teacherSelect">
+                <option value="">-- Chưa phân công (Chủ trung tâm quản lý) --</option>
+                @for (t of teachersList(); track t.id) {
+                  <option [value]="t.id">{{ t.fullName }} ({{ t.phone }})</option>
+                }
+              </select>
+              <small class="fieldHint">Giáo viên được phân công sẽ có quyền điểm danh lớp này trên tài khoản cá nhân.</small>
+            </div>
+          }
 
           <fieldset>
             <legend>Hình thức thu học phí <b>*</b></legend>

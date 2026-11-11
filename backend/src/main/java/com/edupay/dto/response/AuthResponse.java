@@ -40,5 +40,6 @@ public class AuthResponse {
         private List<String> roles;
         private String subscriptionPlan;
         private String subscriptionStatus;
+        private String tenantType; // CENTER, SOLO_TUTOR
     }
 }

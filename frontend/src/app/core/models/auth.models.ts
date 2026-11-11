@@ -25,6 +25,7 @@ export interface BackendUserDto {
   roles?: string[];
   subscriptionPlan?: string;
   subscriptionStatus?: string;
+  tenantType?: 'CENTER' | 'SOLO_TUTOR' | string;
 }
 
 export interface AuthResponse {
@@ -41,6 +42,7 @@ export interface AuthResponse {
   roles?: string[];
   subscriptionPlan?: string;
   subscriptionStatus?: string;
+  tenantType?: 'CENTER' | 'SOLO_TUTOR' | string;
 }
 
 export interface UserInfo {
@@ -54,4 +56,5 @@ export interface UserInfo {
   roles?: string[];
   subscriptionPlan?: string;
   subscriptionStatus?: string;
+  tenantType?: 'CENTER' | 'SOLO_TUTOR' | string;
 }

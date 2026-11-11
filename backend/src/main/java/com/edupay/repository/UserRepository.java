@@ -7,11 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificationExecutor<User> {
+
+    /** Lấy toàn bộ users trong 1 tenant sắp xếp theo ngày tạo mới nhất */
+    List<User> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
     /** Tìm user owner theo SĐT (dùng cho Login — phone là unique trong tenants) */
     Optional<User> findByPhoneAndIsOwnerTrue(String phone);
@@ -21,6 +25,9 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
 
     /** Tìm user theo ID + tenantId (an toàn, chống IDOR) */
     Optional<User> findByIdAndTenantId(UUID id, UUID tenantId);
+
+    /** Tìm user theo SĐT trong 1 tenant */
+    Optional<User> findByTenantIdAndPhone(UUID tenantId, String phone);
 
     /** Tìm bất kỳ user theo SĐT trong 1 tenant (kiểm tra trùng số khi đăng ký) */
     boolean existsByTenantIdAndPhone(UUID tenantId, String phone);

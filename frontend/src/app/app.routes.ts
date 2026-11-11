@@ -80,6 +80,14 @@ export const routes: Routes = [
       import('./features/profile/profile.component').then((m) => m.ProfileComponent),
   },
   {
+    path: 'center/teachers',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/center/teachers/center-teachers.component').then(
+        (m) => m.CenterTeachersComponent
+      ),
+  },
+  {
     path: 'system-config',
     redirectTo: 'admin/system-config',
     pathMatch: 'full',

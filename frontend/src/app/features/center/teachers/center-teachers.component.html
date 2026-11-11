@@ -1,0 +1,477 @@
+<app-navbar mode="app"></app-navbar>
+
+<div class="teachers-page">
+  <div class="page-container">
+    <!-- ─── PAGE HEADER ─── -->
+    <header class="page-header">
+      <div class="header-info">
+        <div class="kicker-badge">
+          <span class="kicker-dot"></span>
+          <span>QUẢN LÝ TRUNG TÂM · ĐỘI NGŨ NHÂN SỰ</span>
+        </div>
+        <h1 class="page-title">Đội Ngũ Giáo Viên & Trợ Giảng</h1>
+        <p class="page-desc">
+          Quản trị toàn bộ danh sách giáo viên trực thuộc trung tâm, cấp tài khoản đăng nhập, bảo vệ quyền riêng tư và theo dõi số lớp học được phân công.
+        </p>
+      </div>
+
+      <div class="header-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="loadTeachers()"
+          [disabled]="loading()"
+          title="Tải lại danh sách"
+        >
+          <svg
+            class="btn-icon"
+            [class.spinning]="loading()"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span>Làm mới</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="openCreateModal()"
+          title="Thêm giáo viên mới vào trung tâm"
+        >
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Thêm giáo viên mới</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── 3 STAT CARDS STRIP ─── -->
+    <section class="stats-grid" aria-label="Thống kê nhân sự trung tâm">
+      <!-- Card 1: Tổng giáo viên -->
+      <article class="stat-card">
+        <div class="stat-icon-wrap icon-blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Tổng số giáo viên</span>
+          <strong class="stat-value text-blue">{{ teachers().length }}</strong>
+          <span class="stat-sub">Trực thuộc trung tâm</span>
+        </div>
+      </article>
+
+      <!-- Card 2: Hoạt động -->
+      <article class="stat-card">
+        <div class="stat-icon-wrap icon-green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Đang hoạt động</span>
+          <strong class="stat-value text-green">{{ activeTeachersCount() }}</strong>
+          <span class="stat-sub">Có thể đăng nhập giảng dạy</span>
+        </div>
+      </article>
+
+      <!-- Card 3: Lớp đã phân công -->
+      <article class="stat-card">
+        <div class="stat-icon-wrap icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Lớp học đã phân công</span>
+          <strong class="stat-value text-purple">{{ totalAssignedClasses() }}</strong>
+          <span class="stat-sub">Tổng số lớp đang có GV dạy</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- ─── FILTER & SEARCH TOOLBAR ─── -->
+    <section class="filter-card">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Tìm giáo viên theo Tên, Số điện thoại hoặc Email..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="clear-search-btn" (click)="searchQuery.set('')">✕</button>
+        }
+      </div>
+
+      <div class="filter-controls">
+        <div class="select-wrapper">
+          <label class="filter-label">Trạng thái:</label>
+          <select
+            class="filter-select"
+            [ngModel]="selectedStatus()"
+            (ngModelChange)="selectedStatus.set($event)"
+          >
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="ACTIVE">Đang hoạt động</option>
+            <option value="SUSPENDED">Đã tạm khóa</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── TEACHERS DATA TABLE ─── -->
+    <section class="table-card">
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Đang tải danh sách giáo viên trung tâm...</p>
+        </div>
+      } @else if (filteredTeachers().length === 0) {
+        <div class="empty-state">
+          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          </svg>
+          <h3>Chưa có giáo viên nào</h3>
+          <p>Bấm nút "Thêm giáo viên mới" để thêm giáo viên hoặc trợ giảng vào trung tâm.</p>
+          <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+            Thêm giáo viên đầu tiên
+          </button>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="teacher-table">
+            <thead>
+              <tr>
+                <th>Giáo viên</th>
+                <th>Thông tin liên hệ</th>
+                <th>Phân công giảng dạy</th>
+                <th>Trạng thái</th>
+                <th>Ngày tham gia</th>
+                <th class="actions-col">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of filteredTeachers(); track t.id) {
+                <tr [class.row-suspended]="t.status === 'SUSPENDED'">
+                  <!-- Giáo viên -->
+                  <td>
+                    <div class="teacher-cell">
+                      <span class="teacher-avatar" [style.background]="getAvatarColor(t.fullName)">
+                        {{ getInitials(t.fullName) }}
+                      </span>
+                      <div class="teacher-info">
+                        <strong class="teacher-name">{{ t.fullName }}</strong>
+                        <span class="teacher-role">Giáo viên trực thuộc</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Liên hệ -->
+                  <td>
+                    <div class="contact-cell">
+                      <span class="contact-phone">{{ t.phone }}</span>
+                      <span class="contact-email">{{ t.email || 'Chưa cập nhật email' }}</span>
+                    </div>
+                  </td>
+
+                  <!-- Phân công -->
+                  <td>
+                    <div class="classes-cell">
+                      @if (t.assignedClassesCount > 0) {
+                        <span class="classes-pill pill-active">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                          </svg>
+                          <b>{{ t.assignedClassesCount }}</b> lớp phụ trách
+                        </span>
+                      } @else {
+                        <span class="classes-pill pill-empty">Chưa phân công</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- Trạng thái -->
+                  <td>
+                    @if (t.status === 'ACTIVE') {
+                      <span class="status-pill status-active">
+                        <span class="status-dot dot-active"></span>
+                        <span>Hoạt động</span>
+                      </span>
+                    } @else {
+                      <span class="status-pill status-suspended">
+                        <span class="status-dot dot-suspended"></span>
+                        <span>Đã khóa</span>
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Ngày tham gia -->
+                  <td>
+                    <span class="date-cell">{{ formatDate(t.createdAt) }}</span>
+                  </td>
+
+                  <!-- Thao tác -->
+                  <td class="actions-col">
+                    <div class="action-btn-group">
+                      <!-- Đổi mật khẩu -->
+                      <button
+                        type="button"
+                        class="btn-act btn-act-reset"
+                        (click)="openResetModal(t)"
+                        title="Đặt lại mật khẩu cho giáo viên"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                        </svg>
+                        <span>Đổi MK</span>
+                      </button>
+
+                      <!-- Khóa / Mở khóa -->
+                      <button
+                        type="button"
+                        class="btn-act"
+                        [class.btn-act-lock]="t.status === 'ACTIVE'"
+                        [class.btn-act-unlock]="t.status === 'SUSPENDED'"
+                        (click)="openToggleModal(t)"
+                        [title]="t.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'"
+                      >
+                        @if (t.status === 'ACTIVE') {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                        } @else {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                        }
+                      </button>
+
+                      <!-- Xóa giáo viên -->
+                      <button
+                        type="button"
+                        class="btn-act btn-act-delete"
+                        (click)="deleteTeacher(t)"
+                        [disabled]="t.assignedClassesCount > 0"
+                        title="Xóa giáo viên (chỉ khi chưa có lớp)"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  </div>
+
+  <!-- ─── MODAL THÊM GIÁO VIÊN MỚI ─── -->
+  @if (isCreateModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-kicker">THÊM GIÁO VIÊN MỚI</span>
+            <h3 class="modal-title">Cấp tài khoản giáo viên trực thuộc</h3>
+          </div>
+          <button type="button" class="btn-close" (click)="closeCreateModal()">✕</button>
+        </header>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Họ và tên giáo viên <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="VD: Cô Nguyễn Thu Hà"
+              [(ngModel)]="createForm.fullName"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Số điện thoại đăng nhập <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="VD: 0901112229"
+              [(ngModel)]="createForm.phone"
+            />
+            <small class="form-hint">Số điện thoại dùng để đăng nhập vào EduPay.</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email liên hệ</label>
+            <input
+              type="email"
+              class="form-input"
+              placeholder="VD: thuha.nguyen@anhduong.edu.vn"
+              [(ngModel)]="createForm.email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Mật khẩu ban đầu <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Mật khẩu ban đầu (tối thiểu 6 ký tự)"
+              [(ngModel)]="createForm.password"
+            />
+            <small class="form-hint">Gợi ý mật khẩu mặc định: <b>Admin&#64;123</b></small>
+          </div>
+
+          <div class="info-alert">
+            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+            </svg>
+            <p>
+              Giáo viên trực thuộc sẽ chỉ thấy và điểm danh cho các lớp học được Quản lý trung tâm phân công. Giáo viên không thể xem doanh thu hay chỉnh sửa tài khoản ngân hàng của trung tâm.
+            </p>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Hủy bỏ</button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="submitCreate()"
+            [disabled]="actionLoading() === 'create'"
+          >
+            @if (actionLoading() === 'create') {
+              <div class="btn-spinner"></div>
+              <span>Đang lưu...</span>
+            } @else {
+              <span>Tạo tài khoản giáo viên</span>
+            }
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL ĐẶT LẠI MẬT KHẨU ─── -->
+  @if (selectedTeacherForReset(); as teacher) {
+    <div class="modal-backdrop" (click)="closeResetModal()">
+      <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-kicker">ĐẶT LẠI MẬT KHẨU</span>
+            <h3 class="modal-title">Đổi mật khẩu cho: {{ teacher.fullName }}</h3>
+          </div>
+          <button type="button" class="btn-close" (click)="closeResetModal()">✕</button>
+        </header>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Mật khẩu mới <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+              [ngModel]="newPassword()"
+              (ngModelChange)="newPassword.set($event)"
+            />
+            <small class="form-hint">Mật khẩu sẽ có hiệu lực ngay lập tức.</small>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeResetModal()">Hủy bỏ</button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="submitResetPassword()"
+            [disabled]="actionLoading() === teacher.id"
+          >
+            @if (actionLoading() === teacher.id) {
+              <div class="btn-spinner"></div>
+              <span>Đang lưu...</span>
+            } @else {
+              <span>Xác nhận đổi mật khẩu</span>
+            }
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL KHÓA / MỞ KHÓA GIÁO VIÊN ─── -->
+  @if (selectedTeacherForToggle(); as teacher) {
+    <div class="modal-backdrop" (click)="closeToggleModal()">
+      <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="modal-header-left">
+            <span class="modal-kicker" [class.kicker-danger]="teacher.status === 'ACTIVE'">
+              {{ teacher.status === 'ACTIVE' ? 'CẢNH BÁO TẠM KHÓA' : 'MỞ KHÓA TÀI KHOẢN' }}
+            </span>
+            <h3 class="modal-title">
+              {{ teacher.status === 'ACTIVE' ? 'Khóa tài khoản giáo viên' : 'Mở khóa tài khoản giáo viên' }}
+            </h3>
+          </div>
+          <button type="button" class="btn-close" (click)="closeToggleModal()">✕</button>
+        </header>
+
+        <div class="modal-body">
+          <div class="toggle-confirm-box">
+            <div class="confirm-icon-wrap" [class.icon-wrap-danger]="teacher.status === 'ACTIVE'">
+              @if (teacher.status === 'ACTIVE') {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              }
+            </div>
+
+            <p class="confirm-text">
+              Bạn có chắc chắn muốn
+              <strong>{{ teacher.status === 'ACTIVE' ? 'tạm khóa' : 'mở khóa hoạt động' }}</strong>
+              cho giáo viên <strong>"{{ teacher.fullName }}"</strong>?
+            </p>
+            <p class="confirm-subtext">
+              {{ teacher.status === 'ACTIVE'
+                ? 'Khi bị khóa, giáo viên sẽ không thể đăng nhập để điểm danh các lớp học.'
+                : 'Sau khi mở khóa, giáo viên có thể tiếp tục đăng nhập và giảng dạy bình thường.' }}
+            </p>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeToggleModal()">Hủy bỏ</button>
+          <button
+            type="button"
+            class="btn"
+            [class.btn-danger]="teacher.status === 'ACTIVE'"
+            [class.btn-primary]="teacher.status !== 'ACTIVE'"
+            (click)="confirmToggleStatus()"
+            [disabled]="actionLoading() === teacher.id"
+          >
+            @if (actionLoading() === teacher.id) {
+              <div class="btn-spinner"></div>
+              <span>Đang xử lý...</span>
+            } @else {
+              <span>{{ teacher.status === 'ACTIVE' ? 'Xác nhận khóa' : 'Xác nhận mở khóa' }}</span>
+            }
+          </button>
+        </footer>
+      </div>
+    </div>
+  }
+</div>

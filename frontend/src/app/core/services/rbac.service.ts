@@ -15,10 +15,14 @@ export class RbacService {
   readonly permissions = signal<Set<string>>(new Set());
   readonly features = signal<Map<string, boolean>>(new Map());
   readonly menus = signal<MenuItem[]>([]);
+  readonly tenantType = signal<'CENTER' | 'SOLO_TUTOR' | string>('SOLO_TUTOR');
   readonly isLoaded = signal<boolean>(false);
   readonly loading = signal<boolean>(false);
 
   readonly isOwner = computed(() => this.roles().includes('OWNER'));
+  readonly isCenterAdmin = computed(() => this.isOwner() && this.tenantType() === 'CENTER');
+  readonly isCenterTeacher = computed(() => !this.isOwner() && this.tenantType() === 'CENTER');
+  readonly isSoloTutor = computed(() => this.isOwner() && this.tenantType() !== 'CENTER');
 
   // ─── API CALLS ──────────────────────────────────────────────────────────────
   loadNavigation(): Observable<UserNavigation> {
@@ -41,6 +45,9 @@ export class RbacService {
         this.features.set(featMap);
 
         this.menus.set(data.menus || []);
+        if (data.tenantType) {
+          this.tenantType.set(data.tenantType);
+        }
         this.isLoaded.set(true);
         this.loading.set(false);
       }),

@@ -9,9 +9,12 @@ import com.edupay.exception.DuplicateResourceException;
 import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.mapper.ClassMapper;
 import com.edupay.repository.ClassRepository;
+import com.edupay.repository.UserRepository;
 import com.edupay.service.ClassService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +27,7 @@ import java.util.UUID;
  * - Luôn lấy tenantId từ TenantContext.getTenantId()
  * - Mọi thao tác đọc/ghi/xóa đều lọc theo tenantId
  * - Sử dụng Soft Delete (isActive = false) để bảo toàn lịch sử điểm danh & học phí
+ * - TASK 3: Scoping theo giáo viên phụ trách (nếu là giáo viên phụ thuộc trung tâm)
  */
 @Service
 @RequiredArgsConstructor
@@ -31,16 +35,27 @@ import java.util.UUID;
 public class ClassServiceImpl implements ClassService {
 
     private final ClassRepository classRepository;
+    private final UserRepository userRepository;
     private final ClassMapper classMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<ClassResponse> getClasses(boolean includeArchived) {
         UUID tenantId = requireTenantId();
+        UUID currentUserId = getCurrentUserId();
 
-        List<ClassEntity> entities = includeArchived
-                ? classRepository.findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(tenantId)
-                : classRepository.findAllByTenantIdAndIsActiveTrueOrderByCreatedAtDesc(tenantId);
+        List<ClassEntity> entities;
+        if (isTeacherOnly(currentUserId)) {
+            // Giáo viên phụ thuộc trung tâm: chỉ xem các lớp được phân công dạy
+            entities = includeArchived
+                    ? classRepository.findAllByTenantIdAndTeacherIdOrderByIsActiveDescCreatedAtDesc(tenantId, currentUserId)
+                    : classRepository.findAllByTenantIdAndTeacherIdAndIsActiveTrueOrderByCreatedAtDesc(tenantId, currentUserId);
+        } else {
+            // Chủ trung tâm hoặc Gia sư tự do: xem toàn bộ các lớp của tenant
+            entities = includeArchived
+                    ? classRepository.findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(tenantId)
+                    : classRepository.findAllByTenantIdAndIsActiveTrueOrderByCreatedAtDesc(tenantId);
+        }
 
         return entities.stream()
                 .map(entity -> enrichWithStudentCount(entity, tenantId))
@@ -69,13 +84,14 @@ public class ClassServiceImpl implements ClassService {
         entity.setName(trimmedName);
         entity.setTenantId(tenantId);
         entity.setIsActive(Boolean.TRUE);
+        if (request.getTeacherId() != null) {
+            entity.setTeacherId(request.getTeacherId());
+        }
 
         ClassEntity saved = classRepository.save(entity);
         log.info("Tenant [{}] created new class [{}] with id [{}]", tenantId, saved.getName(), saved.getId());
 
-        ClassResponse response = classMapper.toResponse(saved);
-        response.setStudentCount(0L);
-        return response;
+        return enrichWithStudentCount(saved, tenantId);
     }
 
     @Override
@@ -91,6 +107,9 @@ public class ClassServiceImpl implements ClassService {
 
         classMapper.updateEntityFromRequest(request, entity);
         entity.setName(trimmedName);
+        if (request.getTeacherId() != null) {
+            entity.setTeacherId(request.getTeacherId());
+        }
 
         ClassEntity updated = classRepository.save(entity);
         log.info("Tenant [{}] updated class id [{}]", tenantId, updated.getId());
@@ -140,6 +159,12 @@ public class ClassServiceImpl implements ClassService {
         ClassResponse response = classMapper.toResponse(entity);
         long studentCount = classRepository.countActiveStudentsByClassIdAndTenantId(entity.getId(), tenantId);
         response.setStudentCount(studentCount);
+        if (entity.getTeacherId() != null) {
+            userRepository.findById(entity.getTeacherId()).ifPresent(t -> {
+                response.setTeacherName(t.getFullName());
+                response.setTeacherPhone(t.getPhone());
+            });
+        }
         return response;
     }
 
@@ -149,5 +174,22 @@ public class ClassServiceImpl implements ClassService {
             throw new BusinessException("TENANT_CONTEXT_MISSING", "Không xác định được thông tin giáo viên (Tenant Context)");
         }
         return tenantId;
+    }
+
+    private UUID getCurrentUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                return UUID.fromString(auth.getName());
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private boolean isTeacherOnly(UUID userId) {
+        if (userId == null) return false;
+        return userRepository.findById(userId)
+                .map(u -> !Boolean.TRUE.equals(u.getIsOwner()))
+                .orElse(false);
     }
 }

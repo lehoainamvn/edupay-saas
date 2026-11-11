@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * Entity đại diện cho Lớp học (bảng classes).
@@ -48,4 +49,7 @@ public class ClassEntity extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = Boolean.TRUE;
+
+    @Column(name = "teacher_id")
+    private UUID teacherId;
 }
