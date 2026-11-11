@@ -1,7 +1,8 @@
-import { Component, Input, inject, signal, computed, HostListener } from '@angular/core';
+import { Component, Input, OnInit, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { RbacService } from '../../../core/services/rbac.service';
 
 @Component({
   selector: 'app-navbar',
@@ -135,6 +136,9 @@ import { AuthService } from '../../../core/services/auth.service';
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
                 </svg>
                 <span>SuperAdmin</span>
+              </a>
+              <a routerLink="/system-config" routerLinkActive="active" (click)="closeAll()" class="navItemLink">
+                Tham số hệ thống
               </a>
             }
           }
@@ -856,8 +860,9 @@ import { AuthService } from '../../../core/services/auth.service';
     }
   `]
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit {
   private authService = inject(AuthService);
+  private rbacService = inject(RbacService);
   private router = inject(Router);
 
   @Input() mode: 'public' | 'app' = 'app';
@@ -865,6 +870,15 @@ export class NavbarComponent {
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly openDropdown = signal<string | null>(null);
   private closeTimer: any = null;
+  readonly navMenus = this.rbacService.menus;
+
+  ngOnInit(): void {
+    if (this.mode === 'app' && !this.rbacService.isLoaded()) {
+      this.rbacService.loadNavigation().subscribe({
+        error: () => {}
+      });
+    }
+  }
 
   readonly userName = () => {
     const user = this.authService.currentUser();
@@ -966,6 +980,7 @@ export class NavbarComponent {
   logout(event: Event): void {
     event.stopPropagation();
     this.closeAll();
+    this.rbacService.clear();
     this.authService.logout();
     this.router.navigate(['/auth/login']);
   }
