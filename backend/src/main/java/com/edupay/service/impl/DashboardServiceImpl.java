@@ -12,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -69,8 +72,9 @@ public class DashboardServiceImpl implements DashboardService {
                 .unpermittedLeaveCount(unpermittedLeaveCount)
                 .build();
 
-        // 2. Today Classes
-        List<DashboardSummaryResponse.TodayClassDto> todayClasses = loadTodayClasses(tenantId);
+        // 2. Classes (All active classes & today's classes)
+        List<DashboardSummaryResponse.TodayClassDto> allClasses = loadAllClasses(tenantId);
+        List<DashboardSummaryResponse.TodayClassDto> todayClasses = filterTodayClasses(allClasses);
 
         // 3. Recent Transactions
         List<DashboardSummaryResponse.RecentTransactionDto> recentTransactions = loadRecentTransactions(tenantId);
@@ -87,6 +91,7 @@ public class DashboardServiceImpl implements DashboardService {
         return DashboardSummaryResponse.builder()
                 .kpis(kpis)
                 .todayClasses(todayClasses)
+                .allClasses(allClasses)
                 .recentTransactions(recentTransactions)
                 .debtors(debtors)
                 .bankSettings(bankSettings)
@@ -94,11 +99,12 @@ public class DashboardServiceImpl implements DashboardService {
                 .build();
     }
 
-    private List<DashboardSummaryResponse.TodayClassDto> loadTodayClasses(UUID tenantId) {
+    private List<DashboardSummaryResponse.TodayClassDto> loadAllClasses(UUID tenantId) {
         String sql = "SELECT c.id, c.name, c.description, c.fee_type, c.default_fee, " +
+                "c.schedule_days, c.start_time, c.end_time, " +
                 "(SELECT COUNT(*) FROM students s WHERE s.class_id = c.id AND s.status = 'STUDYING') as student_count " +
                 "FROM classes c WHERE c.tenant_id = ? AND c.is_active = true " +
-                "ORDER BY c.created_at ASC";
+                "ORDER BY c.start_time ASC NULLS LAST, c.created_at ASC";
 
         return jdbcTemplate.query(sql, (rs, rowNum) -> {
             UUID id = (UUID) rs.getObject("id");
@@ -107,21 +113,94 @@ public class DashboardServiceImpl implements DashboardService {
             String feeType = rs.getString("fee_type");
             double fee = rs.getDouble("default_fee");
             long count = rs.getLong("student_count");
+            String scheduleDays = rs.getString("schedule_days");
+            String startTime = rs.getString("start_time");
+            String endTime = rs.getString("end_time");
 
-            boolean isFirst = (rowNum == 0);
+            String timeStr = (startTime != null && !startTime.isBlank()) ? startTime : "17:30";
+            String endStr = (endTime != null && !endTime.isBlank()) ? endTime : "19:00";
+            String roomName = "Phòng trực tiếp";
+            if (desc != null && !desc.isBlank()) {
+                if (desc.contains("·")) {
+                    String[] parts = desc.split("·");
+                    String last = parts[parts.length - 1].trim();
+                    if (!last.toLowerCase().contains("thứ") && !last.contains(":")) {
+                        roomName = last;
+                    }
+                } else if (!desc.toLowerCase().contains("thứ") && !desc.contains(":")) {
+                    roomName = desc.trim();
+                }
+            }
+
             return DashboardSummaryResponse.TodayClassDto.builder()
                     .id(id)
                     .name(name)
-                    .time(isFirst ? "17:30" : "19:30")
-                    .end(isFirst ? "19:00" : "21:00")
-                    .room(desc != null && !desc.isBlank() ? desc : "Tại nhà · Phòng học 1")
+                    .time(timeStr)
+                    .end(endStr)
+                    .room(roomName)
+                    .scheduleDays(scheduleDays != null && !scheduleDays.isBlank() ? scheduleDays : desc)
                     .count(count)
                     .fee(fee)
                     .feeType(feeType)
-                    .state(isFirst ? "upcoming" : "later")
-                    .text(isFirst ? "Sắp diễn ra" : "Ca tiếp theo")
                     .build();
         }, tenantId);
+    }
+
+    private List<DashboardSummaryResponse.TodayClassDto> filterTodayClasses(List<DashboardSummaryResponse.TodayClassDto> allClasses) {
+        ZoneId zone = ZoneId.of("Asia/Ho_Chi_Minh");
+        DayOfWeek todayDow = LocalDate.now(zone).getDayOfWeek();
+        String todayName = todayDow.name(); // e.g. MONDAY, TUESDAY...
+
+        List<DashboardSummaryResponse.TodayClassDto> allMatching = new ArrayList<>();
+
+        for (DashboardSummaryResponse.TodayClassDto c : allClasses) {
+            String scheduleDays = c.getScheduleDays();
+            boolean matchesToday = false;
+
+            if (scheduleDays != null && !scheduleDays.isBlank()) {
+                matchesToday = Arrays.stream(scheduleDays.split(","))
+                        .map(String::trim)
+                        .anyMatch(day -> day.equalsIgnoreCase(todayName) || day.equals(String.valueOf(todayDow.getValue() + 1)));
+
+                if (!matchesToday) {
+                    String lower = scheduleDays.toLowerCase();
+                    switch (todayDow) {
+                        case MONDAY -> matchesToday = lower.contains("thứ 2") || lower.contains("t2");
+                        case TUESDAY -> matchesToday = lower.contains("thứ 3") || lower.contains("t3");
+                        case WEDNESDAY -> matchesToday = lower.contains("thứ 4") || lower.contains("t4");
+                        case THURSDAY -> matchesToday = lower.contains("thứ 5") || lower.contains("t5");
+                        case FRIDAY -> matchesToday = lower.contains("thứ 6") || lower.contains("t6");
+                        case SATURDAY -> matchesToday = lower.contains("thứ 7") || lower.contains("t7");
+                        case SUNDAY -> matchesToday = lower.contains("chủ nhật") || lower.contains("cn");
+                    }
+                }
+            }
+
+            if (matchesToday) {
+                // Clone item for today view
+                allMatching.add(DashboardSummaryResponse.TodayClassDto.builder()
+                        .id(c.getId())
+                        .name(c.getName())
+                        .time(c.getTime())
+                        .end(c.getEnd())
+                        .room(c.getRoom())
+                        .scheduleDays(c.getScheduleDays())
+                        .count(c.getCount())
+                        .fee(c.getFee())
+                        .feeType(c.getFeeType())
+                        .build());
+            }
+        }
+
+        // Gán trạng thái: Ca đầu tiên là upcoming, các ca sau là later
+        for (int i = 0; i < allMatching.size(); i++) {
+            DashboardSummaryResponse.TodayClassDto item = allMatching.get(i);
+            boolean isFirst = (i == 0);
+            item.setState(isFirst ? "upcoming" : "later");
+            item.setText(isFirst ? "Sắp diễn ra" : "Ca tiếp theo");
+        }
+
+        return allMatching;
     }
 
     private List<DashboardSummaryResponse.RecentTransactionDto> loadRecentTransactions(UUID tenantId) {

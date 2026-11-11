@@ -48,6 +48,9 @@ export interface UserInfo {
   tenantId: string;
   fullName: string;
   phone: string;
+  email?: string;
+  avatarUrl?: string;
+  isOwner?: boolean;
   roles?: string[];
   subscriptionPlan?: string;
   subscriptionStatus?: string;

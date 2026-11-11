@@ -97,50 +97,324 @@ button {
 
 .titleRow h1 {
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink);
   margin: 0 0 6px;
   letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 .titleRow p {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--muted);
   margin: 0;
   max-width: 600px;
   line-height: 1.5;
 }
 
-.classSelectBox {
+/* Custom Class Selector Dropdown */
+.customClassSelectWrapper {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 260px;
+  min-width: 320px;
 }
 
-.classSelectBox label {
-  font-size: 12px;
-  font-weight: 600;
+.selectorLabel {
+  font-size: 11.5px;
+  font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.classDropdown {
-  height: 48px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+.customClassTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: var(--white);
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 600;
-  outline: none;
-  transition: border-color 0.15s ease;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-height: 54px;
+  text-align: left;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
-.classDropdown:focus {
+.customClassTrigger:hover {
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+}
+
+.customClassTrigger.open {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.triggerLeft {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.triggerTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.triggerClassName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todayIndicatorPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid #a7f3d0;
+}
+
+.todayIndicatorPill .liveDot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+}
+
+.otherDayIndicatorPill {
+  display: inline-flex;
+  align-items: center;
+  background: #fffbeb;
+  color: #b45309;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid #fde68a;
+}
+
+.triggerMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.schedBadges {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.dayPillSmall {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.dayPillSmall.highlightDay {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  font-weight: 800;
+}
+
+.metaSep {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.triggerTime {
+  color: #334155;
+  font-weight: 500;
+}
+
+.triggerCount {
+  color: #64748b;
+}
+
+.triggerChevron {
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.customClassTrigger.open .triggerChevron {
+  transform: rotate(180deg);
+  color: var(--blue);
+}
+
+.triggerChevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Custom Floating Dropdown Menu */
+.customClassMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 380px;
+  max-width: 92vw;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.16);
+  z-index: 1000;
+  padding: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+  animation: dropFadeIn 0.15s ease-out;
+}
+
+@keyframes dropFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menuGroupHeader {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 10px 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.menuGroupHeader.todayGroup {
+  color: #2563eb;
+}
+
+.menuGroupHeader.otherGroup {
+  color: #64748b;
+}
+
+.groupStar {
+  color: #2563eb;
+  font-size: 13px;
+}
+
+.menuDivider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 0;
+}
+
+.menuClassItem {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: all 0.12s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+}
+
+.menuClassItem:hover {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.menuClassItem.selected {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.itemLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.itemClassName {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.itemStudentCount {
+  font-size: 11px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.itemMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.itemTime {
+  color: #334155;
+  font-weight: 500;
+}
+
+.itemRoom {
+  color: #64748b;
+}
+
+.itemCheck {
+  color: #2563eb;
+  font-weight: 800;
+  font-size: 16px;
+  padding-left: 8px;
+}
+
+.menuEmptyNotice {
+  padding: 10px 12px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
 }
 
 /* Tab Navigation */
@@ -223,6 +497,89 @@ button {
   font-size: 14px;
   font-weight: 600;
   outline: none;
+}
+
+/* Vietnamese Single Month Picker */
+.vietnameseMonthPicker {
+  display: inline-flex;
+  align-items: center;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 48px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: all 0.15s ease;
+}
+
+.vietnameseMonthPicker:hover {
+  border-color: #94a3b8;
+}
+
+.vietnameseMonthPicker:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.monthNavBtn {
+  width: 36px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.monthNavBtn:hover {
+  background: #e2e8f0;
+  color: var(--blue);
+}
+
+.monthDisplayBox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 100%;
+  background: #ffffff;
+  border-left: 1px solid #f1f5f9;
+  border-right: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+
+.monthText {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.calendarIcon {
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+
+.calendarIcon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.hiddenNativeMonthInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .datePresets {
@@ -1225,6 +1582,213 @@ button {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Session Context Hero Banner */
+.sessionHeroBanner {
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  transition: all 0.2s ease;
+}
+
+.todayHeroBanner {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.08);
+}
+
+.makeupHeroBanner {
+  background: #fffbeb;
+  border: 1.5px solid #fde68a;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.06);
+}
+
+.bannerLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.bannerTopRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.liveSessionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+
+.livePulseDot {
+  width: 7px;
+  height: 7px;
+  background: #15803d;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #15803d;
+}
+
+.makeupSessionPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.03em;
+}
+
+.bannerDateStr {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.bannerClassName {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  letter-spacing: -0.015em;
+}
+
+.bannerMetaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.schedulePillsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.schedulePrefix {
+  font-weight: 500;
+  color: #64748b;
+  margin-right: 2px;
+}
+
+.dayPillLarge {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid #bfdbfe;
+}
+
+.bannerMetaSep {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.bannerMetaItem {
+  color: #334155;
+}
+
+.bannerMetaItem b {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.bannerRight {
+  flex-shrink: 0;
+}
+
+.readyPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+}
+
+.makeupWarningText {
+  color: #92400e;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.makeupWarningText b {
+  color: #78350f;
+  font-weight: 700;
+}
+
+.switchTodayClassBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #f59e0b;
+  color: #b45309;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.1);
+}
+
+.switchTodayClassBtn:hover {
+  background: #fef3c7;
+  border-color: #d97706;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .sessionHeroBanner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .bannerRight {
+    width: 100%;
+  }
+  .switchTodayClassBtn {
+    width: 100%;
+    justify-content: center;
+  }
+  .customClassMenu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 70vh;
   }
 }
 

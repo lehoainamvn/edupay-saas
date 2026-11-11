@@ -36,6 +36,15 @@ public class ClassEntity extends BaseEntity {
     @Builder.Default
     private BigDecimal defaultFee = BigDecimal.ZERO;
 
+    @Column(name = "schedule_days", length = 100)
+    private String scheduleDays;
+
+    @Column(name = "start_time", length = 10)
+    private String startTime;
+
+    @Column(name = "end_time", length = 10)
+    private String endTime;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = Boolean.TRUE;

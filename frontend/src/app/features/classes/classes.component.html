@@ -320,20 +320,39 @@
             }
           </div>
 
-          <div class="twoFields">
-            <div class="field">
-              <span>Lịch học trong tuần</span>
-              <input
-                type="text"
-                formControlName="schedule"
-                placeholder="VD: Thứ 3, Thứ 6 · 18:00" />
+          <!-- Thiết lập lịch học chuẩn hóa trong tuần -->
+          <div class="schedulePickerSection">
+            <label class="scheduleLabel">Lịch học trong tuần</label>
+            <div class="weekdayPills">
+              @for (w of weekdays; track w.code) {
+                <button
+                  type="button"
+                  class="weekdayPill"
+                  [class.selected]="isDaySelected(w.code)"
+                  (click)="toggleDay(w.code)">
+                  {{ w.label }}
+                </button>
+              }
             </div>
-            <div class="field">
-              <span>Ghi chú</span>
-              <input
-                type="text"
-                formControlName="notes"
-                placeholder="Ghi chú nội bộ (nếu có)" />
+
+            <div class="timeRow">
+              <div class="timeField">
+                <span>Giờ bắt đầu</span>
+                <input type="time" formControlName="startTime" />
+              </div>
+              <div class="timeField">
+                <span>Giờ kết thúc</span>
+                <input type="time" formControlName="endTime" />
+              </div>
+              <div class="notesField">
+                <span>Phòng / Địa điểm</span>
+                <input type="text" formControlName="notes" placeholder="VD: Phòng A2" />
+              </div>
+            </div>
+
+            <div class="scheduleLivePreview">
+              <span class="previewDot">●</span>
+              <span>Lịch hiển thị: <b>{{ getSchedulePreview() }}</b></span>
             </div>
           </div>
 

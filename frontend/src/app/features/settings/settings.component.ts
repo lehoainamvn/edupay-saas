@@ -68,12 +68,6 @@ export class SettingsComponent implements OnInit {
     return `${cleanPrefix} + [MÃ LỚP] + [TÊN HS] + [THÁNG]`;
   });
 
-  /**
-   * Kiểm tra đã nhập đủ thông tin ngân hàng cần thiết hay chưa:
-   * - Mã BIN 6 số
-   * - Số tài khoản >= 4 số
-   * - Tên chủ tài khoản >= 2 ký tự
-   */
   readonly isInfoComplete = computed(() => {
     const bin = this.selectedBankBin().trim();
     const accNum = this.accountNumber().trim().replace(/\s+/g, '');
@@ -83,9 +77,6 @@ export class SettingsComponent implements OnInit {
 
   readonly isFormValid = computed(() => this.isInfoComplete());
 
-  /**
-   * Preview mã VietQR mẫu: chỉ hiển thị ngay khi nhập đủ thông tin
-   */
   readonly liveQrUrl = computed(() => {
     if (!this.isInfoComplete()) {
       return null;
@@ -105,7 +96,6 @@ export class SettingsComponent implements OnInit {
     this.loadPaymentSetting();
   }
 
-  // ─── LOAD DATA ──────────────────────────────────────────────────────────────
   loadBanks(): void {
     this.loadingBanks.set(true);
     this.paymentSettingService.getBanks().subscribe({
@@ -113,7 +103,6 @@ export class SettingsComponent implements OnInit {
         this.loadingBanks.set(false);
         if (res.success && res.data && res.data.length > 0) {
           this.banks.set(res.data);
-          // Cập nhật lại tên ngân hàng đang chọn nếu đã có
           const current = res.data.find((b) => b.bin === this.selectedBankBin());
           if (current) {
             this.selectedBankName.set(current.shortName);
@@ -121,7 +110,6 @@ export class SettingsComponent implements OnInit {
         }
       },
       error: () => {
-        // Nếu lỗi, giữ nguyên danh sách 56 ngân hàng dự phòng
         this.loadingBanks.set(false);
       }
     });
@@ -151,7 +139,7 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  // ─── USER ACTIONS ───────────────────────────────────────────────────────────
+  // ─── ACTIONS ────────────────────────────────────────────────────────────────
   onBankChange(event: Event): void {
     const select = event.target as HTMLSelectElement;
     const bin = select.value;
@@ -228,7 +216,7 @@ export class SettingsComponent implements OnInit {
     };
 
     this.paymentSettingService.savePaymentSetting(payload).subscribe({
-      next: (res) => {
+      next: () => {
         this.saving.set(false);
         this.isConfigured.set(true);
         this.toastService.success('Lưu cấu hình tài khoản VietQR thành công!');

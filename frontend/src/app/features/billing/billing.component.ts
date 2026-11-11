@@ -210,7 +210,31 @@ export class BillingComponent implements OnInit {
 
   onMonthChange(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.selectedMonth.set(input.value);
+    if (input && input.value) {
+      this.selectedMonth.set(input.value);
+      if (this.activeTab() === 'calculator') {
+        this.loadPreview();
+      } else {
+        this.loadInvoices();
+      }
+    }
+  }
+
+  changeMonthOffset(offset: number): void {
+    const current = this.selectedMonth();
+    if (!current) return;
+    const parts = current.split('-');
+    let y = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10) + offset;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    } else if (m < 1) {
+      m = 12;
+      y -= 1;
+    }
+    const newMonth = `${y}-${String(m).padStart(2, '0')}`;
+    this.selectedMonth.set(newMonth);
     if (this.activeTab() === 'calculator') {
       this.loadPreview();
     } else {

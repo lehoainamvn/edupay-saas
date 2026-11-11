@@ -77,17 +77,20 @@ Tài liệu này là **tập luật tối cao (Ground Truth)** dành riêng cho 
   * Tối đa 4 thông báo cùng lúc để không làm che khuất nội dung làm việc của giáo viên.
 
 
-### 11. Luật Thống Nhất Cỡ Chữ 16px & Khung Bố Cục Chuẩn 1280px Toàn Hệ Thống (Unified 16px Typography & 1280px Layout Frame Law — P0)
-* **CHUẨN FONT-SIZE 16PX GỐC TOÀN HỆ THỐNG (Base 16px Typography):**
-  * Toàn bộ ứng dụng lấy cỡ chữ **16px** làm chuẩn mực thiết kế cơ sở (`html { font-size: 16px; }`, `body { font-size: 16px; line-height: 1.5; }`).
-  * Mọi ô nhập liệu (`input`, `select`, `textarea`), nút bấm (`button`) chính và nội dung đọc chính **BẮT BUỘC** đạt kích thước tối thiểu **15px - 16px** (chống hiện tượng tự động phóng to khó chịu trên iOS Safari di động, đồng thời đảm bảo giáo viên đọc thông tin học sinh và số tiền rõ ràng, không mỏi mắt).
-  * **CẤM DÙNG FONT CHỮ LI TI:** Tuyệt đối không dùng font chữ < 13px cho nội dung đọc chính, danh sách học sinh, bảng tính học phí hoặc nhãn form. Chỉ cho phép dùng 11px - 12px duy nhất cho các tag kicker/badge in hoa phụ.
-  * Phân cấp cỡ chữ chuẩn:
-    - **Tiêu đề trang (H1):** `font-size: 26px - 28px; font-weight: 700 - 800;`
-    - **Tiêu đề mục / Thẻ (H2, H3, Modal Title):** `font-size: 18px - 20px; font-weight: 700;`
-    - **Đoạn mô tả dưới tiêu đề (Subtitle/Desc):** `font-size: 15px - 16px; line-height: 1.5; color: #64748b;`
-    - **Nội dung bảng, thẻ học sinh, ô nhập liệu:** `font-size: 15px - 16px;`
-    - **Nhãn phụ / Badge kicker:** `font-size: 11px - 12px; font-weight: 700; text-transform: uppercase;`
+### 11. Luật Thống Nhất Typography Cho Người Dùng 22 - 45 Tuổi & Khung Bố Cục Chuẩn 1280px (Unified Typography & Layout Law — P0)
+* **BỘ QUY CHUẨN TYPOGRAPHY CHO NGƯỜI DÙNG 22 - 45 TUỔI (BẮT BUỘC):**
+  * **Phông chữ:** Duy nhất `'Be Vietnam Pro'` (fallback: `'Inter', sans-serif`). Cấm font Serif hoặc font không hỗ trợ tiếng Việt chuẩn.
+  * **Thanh Navigation (Navbar):** Chiều cao cố định `60px`. Chữ menu `14px`, SemiBold (600), màu `#0f172a` (Active `#2563eb`).
+  * **Tiêu đề trang (H1):** `24px - 26px`, Bold (700), màu `#0f172a` / `#111827`, `line-height: 1.3`, `letter-spacing: -0.02em`.
+  * **Tiêu đề phân khu / Thẻ chức năng (H2):** `17px - 18px`, Bold (700), màu `#111827`, `line-height: 1.35`.
+  * **Tiêu đề thẻ con / Modal / Bảng (H3):** `15px - 16px`, SemiBold (600), màu `#111827`.
+  * **Nội dung đọc chính (Body Text):** `14px`, Regular (400) hoặc Medium (500), màu `#334155`, `line-height: 1.5`.
+  * **Nội dung phụ / Chú thích (Meta / Subtext):** `12.5px - 13px`, Regular (400), màu `#64748b`.
+  * **Nhãn trạng thái (Badge / Tag):** `11px - 12px`, SemiBold (600) hoặc Bold (700), padding `2px 8px`, border-radius `999px`.
+  * **Chỉ số KPI & Tiền tệ:** `22px - 26px`, Bold (700), số tiền thực thu dùng `#059669`, nợ phí dùng `#d97706`.
+  * **Kích thước nút bấm (Buttons):** Nút chính cao `44px - 48px` (Touch target $\ge 44\text{px}$, font `14px - 14.5px` SemiBold 600). Nút mini cao `32px - 36px` (font `12.5px - 13px`).
+  * **Ô nhập liệu & Chọn ngày/tháng:** Cao `42px - 48px`, font `14px - 14.5px`. Bộ chọn tháng luôn thuần tiếng Việt: `Tháng 11/2026 📅`, cấm hiển thị ô tiếng Anh hay dư ô phụ.
+  * **CẤM DÙNG FONT < 11PX:** Tuyệt đối không dùng font chữ < 11px trên toàn hệ thống.
 * **THỐNG NHẤT KHUNG BỐ CỤC 1280PX CHO TẤT CẢ CÁC TRANG (No Layout Jumping):**
   * Toàn bộ các trang nghiệp vụ (`dashboard`, `classes`, `students`, `attendance`, `billing`, `settings`) **BẮT BUỘC DÙNG CHUNG DUY NHẤT 1 BỘ THÔNG SỐ KHUNG BỐ CỤC**:
     - **Chiều rộng tối đa (Max Width):** Đúng chuẩn **`1280px`** căn giữa (`margin: 0 auto;`).
