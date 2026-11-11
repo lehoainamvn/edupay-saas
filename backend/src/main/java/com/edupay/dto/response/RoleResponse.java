@@ -22,3 +22,4 @@ public class RoleResponse {
     private Long userCount;
     private List<String> permissions; // List of permission codes
 }
+

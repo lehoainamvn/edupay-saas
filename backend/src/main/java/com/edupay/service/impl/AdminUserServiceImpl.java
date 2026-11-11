@@ -4,6 +4,7 @@ import com.edupay.dto.request.CreateUserRequest;
 import com.edupay.dto.request.ResetPasswordRequest;
 import com.edupay.dto.request.UpdateUserRequest;
 import com.edupay.dto.response.AdminUserResponse;
+import com.edupay.dto.response.PageResponse;
 import com.edupay.entity.Role;
 import com.edupay.entity.Tenant;
 import com.edupay.entity.User;
@@ -15,19 +16,15 @@ import com.edupay.repository.UserRepository;
 import com.edupay.service.AdminUserService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -47,46 +44,28 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId) {
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size), Sort.by(Sort.Direction.DESC, "createdAt"));
+    public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId) {
+        List<User> allUsers = userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Specification<User> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
+        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
+                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
 
-            // 1. Tìm kiếm theo Tên, SĐT, Email
-            if (search != null && !search.isBlank()) {
-                String s = "%" + search.trim().toLowerCase() + "%";
-                Predicate nameMatch = cb.like(cb.lower(root.get("fullName")), s);
-                Predicate phoneMatch = cb.like(root.get("phone"), s);
-                Predicate emailMatch = cb.like(cb.lower(cb.coalesce(root.get("email"), "")), s);
-                predicates.add(cb.or(nameMatch, phoneMatch, emailMatch));
-            }
+        List<AdminUserResponse> filtered = allUsers.stream()
+                .filter(u -> matchesSearch(u, search))
+                .filter(u -> matchesStatus(u, status))
+                .filter(u -> tenantId == null || tenantId.equals(u.getTenantId()))
+                .map(u -> toAdminUserResponse(u, tenantMap))
+                .filter(u -> matchesRole(u, role))
+                .collect(Collectors.toList());
 
-            // 2. Lọc theo trạng thái
-            if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
-                predicates.add(cb.equal(root.get("status"), status.trim().toUpperCase()));
-            }
+        long totalElements = filtered.size();
+        int safePage = Math.max(0, page);
+        int safeSize = Math.max(1, size);
+        int fromIndex = Math.min(safePage * safeSize, (int) totalElements);
+        int toIndex = Math.min(fromIndex + safeSize, (int) totalElements);
 
-            // 3. Lọc theo Tenant
-            if (tenantId != null) {
-                predicates.add(cb.equal(root.get("tenantId"), tenantId));
-            }
-
-            // 4. Lọc theo Vai trò (Role)
-            if (role != null && !role.isBlank() && !"ALL".equalsIgnoreCase(role)) {
-                List<UUID> matchingUserIds = roleRepository.findUserIdsByRoleCode(role.trim().toUpperCase());
-                if (matchingUserIds.isEmpty()) {
-                    predicates.add(cb.disjunction()); // Không có user nào
-                } else {
-                    predicates.add(root.get("id").in(matchingUserIds));
-                }
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
-
-        Page<User> usersPage = userRepository.findAll(spec, pageable);
-        return usersPage.map(this::toAdminUserResponse);
+        List<AdminUserResponse> pageContent = filtered.subList(fromIndex, toIndex);
+        return PageResponse.of(pageContent, totalElements, safePage, safeSize);
     }
 
     @Override
@@ -94,7 +73,10 @@ public class AdminUserServiceImpl implements AdminUserService {
     public AdminUserResponse getUserById(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
-        return toAdminUserResponse(user);
+
+        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
+                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
+        return toAdminUserResponse(user, tenantMap);
     }
 
     @Override
@@ -146,7 +128,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         log.info("SuperAdmin tạo người dùng mới: phone={}, fullName={}, tenantId={}, role={}",
                 savedUser.getPhone(), savedUser.getFullName(), finalTenantId, roleCode);
 
-        return toAdminUserResponse(savedUser);
+        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
+                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
+        return toAdminUserResponse(savedUser, tenantMap);
     }
 
     @Override
@@ -186,7 +170,10 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         User updatedUser = userRepository.save(user);
         log.info("SuperAdmin cập nhật thông tin người dùng: userId={}, fullName={}", id, updatedUser.getFullName());
-        return toAdminUserResponse(updatedUser);
+
+        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
+                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
+        return toAdminUserResponse(updatedUser, tenantMap);
     }
 
     @Override
@@ -212,7 +199,10 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         User updatedUser = userRepository.save(user);
         log.info("SuperAdmin cập nhật trạng thái người dùng: userId={}, status={}", id, upperStatus);
-        return toAdminUserResponse(updatedUser);
+
+        Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
+                .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
+        return toAdminUserResponse(updatedUser, tenantMap);
     }
 
     @Override
@@ -247,11 +237,17 @@ public class AdminUserServiceImpl implements AdminUserService {
         log.info("SuperAdmin xóa người dùng: userId={}, phone={}, name={}", id, user.getPhone(), user.getFullName());
     }
 
-    private AdminUserResponse toAdminUserResponse(User user) {
-        List<String> roles = roleRepository.findRoleCodesByUserId(user.getId());
-        String tenantName = tenantRepository.findById(user.getTenantId())
-                .map(Tenant::getName)
-                .orElse("Hệ thống EduPay");
+    private AdminUserResponse toAdminUserResponse(User user, Map<UUID, String> tenantMap) {
+        List<String> roles = Collections.emptyList();
+        try {
+            roles = roleRepository.findRoleCodesByUserId(user.getId());
+        } catch (Exception e) {
+            log.warn("Cannot find role codes for user {}: {}", user.getId(), e.getMessage());
+        }
+
+        String tenantName = user.getTenantId() != null
+                ? tenantMap.getOrDefault(user.getTenantId(), "Hệ thống EduPay")
+                : "Hệ thống EduPay";
 
         return AdminUserResponse.builder()
                 .id(user.getId())
@@ -262,10 +258,30 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .fullName(user.getFullName())
                 .avatarUrl(user.getAvatarUrl())
                 .status(user.getStatus())
-                .isOwner(user.getIsOwner())
+                .isOwner(user.getIsOwner() != null ? user.getIsOwner() : false)
                 .roles(roles)
                 .lastLoginAt(user.getLastLoginAt())
                 .createdAt(user.getCreatedAt())
                 .build();
+    }
+
+    private boolean matchesSearch(User user, String search) {
+        if (search == null || search.isBlank()) return true;
+        String s = search.trim().toLowerCase();
+        boolean nameMatch = user.getFullName() != null && user.getFullName().toLowerCase().contains(s);
+        boolean phoneMatch = user.getPhone() != null && user.getPhone().contains(s);
+        boolean emailMatch = user.getEmail() != null && user.getEmail().toLowerCase().contains(s);
+        return nameMatch || phoneMatch || emailMatch;
+    }
+
+    private boolean matchesStatus(User user, String status) {
+        if (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status)) return true;
+        return status.trim().equalsIgnoreCase(user.getStatus());
+    }
+
+    private boolean matchesRole(AdminUserResponse user, String role) {
+        if (role == null || role.isBlank() || "ALL".equalsIgnoreCase(role)) return true;
+        if (user.getRoles() == null) return false;
+        return user.getRoles().stream().anyMatch(r -> r.equalsIgnoreCase(role.trim()));
     }
 }

@@ -27,3 +27,4 @@ public class AdminUserResponse {
     private Instant lastLoginAt;
     private Instant createdAt;
 }
+

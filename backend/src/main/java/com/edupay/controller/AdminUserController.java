@@ -5,12 +5,12 @@ import com.edupay.dto.request.CreateUserRequest;
 import com.edupay.dto.request.ResetPasswordRequest;
 import com.edupay.dto.request.UpdateUserRequest;
 import com.edupay.dto.response.AdminUserResponse;
+import com.edupay.dto.response.PageResponse;
 import com.edupay.service.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,14 +28,14 @@ public class AdminUserController {
     @GetMapping
     @Operation(summary = "Lấy danh sách người dùng toàn hệ thống",
             description = "Hỗ trợ phân trang, tìm kiếm theo tên/SĐT/email, lọc theo role, status, tenant")
-    public ResponseEntity<ApiResponse<Page<AdminUserResponse>>> getUsers(
+    public ResponseEntity<ApiResponse<PageResponse<AdminUserResponse>>> getUsers(
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size,
             @RequestParam(name = "search", required = false) String search,
             @RequestParam(name = "role", required = false) String role,
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "tenantId", required = false) UUID tenantId) {
-        Page<AdminUserResponse> data = adminUserService.getAllUsers(page, size, search, role, status, tenantId);
+        PageResponse<AdminUserResponse> data = adminUserService.getAllUsers(page, size, search, role, status, tenantId);
         return ResponseEntity.ok(ApiResponse.ok(data, "Lấy danh sách người dùng thành công"));
     }
 
@@ -88,3 +88,4 @@ public class AdminUserController {
         return ResponseEntity.ok(ApiResponse.ok(null, "Xóa tài khoản người dùng thành công"));
     }
 }
+

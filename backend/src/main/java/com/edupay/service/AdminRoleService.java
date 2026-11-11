@@ -15,3 +15,4 @@ public interface AdminRoleService {
 
     RoleResponse updateRolePermissions(UUID roleId, UpdateRolePermissionsRequest request);
 }
+

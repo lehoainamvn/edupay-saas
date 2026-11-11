@@ -17,3 +17,4 @@ public class UpdateRolePermissionsRequest {
     @NotNull(message = "Danh sách quyền hạn không được null")
     private List<String> permissionCodes;
 }
+

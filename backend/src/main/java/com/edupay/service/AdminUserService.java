@@ -4,13 +4,13 @@ import com.edupay.dto.request.CreateUserRequest;
 import com.edupay.dto.request.ResetPasswordRequest;
 import com.edupay.dto.request.UpdateUserRequest;
 import com.edupay.dto.response.AdminUserResponse;
-import org.springframework.data.domain.Page;
+import com.edupay.dto.response.PageResponse;
 
 import java.util.UUID;
 
 public interface AdminUserService {
 
-    Page<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId);
+    PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId);
 
     AdminUserResponse getUserById(UUID id);
 
@@ -24,3 +24,4 @@ public interface AdminUserService {
 
     void deleteUser(UUID id);
 }
+

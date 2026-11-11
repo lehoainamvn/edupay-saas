@@ -32,3 +32,4 @@ public class CreateUserRequest {
 
     private UUID tenantId; // If null and not SUPER_ADMIN, will link to current or default tenant
 }
+
