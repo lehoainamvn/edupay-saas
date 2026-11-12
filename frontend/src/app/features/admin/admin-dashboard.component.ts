@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AdminService,
@@ -31,8 +31,10 @@ export class AdminDashboardComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
 
   loading = signal<boolean>(true);
+  refreshed = signal<boolean>(false);
   actionLoading = signal<string | null>(null);
   errorMessage = signal<string | null>(null);
 
@@ -43,7 +45,6 @@ export class AdminDashboardComponent implements OnInit {
   // Filter & Search
   currentTab = signal<'ALL' | 'CENTER' | 'SOLO_TUTOR' | 'EXPIRED'>('ALL');
   searchQuery = signal<string>('');
-  planFilter = signal<string>('ALL');
 
   // Extend Modal state
   selectedTenantForExtend = signal<TenantAdminItem | null>(null);
@@ -54,30 +55,61 @@ export class AdminDashboardComponent implements OnInit {
   selectedTenantForToggle = signal<TenantAdminItem | null>(null);
 
   // Computed metrics
-  centerCount = computed(() => this.stats()?.totalCenters || this.tenants().filter(t => t.tenantType === 'CENTER').length);
-  tutorCount = computed(() => this.stats()?.totalTutors || this.tenants().filter(t => t.tenantType === 'SOLO_TUTOR').length);
+  centerCount = computed(
+    () =>
+      this.stats()?.totalCenters ||
+      this.tenants().filter((t) => t.tenantType === 'CENTER').length
+  );
+
+  tutorCount = computed(
+    () =>
+      this.stats()?.totalTutors ||
+      this.tenants().filter((t) => t.tenantType === 'SOLO_TUTOR').length
+  );
+
   teacherCount = computed(() => this.stats()?.totalTeachers || 0);
   studentCount = computed(() => this.stats()?.totalStudents || 0);
   classCount = computed(() => this.stats()?.totalClasses || 0);
 
-  activeCount = computed(() => {
-    return this.tenants().filter((t) => t.subscriptionStatus === 'ACTIVE' && !t.isExpired).length;
-  });
-
-  suspendedCount = computed(() => {
-    return this.tenants().filter((t) => t.subscriptionStatus === 'SUSPENDED').length;
-  });
-
   expiredCount = computed(() => {
-    return this.tenants().filter((t) => t.isExpired || t.subscriptionStatus === 'EXPIRED').length;
+    return this.tenants().filter(
+      (t) => t.isExpired || t.subscriptionStatus === 'EXPIRED'
+    ).length;
   });
 
-  // Top Centers computed
-  topCenters = computed(() => {
-    return this.tenants()
-      .filter((t) => t.tenantType === 'CENTER')
-      .sort((a, b) => (b.totalStudents + b.totalClasses) - (a.totalStudents + a.totalClasses))
-      .slice(0, 5);
+  centerPercent = computed(() => {
+    const total = this.tenants().length || 1;
+    const c = this.centerCount();
+    return Math.round((c / total) * 1000) / 10;
+  });
+
+  tutorPercent = computed(() => {
+    const total = this.tenants().length || 1;
+    const t = this.tutorCount();
+    return Math.round((t / total) * 1000) / 10;
+  });
+
+  // Top Center
+  topCenter = computed(() => {
+    const centers = this.tenants().filter((t) => t.tenantType === 'CENTER');
+    if (!centers.length) return null;
+    return centers.slice().sort(
+      (a, b) =>
+        (b.totalTeachers || 0) +
+        (b.totalClasses || 0) +
+        (b.totalStudents || 0) -
+        ((a.totalTeachers || 0) + (a.totalClasses || 0) + (a.totalStudents || 0))
+    )[0];
+  });
+
+  todayFormatted = computed(() => {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `${d}/${m}/${y} · ${hh}:${mm}`;
   });
 
   // Filtered tenants computed
@@ -85,18 +117,15 @@ export class AdminDashboardComponent implements OnInit {
     let list = this.tenants();
     const tab = this.currentTab();
     const query = this.searchQuery().toLowerCase().trim();
-    const plan = this.planFilter();
 
     if (tab === 'CENTER') {
       list = list.filter((t) => t.tenantType === 'CENTER');
     } else if (tab === 'SOLO_TUTOR') {
       list = list.filter((t) => t.tenantType === 'SOLO_TUTOR');
     } else if (tab === 'EXPIRED') {
-      list = list.filter((t) => t.isExpired || t.subscriptionStatus === 'EXPIRED');
-    }
-
-    if (plan !== 'ALL') {
-      list = list.filter((t) => (t.subscriptionPlan || '').toUpperCase() === plan);
+      list = list.filter(
+        (t) => t.isExpired || t.subscriptionStatus === 'EXPIRED'
+      );
     }
 
     if (query) {
@@ -105,7 +134,8 @@ export class AdminDashboardComponent implements OnInit {
           (t.name && t.name.toLowerCase().includes(query)) ||
           (t.phone && t.phone.toLowerCase().includes(query)) ||
           (t.email && t.email.toLowerCase().includes(query)) ||
-          (t.representativeName && t.representativeName.toLowerCase().includes(query))
+          (t.representativeName &&
+            t.representativeName.toLowerCase().includes(query))
       );
     }
 
@@ -151,10 +181,54 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
+  handleRefresh(): void {
+    this.refreshed.set(true);
+    this.loadData();
+    setTimeout(() => this.refreshed.set(false), 1200);
+  }
+
   setTab(tab: 'ALL' | 'CENTER' | 'SOLO_TUTOR' | 'EXPIRED'): void {
     this.currentTab.set(tab);
   }
 
+  navigateCreateCenter(): void {
+    this.router.navigate(['/admin/centers'], { queryParams: { action: 'create' } });
+  }
+
+  navigateCreateTutor(): void {
+    this.router.navigate(['/admin/tutors'], { queryParams: { action: 'create' } });
+  }
+
+  centerInitials(name: string): string {
+    const parts = (name || 'Ánh Dương').trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return (name || 'TT').substring(0, 2).toUpperCase();
+  }
+
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '01/01/2100';
+    try {
+      const d = new Date(dateStr);
+      return `${String(d.getDate()).padStart(2, '0')}/${String(
+        d.getMonth() + 1
+      ).padStart(2, '0')}/${d.getFullYear()}`;
+    } catch {
+      return dateStr;
+    }
+  }
+
+  formatMoney(amount: number | null | undefined): string {
+    if (amount == null) return '0 đ';
+    return (
+      new Intl.NumberFormat('vi-VN', {
+        maximumFractionDigits: 0,
+      }).format(amount) + ' đ'
+    );
+  }
+
+  // ─── EXTEND MODAL ───────────────────────────────────────────────────────────
   openExtendModal(tenant: TenantAdminItem): void {
     this.selectedTenantForExtend.set(tenant);
     this.extendDuration.set('1_MONTH');
@@ -201,7 +275,8 @@ export class AdminDashboardComponent implements OnInit {
       });
   }
 
-  openToggleModal(tenant: TenantAdminItem): void {
+  // ─── STATUS TOGGLE MODAL ────────────────────────────────────────────────────
+  openStatusModal(tenant: TenantAdminItem): void {
     this.selectedTenantForToggle.set(tenant);
   }
 
@@ -213,7 +288,8 @@ export class AdminDashboardComponent implements OnInit {
     const tenant = this.selectedTenantForToggle();
     if (!tenant) return;
 
-    const newStatus = tenant.subscriptionStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const newStatus =
+      tenant.subscriptionStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
     const actionLabel = newStatus === 'ACTIVE' ? 'mở khóa' : 'tạm khóa';
 
     this.actionLoading.set(tenant.id);
@@ -241,14 +317,5 @@ export class AdminDashboardComponent implements OnInit {
           );
         },
       });
-  }
-
-  formatMoney(amount: number | null | undefined): string {
-    if (amount == null) return '0 ₫';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-      maximumFractionDigits: 0,
-    }).format(amount);
   }
 }
