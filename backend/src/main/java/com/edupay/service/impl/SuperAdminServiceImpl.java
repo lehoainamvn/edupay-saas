@@ -4,11 +4,13 @@ import com.edupay.dto.request.TenantExtendRequest;
 import com.edupay.dto.response.PlatformStatsResponse;
 import com.edupay.dto.response.TenantAdminResponse;
 import com.edupay.entity.Tenant;
+import com.edupay.entity.User;
 import com.edupay.exception.BusinessException;
 import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.repository.ClassRepository;
 import com.edupay.repository.StudentRepository;
 import com.edupay.repository.TenantRepository;
+import com.edupay.repository.UserRepository;
 import com.edupay.service.SuperAdminService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     private final TenantRepository tenantRepository;
     private final ClassRepository classRepository;
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
 
     private static final BigDecimal MONTHLY_PRICE = new BigDecimal("59000");
     private static final BigDecimal ANNUAL_MONTHLY_EQUIVALENT = new BigDecimal("499000").divide(new BigDecimal("12"), 2, RoundingMode.HALF_UP);
@@ -51,7 +54,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Transactional
     public TenantAdminResponse updateTenantStatus(UUID tenantId, String newStatus) {
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("TENANT_NOT_FOUND", "Không tìm thấy thông tin Giáo viên với ID: " + tenantId));
+                .orElseThrow(() -> new ResourceNotFoundException("TENANT_NOT_FOUND", "Không tìm thấy thông tin cơ sở với ID: " + tenantId));
 
         String upperStatus = newStatus.trim().toUpperCase();
         if (!List.of("ACTIVE", "SUSPENDED", "EXPIRED").contains(upperStatus)) {
@@ -69,7 +72,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Transactional
     public TenantAdminResponse extendTenantSubscription(UUID tenantId, TenantExtendRequest request) {
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("TENANT_NOT_FOUND", "Không tìm thấy thông tin Giáo viên với ID: " + tenantId));
+                .orElseThrow(() -> new ResourceNotFoundException("TENANT_NOT_FOUND", "Không tìm thấy thông tin cơ sở với ID: " + tenantId));
 
         Instant now = Instant.now();
         Instant baseTime = (tenant.getSubscriptionEndsAt() != null && tenant.getSubscriptionEndsAt().isAfter(now))
@@ -101,47 +104,73 @@ public class SuperAdminServiceImpl implements SuperAdminService {
         long suspendedTenants = tenantRepository.countBySubscriptionStatus("SUSPENDED");
         long trialTenants = tenantRepository.countBySubscriptionStatus("TRIAL");
 
-        // Giáo viên mới trong 30 ngày qua
+        long totalCenters = tenantRepository.countByTenantType("CENTER");
+        long totalTutors = tenantRepository.countByTenantType("SOLO_TUTOR");
+        long totalTeachers = userRepository.countByIsOwnerFalse();
+        long totalStudents = studentRepository.count();
+        long totalClasses = classRepository.count();
+
+        // Tài khoản mới trong 30 ngày qua
         Instant thirtyDaysAgo = Instant.now().minus(30, ChronoUnit.DAYS);
         long newTeachersThisMonth = tenantRepository.countByCreatedAtAfter(thirtyDaysAgo);
 
-        // Tính MRR
+        // Tính MRR & ARR
         long activeMonthly = tenantRepository.countActiveMonthlyTenants();
         long activeAnnual = tenantRepository.countActiveAnnualTenants();
         BigDecimal mrr = MONTHLY_PRICE.multiply(BigDecimal.valueOf(activeMonthly))
                 .add(ANNUAL_MONTHLY_EQUIVALENT.multiply(BigDecimal.valueOf(activeAnnual)));
+        BigDecimal arr = mrr.multiply(BigDecimal.valueOf(12));
 
         // Tỷ lệ gia hạn ước tính
         double renewalRate = totalTenants > 0 ? ((double) activeTenants / totalTenants) * 100.0 : 85.0;
 
         return PlatformStatsResponse.builder()
                 .mrr(mrr)
-                .newTeachersThisMonth(newTeachersThisMonth)
+                .arr(arr)
                 .renewalRate(Math.round(renewalRate * 10.0) / 10.0)
                 .totalTenants(totalTenants)
+                .totalCenters(totalCenters)
+                .totalTutors(totalTutors)
+                .totalTeachers(totalTeachers)
+                .totalStudents(totalStudents)
+                .totalClasses(totalClasses)
                 .activeTenants(activeTenants)
                 .suspendedTenants(suspendedTenants)
                 .trialTenants(trialTenants)
+                .newTeachersThisMonth(newTeachersThisMonth)
                 .build();
     }
 
     private TenantAdminResponse toTenantAdminResponse(Tenant t, Instant now) {
         long totalClasses = classRepository.findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(t.getId()).size();
         long totalStudents = studentRepository.findAllByTenantIdOrderByCreatedAtDesc(t.getId()).size();
+        long totalTeachers = userRepository.countByTenantIdAndIsOwnerFalse(t.getId());
         boolean isExpired = t.getSubscriptionEndsAt() != null && t.getSubscriptionEndsAt().isBefore(now);
+
+        String repName = t.getName();
+        String repPhone = t.getPhone();
+        User owner = userRepository.findFirstByTenantIdAndIsOwnerTrue(t.getId()).orElse(null);
+        if (owner != null) {
+            repName = owner.getFullName();
+            repPhone = owner.getPhone();
+        }
 
         return TenantAdminResponse.builder()
                 .id(t.getId())
                 .name(t.getName())
                 .phone(t.getPhone())
                 .email(t.getEmail())
+                .tenantType(t.getTenantType() != null ? t.getTenantType() : "SOLO_TUTOR")
                 .subscriptionPlan(t.getSubscriptionPlan())
                 .subscriptionStatus(t.getSubscriptionStatus())
                 .subscriptionEndsAt(t.getSubscriptionEndsAt())
                 .createdAt(t.getCreatedAt())
+                .totalTeachers(totalTeachers)
                 .totalClasses(totalClasses)
                 .totalStudents(totalStudents)
                 .isExpired(isExpired)
+                .representativeName(repName)
+                .representativePhone(repPhone)
                 .build();
     }
 

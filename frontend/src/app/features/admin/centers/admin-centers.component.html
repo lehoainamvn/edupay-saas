@@ -1,0 +1,357 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Quản lý Trung tâm Đào tạo</h1>
+      <p class="page-subtitle">
+        Cấp quyền, quản trị cơ sở đào tạo, theo dõi quy mô giáo viên và thời hạn gói cước của các trung tâm.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary" (click)="openCreateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        <span>Thêm Trung tâm mới</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="toolbar-card">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Tìm kiếm tên trung tâm, người đại diện, số điện thoại..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="filter-select">
+        <option value="ALL">Tất cả trạng thái</option>
+        <option value="ACTIVE">Đang hoạt động</option>
+        <option value="SUSPENDED">Tạm khóa</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Centers Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Đang tải danh sách Trung tâm đào tạo...</p>
+      </div>
+    } @else if (filteredCenters().length === 0) {
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
+        </svg>
+        <h3>Chưa có Trung tâm nào phù hợp</h3>
+        <p>Hãy thử thay đổi từ khóa tìm kiếm hoặc nhấn "Thêm Trung tâm mới".</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Trung tâm / Cơ sở</th>
+              <th>Người đại diện & SĐT</th>
+              <th>Giáo viên trực thuộc</th>
+              <th>Lớp học</th>
+              <th>Gói cước</th>
+              <th>Hạn dùng</th>
+              <th>Trạng thái</th>
+              <th class="text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (center of filteredCenters(); track center.id) {
+              <tr>
+                <td>
+                  <div class="center-meta">
+                    <span class="center-name">{{ center.name }}</span>
+                    <span class="center-email">{{ center.email || 'Chưa có email' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="rep-meta">
+                    <span class="rep-name">{{ center.representativeName || center.name }}</span>
+                    <span class="rep-phone">{{ center.representativePhone || center.phone }}</span>
+                  </div>
+                </td>
+                <td>
+                  <button class="btn-teachers-pill" (click)="openTeachersModal(center)" title="Xem danh sách đội ngũ giáo viên của trung tâm này">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                    <span>{{ center.totalTeachers || 0 }} Giáo viên</span>
+                  </button>
+                </td>
+                <td>
+                  <span class="badge-subtle">{{ center.totalClasses }} lớp</span>
+                </td>
+                <td>
+                  <span class="plan-pill" [class.pro]="center.subscriptionPlan === 'ENTERPRISE'">
+                    {{ center.subscriptionPlan || 'MONTHLY' }}
+                  </span>
+                </td>
+                <td>
+                  <div class="expiry-meta" [class.text-danger]="center.isExpired">
+                    <span>{{ center.subscriptionEndsAt | date:'dd/MM/yyyy' }}</span>
+                    @if (center.isExpired) {
+                      <span class="expired-label">Hết hạn</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (center.subscriptionStatus === 'ACTIVE') {
+                    <span class="status-badge status-active">Hoạt động</span>
+                  } @else {
+                    <span class="status-badge status-suspended">Tạm khóa</span>
+                  }
+                </td>
+                <td class="text-right">
+                  <div class="actions-group">
+                    <button class="btn-action edit" (click)="openEditModal(center)" title="Chỉnh sửa thông tin">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    </button>
+                    <button class="btn-action toggle" (click)="toggleStatus(center)" [title]="center.subscriptionStatus === 'ACTIVE' ? 'Tạm khóa cơ sở' : 'Mở khóa cơ sở'">
+                      @if (center.subscriptionStatus === 'ACTIVE') {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      }
+                    </button>
+                    <button class="btn-action delete" (click)="openDeleteModal(center)" title="Xóa trung tâm">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ─── MODAL: DANH SÁCH GIÁO VIÊN TRỰC THUỘC TRUNG TÂM ─── -->
+  @if (viewingCenter()) {
+    <div class="modal-backdrop" (click)="closeTeachersModal()">
+      <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Đội ngũ Giáo viên Trực thuộc</h3>
+            <p class="modal-subtitle">Cơ sở: <strong>{{ viewingCenter()?.name }}</strong></p>
+          </div>
+          <button class="btn-close" (click)="closeTeachersModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          @if (teachersLoading()) {
+            <div class="loading-state">
+              <div class="spinner"></div>
+              <p>Đang tải danh sách giáo viên cơ sở...</p>
+            </div>
+          } @else if (centerTeachers().length === 0) {
+            <div class="empty-state-modal">
+              <p>Trung tâm này hiện chưa có tài khoản giáo viên trực thuộc nào được tạo.</p>
+            </div>
+          } @else {
+            <div class="teachers-list-wrap">
+              @for (t of centerTeachers(); track t.id) {
+                <div class="teacher-item-card">
+                  <div class="t-avatar">{{ t.fullName.substring(0, 2).toUpperCase() }}</div>
+                  <div class="t-info">
+                    <span class="t-name">{{ t.fullName }}</span>
+                    <span class="t-contact">{{ t.phone }} {{ t.email ? '• ' + t.email : '' }}</span>
+                  </div>
+                  <div class="t-classes">
+                    <span class="badge-subtle">{{ t.assignedClassesCount }} lớp phụ trách</span>
+                  </div>
+                  <div class="t-status">
+                    <span class="status-badge" [class.status-active]="t.status === 'ACTIVE'">
+                      {{ t.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa' }}
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeTeachersModal()">Đóng cửa sổ</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: THÊM TRUNG TÂM MỚI ─── -->
+  @if (createModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Cấp Tài Khoản Trung Tâm Mới</h3>
+            <p class="modal-subtitle">Tự động kích hoạt cơ sở và tài khoản Quản lý Trung tâm ban đầu</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Tên Trung tâm / Cơ sở đào tạo <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="createForm.name" name="name" placeholder="VD: Trung tâm Toán - Lý Trí Đức" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Họ tên Người đại diện (Chủ cơ sở) <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="createForm.representativeName" name="repName" placeholder="VD: Thầy Nguyễn Văn An" required />
+              </div>
+              <div class="form-group">
+                <label>Số điện thoại đăng nhập <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="createForm.phone" name="phone" placeholder="VD: 0912345678" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Email liên hệ</label>
+              <input type="email" [(ngModel)]="createForm.email" name="email" placeholder="VD: contact@triduc.edu.vn" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Gói phần mềm</label>
+                <select [(ngModel)]="createForm.subscriptionPlan" name="plan">
+                  <option value="MONTHLY">Gói Tháng (Monthly Pro)</option>
+                  <option value="ANNUAL">Gói Năm (Annual Pro)</option>
+                  <option value="ENTERPRISE">Gói Trung Tâm (Enterprise)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Thời hạn ban đầu (Tháng)</label>
+                <input type="number" [(ngModel)]="createForm.durationMonths" name="duration" min="1" max="60" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Mật khẩu khởi tạo</label>
+              <input type="text" [(ngModel)]="createForm.password" name="password" placeholder="Mặc định: Admin@123" />
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeCreateModal()">Hủy bỏ</button>
+          <button class="btn-primary" (click)="submitCreate()" [disabled]="actionLoading() === 'create'">
+            <span>{{ actionLoading() === 'create' ? 'Đang kích hoạt...' : 'Kích hoạt Cơ sở' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: SỬA TRUNG TÂM ─── -->
+  @if (editModalOpen()) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Cập Nhật Thông Tin Trung Tâm</h3>
+            <p class="modal-subtitle">Chỉnh sửa thông tin cơ sở và thời hạn sử dụng</p>
+          </div>
+          <button class="btn-close" (click)="closeEditModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Tên Trung tâm <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="editForm.name" name="editName" required />
+            </div>
+
+            <div class="form-group">
+              <label>Họ tên Người đại diện</label>
+              <input type="text" [(ngModel)]="editForm.representativeName" name="editRepName" />
+            </div>
+
+            <div class="form-group">
+              <label>Email liên hệ</label>
+              <input type="email" [(ngModel)]="editForm.email" name="editEmail" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Gói phần mềm</label>
+                <select [(ngModel)]="editForm.subscriptionPlan" name="editPlan">
+                  <option value="MONTHLY">Gói Tháng (Monthly Pro)</option>
+                  <option value="ANNUAL">Gói Năm (Annual Pro)</option>
+                  <option value="ENTERPRISE">Gói Trung Tâm (Enterprise)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Trạng thái</label>
+                <select [(ngModel)]="editForm.subscriptionStatus" name="editStatus">
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="SUSPENDED">Tạm khóa</option>
+                  <option value="EXPIRED">Hết hạn</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeEditModal()">Hủy</button>
+          <button class="btn-primary" (click)="submitEdit()" [disabled]="actionLoading() === editingCenter()?.id">
+            <span>{{ actionLoading() === editingCenter()?.id ? 'Đang lưu...' : 'Lưu thay đổi' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: XÁC NHẬN XÓA ─── -->
+  @if (deleteModalOpen()) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title text-danger">Xóa Vĩnh Viễn Trung Tâm</h3>
+          <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Bạn có chắc chắn muốn xóa trung tâm <strong>{{ deletingCenter()?.name }}</strong>?
+          </p>
+          <p class="text-subtle text-sm">
+            Toàn bộ lớp học, giáo viên và dữ liệu điểm danh của cơ sở này sẽ bị xóa khỏi hệ thống.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeDeleteModal()">Hủy bỏ</button>
+          <button class="btn-danger" (click)="confirmDelete()" [disabled]="actionLoading() === deletingCenter()?.id">
+            <span>{{ actionLoading() === deletingCenter()?.id ? 'Đang xóa...' : 'Xác nhận Xóa' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

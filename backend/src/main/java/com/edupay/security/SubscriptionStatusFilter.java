@@ -87,6 +87,8 @@ public class SubscriptionStatusFilter extends OncePerRequestFilter {
                 || uri.startsWith("/api/webhooks")
                 || uri.startsWith("/admin")
                 || uri.startsWith("/api/admin")
+                || uri.startsWith("/me")
+                || uri.startsWith("/api/me")
                 || uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v3/api-docs")
                 || uri.startsWith("/actuator")

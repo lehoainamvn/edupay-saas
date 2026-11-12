@@ -28,14 +28,18 @@ export const permissionGuard: CanActivateFn = (route, state) => {
     // 1. Kiểm tra Feature Flag (nếu có yêu cầu)
     if (requiredFeature && !rbacService.hasFeature(requiredFeature)) {
       toastService.warning('Tính năng này chưa được kích hoạt cho gói dịch vụ của bạn');
-      router.navigate(['/dashboard']);
+      if (state.url !== '/dashboard') {
+        router.navigate(['/dashboard']);
+      }
       return false;
     }
 
     // 2. Kiểm tra Permission (nếu có yêu cầu)
     if (requiredPermission && !rbacService.hasPermission(requiredPermission, permissionMode)) {
       toastService.error('Bạn không có quyền truy cập vào mục này');
-      router.navigate(['/dashboard']);
+      if (state.url !== '/dashboard') {
+        router.navigate(['/dashboard']);
+      }
       return false;
     }
 
@@ -52,7 +56,9 @@ export const permissionGuard: CanActivateFn = (route, state) => {
     map(() => checkAccess()),
     catchError(() => {
       toastService.error('Không thể xác thực quyền hạn người dùng');
-      router.navigate(['/dashboard']);
+      if (state.url !== '/auth/login') {
+        router.navigate(['/auth/login']);
+      }
       return of(false);
     })
   );

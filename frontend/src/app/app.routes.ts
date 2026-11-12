@@ -113,6 +113,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'centers',
+        loadComponent: () =>
+          import('./features/admin/centers/admin-centers.component').then(
+            (m) => m.AdminCentersComponent
+          ),
+      },
+      {
+        path: 'tutors',
+        loadComponent: () =>
+          import('./features/admin/tutors/admin-tutors.component').then(
+            (m) => m.AdminTutorsComponent
+          ),
+      },
+      {
+        path: 'menus',
+        loadComponent: () =>
+          import('./features/admin/menus/admin-menus.component').then(
+            (m) => m.AdminMenusComponent
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/admin/users/admin-users.component').then(

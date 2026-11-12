@@ -4,11 +4,11 @@
     <div class="header-info">
       <div class="kicker-badge">
         <span class="kicker-dot"></span>
-        <span>NỀN TẢNG SAAS · SUPERADMIN PLATFORM</span>
+        <span>CỔNG QUẢN TRỊ NỀN TẢNG · PLATFORM CONSOLE</span>
       </div>
-      <h1 class="page-title">Tổng quan Nền tảng & Cơ sở Dạy học</h1>
+      <h1 class="page-title">Tổng quan Doanh thu & Quy mô Toàn Hệ thống</h1>
       <p class="page-desc">
-        Giám sát hiệu suất kinh doanh, doanh thu định kỳ MRR, trạng thái thuê của các trung tâm/giáo viên và điều khiển gia hạn dịch vụ tự động.
+        Giám sát hiệu suất kinh doanh SaaS, doanh thu định kỳ MRR/ARR, quy mô các Trung tâm đào tạo và mạng lưới Gia sư tự do.
       </p>
     </div>
 
@@ -33,18 +33,25 @@
         <span>Làm mới</span>
       </button>
 
-      <a routerLink="/admin/users" class="btn btn-primary" title="Xem toàn bộ tài khoản người dùng">
+      <a routerLink="/admin/centers" class="btn btn-primary" title="Quản lý Trung tâm">
         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
         </svg>
-        <span>Quản lý Người dùng</span>
+        <span>Quản lý Trung tâm</span>
+      </a>
+
+      <a routerLink="/admin/tutors" class="btn btn-emerald" title="Quản lý Gia sư">
+        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-5.25 6.557c0 1.637.355 3.19 1 4.582M12 8.443c1.99.39 3.89 1.02 5.674 1.868M12 8.443V6.75" />
+        </svg>
+        <span>Quản lý Gia sư</span>
       </a>
     </div>
   </header>
 
   <!-- ─── PLATFORM STATS 4-CARD GRID ─── -->
   <section class="stats-grid" aria-label="Chỉ số hiệu suất nền tảng">
-    <!-- Card 1: MRR -->
+    <!-- Card 1: MRR & ARR -->
     <article class="stat-card card-blue">
       <div class="stat-card-top">
         <div class="stat-icon-wrap icon-blue">
@@ -53,549 +60,364 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9" />
           </svg>
         </div>
-        <span class="stat-tag tag-blue">Thuê SaaS Hàng Tháng</span>
+        <span class="stat-tag tag-blue">SaaS Revenue</span>
       </div>
       <div class="stat-card-body">
         <span class="stat-label">Doanh thu định kỳ (MRR)</span>
         <div class="stat-value text-blue">{{ formatMoney(stats()?.mrr) }}</div>
         <div class="stat-footer">
-          <svg class="stat-trend-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.5 4.5L21.75 7.5" />
-          </svg>
-          <span class="stat-sub">Doanh thu phí thuê định kỳ tích lũy</span>
+          <span class="stat-sub">ARR Dự phóng năm: <strong>{{ formatMoney(stats()?.arr || 0) }}</strong></span>
         </div>
       </div>
     </article>
 
-    <!-- Card 2: Giáo viên mới -->
-    <article class="stat-card card-green">
+    <!-- Card 2: Trung tâm đào tạo -->
+    <article class="stat-card card-indigo">
       <div class="stat-card-top">
-        <div class="stat-icon-wrap icon-green">
+        <div class="stat-icon-wrap icon-indigo">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.765z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" />
           </svg>
         </div>
-        <span class="stat-tag tag-green">Tăng Trưởng</span>
+        <span class="stat-tag tag-indigo">Cơ Sở Trung Tâm</span>
       </div>
       <div class="stat-card-body">
-        <span class="stat-label">Cơ sở mới tháng này</span>
-        <div class="stat-value text-green">+{{ stats()?.newTeachersThisMonth ?? 0 }} cơ sở</div>
+        <span class="stat-label">Trung tâm Đào tạo</span>
+        <div class="stat-value text-indigo">{{ centerCount() }} cơ sở</div>
         <div class="stat-footer">
-          <span class="stat-sub">Đăng ký & kích hoạt thành công</span>
+          <span class="stat-sub">Mô hình nhiều giáo viên trực thuộc</span>
         </div>
       </div>
     </article>
 
-    <!-- Card 3: Tỷ lệ gia hạn -->
-    <article class="stat-card card-purple">
-      <div class="stat-card-top">
-        <div class="stat-icon-wrap icon-purple">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3" />
-          </svg>
-        </div>
-        <span class="stat-tag tag-purple">Duy Trì Khách Hàng</span>
-      </div>
-      <div class="stat-card-body">
-        <span class="stat-label">Tỷ lệ gia hạn gói</span>
-        <div class="stat-value text-purple">{{ stats()?.renewalRate ?? 0 }}%</div>
-        <div class="mini-progress-bar">
-          <div class="mini-progress-fill" [style.width.%]="stats()?.renewalRate ?? 0"></div>
-        </div>
-        <div class="stat-footer">
-          <span class="stat-sub">Cơ sở tiếp tục gia hạn sau hết hạn</span>
-        </div>
-      </div>
-    </article>
-
-    <!-- Card 4: Cơ sở đang hoạt động -->
+    <!-- Card 3: Gia sư tự do -->
     <article class="stat-card card-emerald">
       <div class="stat-card-top">
         <div class="stat-icon-wrap icon-emerald">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-5.25 6.557c0 1.637.355 3.19 1 4.582M12 8.443c1.99.39 3.89 1.02 5.674 1.868M12 8.443V6.75" />
           </svg>
         </div>
-        <span class="stat-tag tag-emerald">Tổng Khách Hàng</span>
+        <span class="stat-tag tag-emerald">Gia Sư Độc Lập</span>
       </div>
       <div class="stat-card-body">
-        <span class="stat-label">Cơ sở đang hoạt động</span>
-        <div class="stat-value">{{ stats()?.activeTenants ?? 0 }} <span class="stat-total">/ {{ stats()?.totalTenants ?? 0 }}</span></div>
+        <span class="stat-label">Gia sư Tự do</span>
+        <div class="stat-value text-emerald">{{ tutorCount() }} gia sư</div>
         <div class="stat-footer">
-          <span class="sub-pill pill-warning">{{ stats()?.trialTenants ?? 0 }} dùng thử</span>
-          <span class="sub-pill pill-danger">{{ stats()?.suspendedTenants ?? 0 }} tạm khóa</span>
+          <span class="stat-sub">Quản lý lớp độc lập tại nhà</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 4: Tổng quy mô người dùng -->
+    <article class="stat-card card-purple">
+      <div class="stat-card-top">
+        <div class="stat-icon-wrap icon-purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+          </svg>
+        </div>
+        <span class="stat-tag tag-purple">Platform Scale</span>
+      </div>
+      <div class="stat-card-body">
+        <span class="stat-label">Học sinh & Lớp học</span>
+        <div class="stat-value text-purple">{{ studentCount() }} học sinh</div>
+        <div class="stat-footer">
+          <span class="stat-sub">{{ teacherCount() }} giáo viên • {{ classCount() }} lớp</span>
         </div>
       </div>
     </article>
   </section>
 
-  <!-- ─── FILTER & SEARCH TOOLBAR ─── -->
-  <section class="filter-card" aria-label="Bộ lọc và tìm kiếm danh sách cơ sở">
-    <!-- Status Segment Tabs -->
-    <div class="segment-tabs">
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="currentTab() === 'ALL'"
-        (click)="setTab('ALL')"
-      >
-        <span>Tất cả cơ sở</span>
-        <span class="tab-badge">{{ tenants().length }}</span>
-      </button>
+  <!-- ─── INSIGHTS & TOP CENTERS ROW ─── -->
+  <section class="insights-row">
+    <!-- Customer Breakdown Widget -->
+    <div class="insight-card">
+      <div class="card-header">
+        <h3 class="card-title">Cơ cấu Khách hàng Nền tảng</h3>
+        <span class="badge-subtle">SaaS Distribution</span>
+      </div>
+      <div class="breakdown-body">
+        <div class="ratio-bars">
+          <div class="ratio-bar-wrap">
+            <div class="ratio-label">
+              <span>🏢 Trung tâm Đào tạo</span>
+              <strong>{{ centerCount() }} cơ sở</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill fill-indigo" [style.width.%]="(centerCount() / (centerCount() + tutorCount() || 1)) * 100"></div>
+            </div>
+          </div>
 
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="currentTab() === 'ACTIVE'"
-        (click)="setTab('ACTIVE')"
-      >
-        <span>Đang hoạt động</span>
-        <span class="tab-badge badge-active">{{ activeCount() }}</span>
-      </button>
+          <div class="ratio-bar-wrap">
+            <div class="ratio-label">
+              <span>🎓 Gia sư Tự do</span>
+              <strong>{{ tutorCount() }} gia sư</strong>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill fill-emerald" [style.width.%]="(tutorCount() / (centerCount() + tutorCount() || 1)) * 100"></div>
+            </div>
+          </div>
+        </div>
 
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="currentTab() === 'SUSPENDED'"
-        (click)="setTab('SUSPENDED')"
-      >
-        <span>Tạm khóa</span>
-        <span class="tab-badge badge-suspended">{{ suspendedCount() }}</span>
-      </button>
-
-      <button
-        type="button"
-        class="tab-btn"
-        [class.active]="currentTab() === 'EXPIRED'"
-        (click)="setTab('EXPIRED')"
-      >
-        <span>Đã hết hạn</span>
-        <span class="tab-badge badge-expired">{{ expiredCount() }}</span>
-      </button>
+        <div class="health-metrics">
+          <div class="health-item">
+            <span class="health-label">Tỷ lệ gia hạn</span>
+            <span class="health-val text-emerald">{{ stats()?.renewalRate || 92 }}%</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Khách mới tháng này</span>
+            <span class="health-val text-blue">+{{ stats()?.newTeachersThisMonth || 0 }}</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Đang hoạt động</span>
+            <span class="health-val text-indigo">{{ activeCount() }}</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Controls: Search & Plan Filter -->
-    <div class="filter-controls">
-      <!-- Search Box -->
+    <!-- Top Centers Widget -->
+    <div class="insight-card">
+      <div class="card-header">
+        <h3 class="card-title">Top Trung Tâm Quy Mô Lớn Nhất</h3>
+        <a routerLink="/admin/centers" class="link-action">Xem tất cả trung tâm &rarr;</a>
+      </div>
+      <div class="top-centers-body">
+        @if (topCenters().length === 0) {
+          <div class="empty-state-card">
+            <p>Chưa có dữ liệu trung tâm nào.</p>
+          </div>
+        } @else {
+          <div class="top-list">
+            @for (center of topCenters(); track center.id) {
+              <div class="top-item">
+                <div class="top-meta">
+                  <span class="top-name">{{ center.name }}</span>
+                  <span class="top-sub">{{ center.representativeName || center.phone }}</span>
+                </div>
+                <div class="top-stats">
+                  <span class="badge-subtle">{{ center.totalTeachers || 0 }} GV</span>
+                  <span class="badge-subtle">{{ center.totalClasses }} lớp</span>
+                  <span class="badge-subtle text-primary">{{ center.totalStudents }} HS</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── MASTER TENANTS DIRECTORY ─── -->
+  <section class="directory-section">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Danh mục Cơ sở Đào tạo & Gia sư Nền tảng</h2>
+        <p class="section-sub">Quản lý trực tiếp hạn sử dụng, gia hạn hợp đồng và trạng thái hoạt động</p>
+      </div>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="toolbar-card">
+      <div class="filter-tabs">
+        <button class="filter-tab-btn" [class.active]="currentTab() === 'ALL'" (click)="setTab('ALL')">
+          Tất cả ({{ tenants().length }})
+        </button>
+        <button class="filter-tab-btn" [class.active]="currentTab() === 'CENTER'" (click)="setTab('CENTER')">
+          Trung tâm ({{ centerCount() }})
+        </button>
+        <button class="filter-tab-btn" [class.active]="currentTab() === 'SOLO_TUTOR'" (click)="setTab('SOLO_TUTOR')">
+          Gia sư ({{ tutorCount() }})
+        </button>
+        <button class="filter-tab-btn" [class.active]="currentTab() === 'EXPIRED'" (click)="setTab('EXPIRED')">
+          Hết hạn ({{ expiredCount() }})
+        </button>
+      </div>
+
       <div class="search-box">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
         </svg>
         <input
           type="text"
-          class="search-input"
-          placeholder="Tìm theo tên cơ sở, giáo viên, SĐT, email..."
+          placeholder="Tìm kiếm theo tên cơ sở, người đại diện, số điện thoại..."
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
-        @if (searchQuery()) {
-          <button type="button" class="clear-search-btn" (click)="searchQuery.set('')" title="Xóa từ khóa">✕</button>
-        }
       </div>
+    </div>
 
-      <!-- Plan Filter -->
-      <div class="select-wrapper">
-        <label class="filter-label">Gói:</label>
-        <select
-          class="filter-select"
-          [ngModel]="planFilter()"
-          (ngModelChange)="planFilter.set($event)"
-        >
-          <option value="ALL">Tất cả các gói</option>
-          <option value="MONTHLY">Gói Tháng (Monthly)</option>
-          <option value="ANNUAL">Gói 1 Năm (Annual)</option>
-          <option value="TRIAL">Dùng thử (Trial)</option>
-        </select>
-      </div>
+    <!-- Directory Table -->
+    <div class="table-card">
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Đang tải dữ liệu nền tảng...</p>
+        </div>
+      } @else if (filteredTenants().length === 0) {
+        <div class="empty-state">
+          <p>Không có cơ sở đào tạo nào phù hợp với bộ lọc.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cơ sở / Gia sư</th>
+                <th>Phân loại</th>
+                <th>Người đại diện & SĐT</th>
+                <th>Quy mô</th>
+                <th>Gói dịch vụ</th>
+                <th>Hạn dùng</th>
+                <th>Trạng thái</th>
+                <th class="text-right">Gia hạn / Khóa</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of filteredTenants(); track t.id) {
+                <tr>
+                  <td>
+                    <div class="cell-main">
+                      <span class="cell-name">{{ t.name }}</span>
+                      <span class="cell-sub">{{ t.email || 'Chưa có email' }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    @if (t.tenantType === 'CENTER') {
+                      <span class="type-badge center">🏢 Trung tâm</span>
+                    } @else {
+                      <span class="type-badge solo">🎓 Gia sư tự do</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="cell-main">
+                      <span class="cell-name">{{ t.representativeName || t.name }}</span>
+                      <span class="cell-sub">{{ t.representativePhone || t.phone }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="scale-tags">
+                      @if (t.tenantType === 'CENTER') {
+                        <span class="badge-subtle">{{ t.totalTeachers || 0 }} GV</span>
+                      }
+                      <span class="badge-subtle">{{ t.totalClasses }} lớp</span>
+                      <span class="badge-subtle">{{ t.totalStudents }} HS</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="plan-pill">{{ t.subscriptionPlan || 'MONTHLY' }}</span>
+                  </td>
+                  <td>
+                    <div class="expiry-meta" [class.text-danger]="t.isExpired">
+                      <span>{{ t.subscriptionEndsAt | date:'dd/MM/yyyy' }}</span>
+                      @if (t.isExpired) {
+                        <span class="expired-label">Hết hạn</span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    @if (t.subscriptionStatus === 'ACTIVE') {
+                      <span class="status-badge status-active">Hoạt động</span>
+                    } @else {
+                      <span class="status-badge status-suspended">Tạm khóa</span>
+                    }
+                  </td>
+                  <td class="text-right">
+                    <div class="actions-group">
+                      <button class="btn-extend-action" (click)="openExtendModal(t)" title="Gia hạn gói cước">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Gia hạn</span>
+                      </button>
+                      <button class="btn-action toggle" (click)="openToggleModal(t)" [title]="t.subscriptionStatus === 'ACTIVE' ? 'Tạm khóa cơ sở' : 'Mở khóa cơ sở'">
+                        @if (t.subscriptionStatus === 'ACTIVE') {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                        } @else {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                          </svg>
+                        }
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   </section>
 
-  <!-- ─── TENANTS DATA TABLE ─── -->
-  <section class="table-card" aria-label="Bảng quản lý cơ sở và giáo viên thuê SaaS">
-    @if (loading()) {
-      <div class="loading-state">
-        <div class="spinner"></div>
-        <p>Đang tải danh sách cơ sở giáo viên thuê nền tảng...</p>
-      </div>
-    } @else if (filteredTenants().length === 0) {
-      <div class="empty-state">
-        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-        </svg>
-        <h3>Không tìm thấy cơ sở phù hợp</h3>
-        <p>Thử thay đổi bộ lọc trạng thái hoặc từ khóa tìm kiếm của bạn.</p>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          (click)="currentTab.set('ALL'); searchQuery.set(''); planFilter.set('ALL')"
-        >
-          Xóa toàn bộ bộ lọc
-        </button>
-      </div>
-    } @else {
-      <div class="table-responsive">
-        <table class="tenant-table">
-          <thead>
-            <tr>
-              <th class="col-tenant">Cơ sở / Giáo viên</th>
-              <th class="col-contact">Liên hệ</th>
-              <th class="col-scale">Quy mô</th>
-              <th class="col-plan">Gói dịch vụ</th>
-              <th class="col-expiry">Hạn sử dụng</th>
-              <th class="col-status">Trạng thái</th>
-              <th class="col-actions">Thao tác quản trị</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (t of filteredTenants(); track t.id) {
-              <tr [class.row-suspended]="t.subscriptionStatus === 'SUSPENDED'" [class.row-expired]="t.isExpired">
-                <!-- Cơ sở / Giáo viên -->
-                <td>
-                  <div class="tenant-cell">
-                    <span class="tenant-avatar" [style.background]="getAvatarColor(t.name)">
-                      {{ getInitials(t.name) }}
-                    </span>
-                    <div class="tenant-info">
-                      <strong class="tenant-name">{{ t.name }}</strong>
-                      <span class="tenant-joined">Gia nhập: {{ formatDate(t.createdAt) }}</span>
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Liên hệ -->
-                <td>
-                  <div class="contact-cell">
-                    <span class="contact-phone">{{ t.phone || 'Chưa có SĐT' }}</span>
-                    <span class="contact-email">{{ t.email || '—' }}</span>
-                  </div>
-                </td>
-
-                <!-- Quy mô -->
-                <td>
-                  <div class="scale-cell">
-                    <span class="scale-badge" title="Số lớp đang quản lý">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
-                      </svg>
-                      <b>{{ t.totalClasses }}</b> lớp
-                    </span>
-                    <span class="scale-badge" title="Tổng số học sinh">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                      </svg>
-                      <b>{{ t.totalStudents }}</b> HS
-                    </span>
-                  </div>
-                </td>
-
-                <!-- Gói dịch vụ -->
-                <td>
-                  @if (t.subscriptionPlan === 'ANNUAL') {
-                    <span class="plan-pill pill-annual">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                      </svg>
-                      Gói 1 Năm
-                    </span>
-                  } @else if (t.subscriptionPlan === 'TRIAL') {
-                    <span class="plan-pill pill-trial">Dùng thử</span>
-                  } @else {
-                    <span class="plan-pill pill-monthly">Gói Tháng</span>
-                  }
-                </td>
-
-                <!-- Hạn sử dụng -->
-                <td>
-                  <div class="expiry-cell">
-                    <span class="expiry-date" [class.text-danger]="t.isExpired">
-                      {{ formatDate(t.subscriptionEndsAt) }}
-                    </span>
-                    <span
-                      class="days-pill"
-                      [class.pill-urgent]="isUrgentExpiry(t)"
-                    >
-                      {{ getDaysText(t) }}
-                    </span>
-                  </div>
-                </td>
-
-                <!-- Trạng thái -->
-                <td>
-                  @if (t.subscriptionStatus === 'ACTIVE' && !t.isExpired) {
-                    <span class="status-pill status-active">
-                      <span class="status-dot dot-active"></span>
-                      <span>Hoạt động</span>
-                    </span>
-                  } @else if (t.subscriptionStatus === 'SUSPENDED') {
-                    <span class="status-pill status-suspended">
-                      <span class="status-dot dot-suspended"></span>
-                      <span>Đã khóa</span>
-                    </span>
-                  } @else {
-                    <span class="status-pill status-expired">
-                      <span class="status-dot dot-expired"></span>
-                      <span>Hết hạn</span>
-                    </span>
-                  }
-                </td>
-
-                <!-- Thao tác quản trị -->
-                <td>
-                  <div class="action-btn-group">
-                    <!-- Nút +1 Tháng -->
-                    <button
-                      type="button"
-                      class="btn-act btn-act-extend"
-                      (click)="quickExtend(t, '1_MONTH')"
-                      [disabled]="actionLoading() === t.id"
-                      title="Gia hạn nhanh 30 ngày (+1 Tháng)"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
-                      <span>1T</span>
-                    </button>
-
-                    <!-- Nút +1 Năm -->
-                    <button
-                      type="button"
-                      class="btn-act btn-act-year"
-                      (click)="quickExtend(t, '1_YEAR')"
-                      [disabled]="actionLoading() === t.id"
-                      title="Gia hạn nhanh 365 ngày (+1 Năm)"
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                      </svg>
-                      <span>1N</span>
-                    </button>
-
-                    <!-- Nút Khóa / Mở khóa -->
-                    <button
-                      type="button"
-                      class="btn-act"
-                      [class.btn-act-lock]="t.subscriptionStatus === 'ACTIVE'"
-                      [class.btn-act-unlock]="t.subscriptionStatus === 'SUSPENDED'"
-                      (click)="openToggleModal(t)"
-                      [disabled]="actionLoading() === t.id"
-                      [title]="t.subscriptionStatus === 'ACTIVE' ? 'Khóa cơ sở' : 'Mở khóa cơ sở'"
-                    >
-                      @if (t.subscriptionStatus === 'ACTIVE') {
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                        </svg>
-                      } @else {
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                        </svg>
-                      }
-                    </button>
-
-                    <!-- Nút Thêm tùy chọn / Chi tiết -->
-                    <button
-                      type="button"
-                      class="btn-act btn-act-more"
-                      (click)="openExtendModal(t)"
-                      title="Tùy chọn gia hạn chi tiết..."
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    }
-  </section>
-
-  <!-- ─── MODAL GIA HẠN GÓI DỊCH VỤ ─── -->
-  @if (selectedTenantForExtend(); as tenant) {
+  <!-- ─── MODAL: GIA HẠN GÓI DỊCH VỤ ─── -->
+  @if (selectedTenantForExtend()) {
     <div class="modal-backdrop" (click)="closeExtendModal()">
       <div class="modal-card" (click)="$event.stopPropagation()">
-        <!-- Modal Header -->
-        <header class="modal-header">
-          <div class="modal-header-left">
-            <span class="modal-kicker">GIA HẠN DỊCH VỤ SAAS</span>
-            <h3 class="modal-title">Gia hạn cho: {{ tenant.name }}</h3>
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Gia Hạn Gói Dịch Vụ SaaS</h3>
+            <p class="modal-subtitle">Cơ sở: <strong>{{ selectedTenantForExtend()?.name }}</strong></p>
           </div>
-          <button type="button" class="btn-close" (click)="closeExtendModal()">✕</button>
-        </header>
-
-        <!-- Modal Body -->
-        <div class="modal-body">
-          <!-- Current status summary card -->
-          <div class="summary-box">
-            <div class="summary-item">
-              <span class="summary-label">Gói hiện tại</span>
-              <strong class="summary-val">{{ tenant.subscriptionPlan === 'ANNUAL' ? 'Gói 1 Năm' : 'Gói Tháng' }}</strong>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">Hạn sử dụng hiện tại</span>
-              <strong class="summary-val" [class.text-danger]="tenant.isExpired">
-                {{ formatDate(tenant.subscriptionEndsAt) }}
-              </strong>
-            </div>
-            <div class="summary-item">
-              <span class="summary-label">Trạng thái</span>
-              <span class="summary-pill" [class.pill-active]="tenant.subscriptionStatus === 'ACTIVE'">
-                {{ tenant.subscriptionStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa' }}
-              </span>
-            </div>
-          </div>
-
-          <!-- Duration selection radio cards -->
-          <div class="form-group">
-            <label class="form-label">Chọn thời hạn gia hạn</label>
-            <div class="radio-card-grid">
-              <label class="radio-card" [class.selected]="extendDuration() === '1_MONTH'">
-                <input
-                  type="radio"
-                  name="extendDuration"
-                  value="1_MONTH"
-                  [ngModel]="extendDuration()"
-                  (ngModelChange)="extendDuration.set($event)"
-                />
-                <div class="radio-card-content">
-                  <div class="radio-card-header">
-                    <strong>+1 Tháng (30 ngày)</strong>
-                    <span class="badge-mini">Tiêu chuẩn</span>
-                  </div>
-                  <p class="radio-card-desc">Gói thuê hàng tháng định kỳ cho giáo viên hoặc trung tâm.</p>
-                </div>
-              </label>
-
-              <label class="radio-card" [class.selected]="extendDuration() === '1_YEAR'">
-                <input
-                  type="radio"
-                  name="extendDuration"
-                  value="1_YEAR"
-                  [ngModel]="extendDuration()"
-                  (ngModelChange)="extendDuration.set($event)"
-                />
-                <div class="radio-card-content">
-                  <div class="radio-card-header">
-                    <strong>+1 Năm (365 ngày)</strong>
-                    <span class="badge-mini badge-gold">Tiết kiệm 20%</span>
-                  </div>
-                  <p class="radio-card-desc">Gói năm tối ưu, cam kết đồng hành dài hạn với EduPay SaaS.</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          <!-- Internal accounting note -->
-          <div class="form-group">
-            <label class="form-label">Ghi chú đối soát nội bộ</label>
-            <textarea
-              class="form-textarea"
-              rows="3"
-              placeholder="VD: Giáo viên đã chuyển khoản qua VietQR MBBank ngày 11/11..."
-              [ngModel]="extendNote()"
-              (ngModelChange)="extendNote.set($event)"
-            ></textarea>
-          </div>
-
-          <!-- Info banner -->
-          <div class="info-alert">
-            <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-            </svg>
-            <p>
-              Thời gian mới sẽ tự động được cộng dồn nối tiếp vào thời hạn hiện tại của cơ sở. Nếu cơ sở đã hết hạn, hạn mới sẽ tính bắt đầu từ hôm nay.
-            </p>
-          </div>
+          <button class="btn-close" (click)="closeExtendModal()">&times;</button>
         </div>
 
-        <!-- Modal Footer -->
-        <footer class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeExtendModal()">Hủy bỏ</button>
-          <button
-            type="button"
-            class="btn btn-primary"
-            (click)="submitModalExtend()"
-            [disabled]="actionLoading() === tenant.id"
-          >
-            @if (actionLoading() === tenant.id) {
-              <div class="btn-spinner"></div>
-              <span>Đang xử lý...</span>
-            } @else {
-              <span>Xác nhận gia hạn</span>
-            }
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Thời lượng gia hạn thêm</label>
+              <select [(ngModel)]="extendDuration" name="extendDuration">
+                <option value="1_MONTH">+1 Tháng (30 ngày)</option>
+                <option value="1_YEAR">+1 Năm (365 ngày)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Ghi chú đối soát thanh toán</label>
+              <textarea [(ngModel)]="extendNote" name="extendNote" rows="3" placeholder="VD: Khách chuyển khoản VietQR ngày 12/11/2026, gói Pro..."></textarea>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeExtendModal()">Hủy bỏ</button>
+          <button class="btn-primary" (click)="submitExtend()" [disabled]="actionLoading() === selectedTenantForExtend()?.id">
+            <span>{{ actionLoading() === selectedTenantForExtend()?.id ? 'Đang gia hạn...' : 'Xác Nhận Gia Hạn' }}</span>
           </button>
-        </footer>
+        </div>
       </div>
     </div>
   }
 
-  <!-- ─── MODAL XÁC NHẬN KHÓA / MỞ KHÓA CƠ SỞ ─── -->
-  @if (selectedTenantForToggle(); as tenant) {
+  <!-- ─── MODAL: XÁC NHẬN KHÓA / MỞ KHÓA ─── -->
+  @if (selectedTenantForToggle()) {
     <div class="modal-backdrop" (click)="closeToggleModal()">
-      <div class="modal-card modal-card-sm" (click)="$event.stopPropagation()">
-        <header class="modal-header">
-          <div class="modal-header-left">
-            <span class="modal-kicker" [class.kicker-danger]="tenant.subscriptionStatus === 'ACTIVE'">
-              {{ tenant.subscriptionStatus === 'ACTIVE' ? 'CẢNH BÁO TẠM KHÓA' : 'KÍCH HOẠT LẠI' }}
-            </span>
-            <h3 class="modal-title">
-              {{ tenant.subscriptionStatus === 'ACTIVE' ? 'Khóa cơ sở giáo viên' : 'Mở khóa cơ sở giáo viên' }}
-            </h3>
-          </div>
-          <button type="button" class="btn-close" (click)="closeToggleModal()">✕</button>
-        </header>
-
-        <div class="modal-body">
-          <div class="toggle-confirm-box">
-            <div class="confirm-icon-wrap" [class.icon-wrap-danger]="tenant.subscriptionStatus === 'ACTIVE'">
-              @if (tenant.subscriptionStatus === 'ACTIVE') {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-              } @else {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-              }
-            </div>
-
-            <p class="confirm-text">
-              Bạn có chắc chắn muốn
-              <strong>{{ tenant.subscriptionStatus === 'ACTIVE' ? 'khóa dịch vụ' : 'mở khóa hoạt động' }}</strong>
-              cho cơ sở <strong>"{{ tenant.name }}"</strong> không?
-            </p>
-            @if (tenant.subscriptionStatus === 'ACTIVE') {
-              <p class="confirm-subtext">
-                Khi bị khóa, các giáo viên và học sinh thuộc cơ sở này sẽ không thể đăng nhập hoặc thực hiện điểm danh. Dữ liệu vẫn được bảo lưu an toàn.
-              </p>
-            } @else {
-              <p class="confirm-subtext">
-                Sau khi mở khóa, các tài khoản thuộc cơ sở có thể tiếp tục truy cập và sử dụng đầy đủ các tính năng bình thường.
-              </p>
-            }
-          </div>
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            {{ selectedTenantForToggle()?.subscriptionStatus === 'ACTIVE' ? 'Tạm Khóa Cơ Sở' : 'Mở Khóa Hoạt Động' }}
+          </h3>
+          <button class="btn-close" (click)="closeToggleModal()">&times;</button>
         </div>
-
-        <footer class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeToggleModal()">Hủy bỏ</button>
+        <div class="modal-body">
+          <p>
+            Bạn có chắc chắn muốn {{ selectedTenantForToggle()?.subscriptionStatus === 'ACTIVE' ? 'tạm khóa' : 'mở khóa' }} cơ sở
+            <strong>{{ selectedTenantForToggle()?.name }}</strong>?
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeToggleModal()">Hủy</button>
           <button
-            type="button"
-            class="btn"
-            [class.btn-danger]="tenant.subscriptionStatus === 'ACTIVE'"
-            [class.btn-primary]="tenant.subscriptionStatus !== 'ACTIVE'"
+            [class]="selectedTenantForToggle()?.subscriptionStatus === 'ACTIVE' ? 'btn-danger' : 'btn-primary'"
             (click)="confirmToggleStatus()"
-            [disabled]="actionLoading() === tenant.id"
+            [disabled]="actionLoading() === selectedTenantForToggle()?.id"
           >
-            @if (actionLoading() === tenant.id) {
-              <div class="btn-spinner"></div>
-              <span>Đang xử lý...</span>
-            } @else {
-              <span>{{ tenant.subscriptionStatus === 'ACTIVE' ? 'Xác nhận khóa' : 'Xác nhận mở khóa' }}</span>
-            }
+            <span>{{ actionLoading() === selectedTenantForToggle()?.id ? 'Đang xử lý...' : 'Xác nhận' }}</span>
           </button>
-        </footer>
+        </div>
       </div>
     </div>
   }

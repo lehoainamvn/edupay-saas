@@ -17,7 +17,13 @@ public interface TenantRepository extends JpaRepository<Tenant, UUID> {
 
     List<Tenant> findAllByOrderByCreatedAtDesc();
 
+    List<Tenant> findAllByTenantTypeOrderByCreatedAtDesc(String tenantType);
+
     long countBySubscriptionStatus(String subscriptionStatus);
+
+    long countByTenantType(String tenantType);
+
+    long countByTenantTypeAndSubscriptionStatus(String tenantType, String subscriptionStatus);
 
     long countByCreatedAtAfter(Instant afterTime);
 
