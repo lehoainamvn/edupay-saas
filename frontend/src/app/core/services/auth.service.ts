@@ -91,6 +91,14 @@ export class AuthService {
     return this.tokenService.isAuthenticated();
   }
 
+  isSuperAdmin(): boolean {
+    const roles = this.currentUser()?.roles || this.tokenService.getUserInfo()?.roles || [];
+    return roles.some((r) => {
+      const upper = r.toUpperCase();
+      return upper.includes('SUPER_ADMIN') || upper.includes('SUPERADMIN') || upper === 'ROLE_SUPER_ADMIN';
+    });
+  }
+
   private handleAuthSuccess(res: AuthResponse): void {
     if (!res) return;
 

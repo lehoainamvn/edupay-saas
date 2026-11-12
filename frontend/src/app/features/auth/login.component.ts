@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -424,11 +424,21 @@ import { AuthService } from '../../core/services/auth.service';
     }
   `]
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      if (this.authService.isSuperAdmin()) {
+        this.router.navigate(['/admin/platform']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+    }
+  }
 
   // UI State
   loading = signal(false);
@@ -492,7 +502,19 @@ export class LoginComponent {
 
     this.authService.login({ phone: phone!, password: password! }).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
+        let returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
+        if (this.authService.isSuperAdmin()) {
+          // Tài khoản SuperAdmin: Chuyển thẳng vào Cổng Quản trị SuperAdmin
+          if (!returnUrl || returnUrl === '/dashboard' || returnUrl === '/home' || returnUrl === '/') {
+            returnUrl = '/admin/platform';
+          }
+        } else {
+          if (!returnUrl) {
+            returnUrl = '/dashboard';
+          }
+        }
+
         this.router.navigateByUrl(returnUrl);
       },
       error: (err) => {
