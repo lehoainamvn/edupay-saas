@@ -47,6 +47,12 @@ public class SubscriptionStatusFilter extends OncePerRequestFilter {
             return;
         }
 
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities() != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("SUPER_ADMIN"))) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         UUID tenantId = TenantContext.getTenantId();
         if (tenantId == null) {
             filterChain.doFilter(request, response);

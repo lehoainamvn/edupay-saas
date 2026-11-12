@@ -21,7 +21,7 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
             SELECT DISTINCT r.code
             FROM roles r
             JOIN user_roles ur ON ur.role_id = r.id
-            WHERE ur.user_id = :userId AND ur.tenant_id = :tenantId
+            WHERE ur.user_id = :userId AND (ur.tenant_id = :tenantId OR ur.tenant_id IS NULL)
             """, nativeQuery = true)
     List<String> findRoleCodesByUserIdAndTenantId(
             @Param("userId") UUID userId,

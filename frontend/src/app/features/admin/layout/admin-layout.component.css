@@ -161,25 +161,6 @@
   flex-shrink: 0;
 }
 
-.backLink {
-  height: 34px;
-  padding: 0 6px;
-  border: 0;
-  background: transparent;
-  color: #94a3b8;
-  font-size: 11px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-  transition: color 0.15s ease;
-}
-
-.backLink:hover {
-  color: #fff;
-}
-
 .adminProfile {
   height: 51px;
   padding: 7px 8px;
