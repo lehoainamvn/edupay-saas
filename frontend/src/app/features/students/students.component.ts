@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentService } from '../../core/services/student.service';
 import { ToastService } from '../../core/services/toast.service';
 import { ClassService } from '../../core/services/class.service';
+import { TeacherPolicyService } from '../../core/services/teacher-policy.service';
 import { FeeType } from '../../shared/models/class.model';
 import {
   StudentItem,
@@ -169,6 +170,7 @@ export class StudentsComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly classService = inject(ClassService);
   private readonly destroyRef = inject(DestroyRef);
+  readonly policyService = inject(TeacherPolicyService);
 
   readonly classes = signal<ClassOptionVm[]>(DEFAULT_CLASSES);
   readonly students = signal<StudentItem[]>(INITIAL_STUDENTS);
@@ -340,6 +342,10 @@ export class StudentsComponent implements OnInit {
 
   // Create / Edit Modal
   openCreateModal(): void {
+    if (!this.policyService.canCreateStudent()) {
+      this.toastService.error('Bạn không có quyền tự thêm học sinh theo quy định của trung tâm.');
+      return;
+    }
     this.editingStudent.set(null);
     this.submitted.set(false);
     this.useCustomFee.set(false);
@@ -389,6 +395,10 @@ export class StudentsComponent implements OnInit {
   }
 
   toggleCustomFeeMode(enableCustom: boolean): void {
+    if (enableCustom && !this.policyService.canEditStudentFee()) {
+      this.toastService.error('Trung tâm không cấp quyền tùy chỉnh học phí riêng cho giáo viên.');
+      return;
+    }
     this.useCustomFee.set(enableCustom);
     if (enableCustom && !this.studentForm.controls.customFee.value) {
       this.studentForm.controls.customFee.setValue(this.getSelectedClassOption().defaultFee);
@@ -396,6 +406,10 @@ export class StudentsComponent implements OnInit {
   }
 
   selectCustomFeePreset(amount: number): void {
+    if (!this.policyService.canEditStudentFee()) {
+      this.toastService.error('Trung tâm không cấp quyền tùy chỉnh học phí riêng cho giáo viên.');
+      return;
+    }
     this.useCustomFee.set(true);
     this.studentForm.controls.customFee.setValue(amount);
   }
@@ -604,6 +618,10 @@ export class StudentsComponent implements OnInit {
   // =========================================================================
 
   openImportModal(): void {
+    if (!this.policyService.canCreateStudent()) {
+      this.toastService.error('Bạn không có quyền tự thêm hoặc import học sinh theo quy định của trung tâm.');
+      return;
+    }
     const defaultCls =
       this.selectedClassFilter() !== 'ALL'
         ? this.selectedClassFilter()

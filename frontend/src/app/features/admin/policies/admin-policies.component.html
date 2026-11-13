@@ -1,0 +1,198 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">Phân quyền Giáo viên Cơ sở</h1>
+      <p class="page-desc">
+        Thiết lập ma trận quyền hạn cho đội ngũ giáo viên trực thuộc cơ sở theo quy định điều hành của trung tâm.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="savePolicy()" [disabled]="saving() || loading()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span>{{ saving() ? 'Đang lưu...' : 'Lưu chính sách phân quyền' }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="table-card">
+      <div class="state-container">
+        <div class="spinner"></div>
+        <p>Đang tải chính sách phân quyền giáo viên...</p>
+      </div>
+    </div>
+  } @else {
+    <div class="policy-layout">
+      <!-- Left Card: Policies Matrix -->
+      <div class="policy-card main-policy">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Ma trận Đặc quyền Giáo viên Nội bộ</h3>
+            <p>Bật hoặc tắt các quyền hạn nghiệp vụ áp dụng cho tất cả giáo viên trực thuộc cơ sở này.</p>
+          </div>
+          <span class="center-badge">Quy định Cơ sở</span>
+        </div>
+
+        <div class="policy-list">
+          <!-- Policy 1: canCreateClass -->
+          <div class="policy-item">
+            <div class="policy-info">
+              <div class="policy-title-row">
+                <span class="policy-icon blue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </span>
+                <b>Quyền tự tạo lớp học mới</b>
+              </div>
+              <p class="policy-desc">
+                Cho phép giáo viên tự mở lớp học giảng dạy mới. Nếu tắt, chỉ có Quản lý Trung tâm mới được quyền tạo lớp và phân công giáo viên.
+              </p>
+            </div>
+            <div class="switch-box">
+              <span class="policy-badge" [class.enabled]="policy().canCreateClass">
+                {{ policy().canCreateClass ? 'Cho phép' : 'Đang khóa' }}
+              </span>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canCreateClass"
+                  (change)="toggle('canCreateClass', 'Quyền tự tạo lớp học mới')"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Policy 2: canEditStudentFee -->
+          <div class="policy-item">
+            <div class="policy-info">
+              <div class="policy-title-row">
+                <span class="policy-icon green">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                </span>
+                <b>Quyền điều chỉnh học phí buổi khi điểm danh</b>
+              </div>
+              <p class="policy-desc">
+                Cho phép giáo viên linh hoạt sửa giá buổi học hoặc phụ phí trong ca dạy. Nếu tắt, học phí buổi học hoàn toàn cố định theo quy định của lớp.
+              </p>
+            </div>
+            <div class="switch-box">
+              <span class="policy-badge" [class.enabled]="policy().canEditStudentFee">
+                {{ policy().canEditStudentFee ? 'Cho phép' : 'Đang khóa' }}
+              </span>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canEditStudentFee"
+                  (change)="toggle('canEditStudentFee', 'Quyền sửa học phí riêng')"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Policy 3: canCreateStudent -->
+          <div class="policy-item">
+            <div class="policy-info">
+              <div class="policy-title-row">
+                <span class="policy-icon purple">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                  </svg>
+                </span>
+                <b>Quyền tự thêm & xếp học sinh vào lớp</b>
+              </div>
+              <p class="policy-desc">
+                Cho phép giáo viên tự ghi danh học sinh mới vào lớp mình dạy. Nếu tắt, việc thêm học sinh phải do phòng giáo vụ trung tâm thực hiện.
+              </p>
+            </div>
+            <div class="switch-box">
+              <span class="policy-badge" [class.enabled]="policy().canCreateStudent">
+                {{ policy().canCreateStudent ? 'Cho phép' : 'Đang khóa' }}
+              </span>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canCreateStudent"
+                  (change)="toggle('canCreateStudent', 'Quyền thêm học sinh')"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Policy 4: canViewBilling -->
+          <div class="policy-item">
+            <div class="policy-info">
+              <div class="policy-title-row">
+                <span class="policy-icon orange">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                  </svg>
+                </span>
+                <b>Quyền xem phiếu thu & doanh thu học phí</b>
+              </div>
+              <p class="policy-desc">
+                Cho phép giáo viên xem tổng doanh thu học phí và trạng thái đóng tiền của học sinh. Nếu tắt, giáo viên chỉ tập trung vào chuyên môn điểm danh.
+              </p>
+            </div>
+            <div class="switch-box">
+              <span class="policy-badge" [class.enabled]="policy().canViewBilling">
+                {{ policy().canViewBilling ? 'Cho phép' : 'Đang khóa' }}
+              </span>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canViewBilling"
+                  (change)="toggle('canViewBilling', 'Quyền xem doanh thu VietQR')"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Card: Teachers list -->
+      <div class="policy-card side-info">
+        <div class="card-header">
+          <div class="card-title-group">
+            <h3>Đội ngũ Giáo viên Áp dụng</h3>
+            <p>Có <b>{{ teachers().length }}</b> giáo viên trực thuộc đang chịu ảnh hưởng bởi chính sách này.</p>
+          </div>
+          <a routerLink="/admin/users" class="btn btn-secondary btn-sm">Quản lý Giáo viên →</a>
+        </div>
+
+        <div class="teacher-mini-list">
+          @for (t of teachers(); track t.id) {
+            <div class="teacher-mini-item">
+              <span class="mini-avatar">{{ t.fullName.charAt(0) }}</span>
+              <div class="mini-info">
+                <b>{{ t.fullName }}</b>
+                <small>{{ t.phone }} · {{ t.assignedClassesCount || 0 }} lớp phụ trách</small>
+              </div>
+              <span class="mini-status">Đang áp dụng</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

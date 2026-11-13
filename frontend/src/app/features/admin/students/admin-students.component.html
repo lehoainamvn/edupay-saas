@@ -1,0 +1,314 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">Học sinh & Điểm danh Cơ sở</h1>
+      <p class="page-desc">
+        Quản lý danh sách học sinh toàn cơ sở, thông tin liên hệ phụ huynh và tình trạng học tập của từng lớp.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        <span>+ Thêm Học sinh mới</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 4 KPI Cards -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Tổng số học sinh</span>
+        <b class="kpi-value">{{ totalStudents() }}</b>
+        <small class="kpi-meta">Hồ sơ đã ghi danh</small>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Đang theo học</span>
+        <b class="kpi-value">{{ studyingStudents() }}</b>
+        <small class="kpi-meta">Học sinh tích cực</small>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon orange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Tạm dừng học</span>
+        <b class="kpi-value">{{ pausedStudents() }}</b>
+        <small class="kpi-meta">Bảo lưu / Tạm nghỉ</small>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-label">Số lớp đang mở</span>
+        <b class="kpi-value">{{ classesCovered() }}</b>
+        <small class="kpi-meta">Có học sinh theo học</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filter & Search Toolbar -->
+  <section class="filter-card">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"></path>
+      </svg>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Tìm kiếm theo Tên học sinh, SĐT phụ huynh, Lớp học..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+      @if (searchQuery()) {
+        <button class="clear-search" (click)="searchQuery.set('')" title="Xóa tìm kiếm">✕</button>
+      }
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Lớp học:</label>
+      <select
+        class="filter-select"
+        [ngModel]="classFilter()"
+        (ngModelChange)="classFilter.set($event)"
+      >
+        <option value="ALL">Tất cả các lớp</option>
+        @for (c of classes(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Trạng thái:</label>
+      <select
+        class="filter-select"
+        [ngModel]="statusFilter()"
+        (ngModelChange)="statusFilter.set($event)"
+      >
+        <option value="ALL">Tất cả trạng thái</option>
+        <option value="STUDYING">Đang theo học</option>
+        <option value="PAUSED">Tạm nghỉ / Bảo lưu</option>
+        <option value="DROPPED">Đã nghỉ hẳn</option>
+      </select>
+    </div>
+
+    <button class="btn btn-secondary" (click)="loadData()" title="Làm mới danh sách">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+      <span>Làm mới</span>
+    </button>
+  </section>
+
+  <!-- Data Table Card -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="state-container">
+        <div class="spinner"></div>
+        <p>Đang tải danh sách học sinh của cơ sở...</p>
+      </div>
+    } @else if (filteredStudents().length === 0) {
+      <div class="state-container empty-state">
+        <div class="empty-icon">🎒</div>
+        <h3>Không tìm thấy học sinh nào</h3>
+        <p>Chưa có học sinh phù hợp với bộ lọc tìm kiếm hiện tại.</p>
+        <button class="btn btn-primary" (click)="openCreateModal()">+ Thêm học sinh đầu tiên</button>
+      </div>
+    } @else {
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>HỌC SINH</th>
+            <th>PHỤ HUYNH & SĐT</th>
+            <th>LỚP THEO HỌC</th>
+            <th>HỌC PHÍ / BUỔI</th>
+            <th>TRẠNG THÁI</th>
+            <th class="text-right">THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of filteredStudents(); track s.id) {
+            <tr>
+              <td>
+                <div class="student-cell">
+                  <span class="student-avatar">{{ s.fullName.charAt(0) }}</span>
+                  <div class="student-info">
+                    <b class="student-name">{{ s.fullName }}</b>
+                    @if (s.nickname) {
+                      <small class="student-nick">({{ s.nickname }})</small>
+                    }
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="parent-info">
+                  <b>{{ s.parentPhone }}</b>
+                  @if (s.parentName) {
+                    <small>Phụ huynh: {{ s.parentName }}</small>
+                  }
+                </div>
+              </td>
+              <td>
+                <span class="class-badge">{{ s.className }}</span>
+              </td>
+              <td>
+                <div class="fee-info">
+                  <b class="fee-text">{{ formatCurrency(s.effectiveFee || s.classDefaultFee) }}</b>
+                  @if (s.customFee) {
+                    <small class="custom-badge">Học phí riêng</small>
+                  }
+                </div>
+              </td>
+              <td>
+                @if (s.status === 'STUDYING') {
+                  <span class="badge badge-active">● Đang học</span>
+                } @else if (s.status === 'PAUSED') {
+                  <span class="badge badge-paused">● Tạm dừng</span>
+                } @else {
+                  <span class="badge badge-dropped">● Nghỉ hẳn</span>
+                }
+              </td>
+              <td class="text-right">
+                <div class="action-btn-group">
+                  <button class="btn-icon" (click)="openEditModal(s)" title="Chỉnh sửa thông tin">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button class="btn-icon danger" (click)="onDelete(s)" title="Xóa học sinh">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+
+  <!-- Create / Edit Modal -->
+  @if (showModal()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingStudent() ? 'Chỉnh sửa Hồ sơ Học sinh' : 'Thêm Học sinh Mới vào Cơ sở' }}</h3>
+          <button class="btn-close" (click)="closeModal()">✕</button>
+        </div>
+
+        <form [formGroup]="studentForm" (ngSubmit)="onSubmit()" class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Họ và tên học sinh <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="fullName"
+              placeholder="VD: Nguyễn Văn An"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Số điện thoại phụ huynh <span class="required">*</span></label>
+              <input
+                type="tel"
+                class="form-control"
+                formControlName="parentPhone"
+                placeholder="0912 345 678"
+              />
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="form-label">Họ tên phụ huynh</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="parentName"
+                placeholder="VD: Chị Mai"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Lớp học theo học <span class="required">*</span></label>
+              <select class="form-control" formControlName="classId">
+                <option value="">-- Chọn lớp học --</option>
+                @for (c of classes(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group flex-1">
+              <label class="form-label">Trạng thái học tập</label>
+              <select class="form-control" formControlName="status">
+                <option value="STUDYING">Đang theo học</option>
+                <option value="PAUSED">Tạm nghỉ / Bảo lưu</option>
+                <option value="DROPPED">Đã nghỉ hẳn</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Học phí riêng (nếu có ưu đãi, để trống nếu theo giá lớp chuẩn)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="customFee"
+              placeholder="Để trống nếu thu theo giá lớp"
+            />
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">Hủy bỏ</button>
+            <button type="submit" class="btn btn-primary" [disabled]="submitting()">
+              {{ submitting() ? 'Đang lưu...' : (editingStudent() ? 'Cập nhật học sinh' : 'Lưu học sinh') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
+

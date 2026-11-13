@@ -2,8 +2,13 @@
   <!-- ─── PAGE HEADER ─── -->
   <section class="pageHeader">
     <div>
-      <h1>Tổng quan Doanh thu & Quy mô Hệ thống</h1>
-      <p>Giám sát doanh thu định kỳ MRR/ARR, quy mô các Trung tâm đào tạo và mạng lưới Gia sư độc lập.</p>
+      @if (isCenterAdmin() && !isSuperAdmin()) {
+        <h1>Tổng quan Cơ sở · {{ centerName() }}</h1>
+        <p>Giám sát doanh thu học phí VietQR, quy mô giáo viên, lớp học và học viên trực thuộc cơ sở trung tâm.</p>
+      } @else {
+        <h1>Tổng quan Doanh thu & Quy mô Hệ thống</h1>
+        <p>Giám sát doanh thu định kỳ MRR/ARR, quy mô các Trung tâm đào tạo và mạng lưới Gia sư độc lập.</p>
+      }
     </div>
     <div class="headerActions">
       <button class="ghost" (click)="handleRefresh()" [disabled]="loading()">
@@ -14,256 +19,407 @@
         <span>{{ refreshed() ? 'Đã cập nhật' : 'Làm mới' }}</span>
       </button>
 
-      <button class="secondary" (click)="navigateCreateTutor()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        <span>Thêm Gia sư</span>
-      </button>
+      @if (isCenterAdmin() && !isSuperAdmin()) {
+        <button class="secondary" routerLink="/admin/classes">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Quản lý Lớp học</span>
+        </button>
 
-      <button class="primary" (click)="navigateCreateCenter()">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-        <span>Tạo Trung tâm</span>
-      </button>
+        <button class="primary" routerLink="/admin/users" [queryParams]="{action: 'create'}">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>+ Thêm Giáo viên</span>
+        </button>
+      } @else {
+        <button class="secondary" (click)="navigateCreateTutor()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>Thêm Gia sư</span>
+        </button>
+
+        <button class="primary" (click)="navigateCreateCenter()">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          <span>Tạo Trung tâm</span>
+        </button>
+      }
     </div>
   </section>
 
   <!-- ─── KPI STRIP (4 METRIC BOXES) ─── -->
   <section class="kpiStrip">
-    <div>
-      <span>DOANH THU ĐỊNH KỲ (MRR)</span>
-      <strong>{{ formatMoney(stats()?.mrr) }}</strong>
-      <small>ARR dự phóng: {{ formatMoney(stats()?.arr || 0) }}</small>
-    </div>
-    <div>
-      <span>TRUNG TÂM ĐÀO TẠO</span>
-      <strong>{{ centerCount() }} cơ sở</strong>
-      <small>Mô hình nhiều giáo viên trực thuộc</small>
-    </div>
-    <div>
-      <span>GIA SƯ TỰ DO</span>
-      <strong>{{ tutorCount() }} gia sư</strong>
-      <small>Quản lý lớp độc lập tại nhà</small>
-    </div>
-    <div>
-      <span>QUY MÔ HỌC TẬP</span>
-      <strong>{{ studentCount() }} học sinh</strong>
-      <small>{{ teacherCount() }} giáo viên • {{ classCount() }} lớp đang hoạt động</small>
-    </div>
+    @if (isCenterAdmin() && !isSuperAdmin()) {
+      <div>
+        <span>HỌC PHÍ THÁNG (VIETQR)</span>
+        <strong>{{ formatMoney(stats()?.mrr) }}</strong>
+        <small>Dự kiến: {{ formatMoney(stats()?.arr || 0) }}</small>
+      </div>
+      <div>
+        <span>ĐỘI NGŨ GIÁO VIÊN</span>
+        <strong>{{ teacherCount() }} giáo viên</strong>
+        <small>Trực thuộc cơ sở trung tâm</small>
+      </div>
+      <div>
+        <span>LỚP HỌC ĐANG MỞ</span>
+        <strong>{{ classCount() }} lớp học</strong>
+        <small>Đang giảng dạy tại cơ sở</small>
+      </div>
+      <div>
+        <span>HỌC SINH ĐANG HỌC</span>
+        <strong>{{ studentCount() }} học sinh</strong>
+        <small>Học viên đăng ký tại cơ sở</small>
+      </div>
+    } @else {
+      <div>
+        <span>DOANH THU ĐỊNH KỲ (MRR)</span>
+        <strong>{{ formatMoney(stats()?.mrr) }}</strong>
+        <small>ARR dự phóng: {{ formatMoney(stats()?.arr || 0) }}</small>
+      </div>
+      <div>
+        <span>TRUNG TÂM ĐÀO TẠO</span>
+        <strong>{{ centerCount() }} cơ sở</strong>
+        <small>Mô hình nhiều giáo viên trực thuộc</small>
+      </div>
+      <div>
+        <span>GIA SƯ TỰ DO</span>
+        <strong>{{ tutorCount() }} gia sư</strong>
+        <small>Quản lý lớp độc lập tại nhà</small>
+      </div>
+      <div>
+        <span>QUY MÔ HỌC TẬP</span>
+        <strong>{{ studentCount() }} học sinh</strong>
+        <small>{{ teacherCount() }} giáo viên • {{ classCount() }} lớp đang hoạt động</small>
+      </div>
+    }
   </section>
 
   <!-- ─── DISTRIBUTION GRID (2 SUMMARY CARDS) ─── -->
-  <section class="distributionGrid">
-    <!-- Card 1: Cơ cấu Khách hàng Nền tảng -->
-    <article class="summaryCard">
-      <header>
-        <h2>Cơ cấu Khách hàng Nền tảng</h2>
-        <span>{{ tenants().length }} tenant đang hoạt động</span>
-      </header>
-      <div class="stackedBar">
-        <i [style.width.%]="centerPercent()"></i>
-        <b [style.width.%]="tutorPercent()"></b>
-      </div>
-      <div class="legend">
-        <div>
-          <span class="centerDot"></span>
-          <p>
-            <b>Trung tâm Đào tạo</b>
-            <small>{{ centerCount() }} cơ sở</small>
-          </p>
-          <strong>{{ centerPercent() }}%</strong>
-        </div>
-        <div>
-          <span class="tutorDot"></span>
-          <p>
-            <b>Gia sư Tự do</b>
-            <small>{{ tutorCount() }} gia sư</small>
-          </p>
-          <strong>{{ tutorPercent() }}%</strong>
-        </div>
-      </div>
-    </article>
-
-    <!-- Card 2: Trung tâm Quy mô Lớn nhất -->
-    <article class="summaryCard topTenant">
-      <header>
-        <h2>Trung tâm Quy mô Lớn nhất</h2>
-        <button routerLink="/admin/centers">Xem tất cả →</button>
-      </header>
-      @if (topCenter(); as center) {
-        <div class="tenantFeature">
-          <span>{{ centerInitials(center.name) }}</span>
+  @if (isCenterAdmin() && !isSuperAdmin()) {
+    <section class="distributionGrid">
+      <article class="summaryCard">
+        <header>
+          <h2>Thông tin Cơ sở Đào tạo</h2>
+          <span style="color: #059669; font-weight: 600;">● Đang hoạt động</span>
+        </header>
+        <div class="tenantFeature" style="margin-top: 10px;">
+          <span>{{ centerInitials(centerName()) }}</span>
           <div>
-            <b>{{ center.name }}</b>
-            <small>Đại diện: {{ center.representativeName || center.phone }}</small>
+            <b>{{ centerName() }}</b>
+            <small>Hotline: {{ currentTenant()?.phone || '0901 112 222' }} · Email: {{ currentTenant()?.email || 'anhduong.edu@edupay.vn' }}</small>
           </div>
         </div>
         <div class="tenantMetrics">
           <div>
-            <strong>{{ center.totalTeachers }}</strong>
+            <strong>{{ teacherCount() }}</strong>
             <span>GIÁO VIÊN</span>
           </div>
           <div>
-            <strong>{{ center.totalClasses }}</strong>
+            <strong>{{ classCount() }}</strong>
             <span>LỚP HỌC</span>
           </div>
           <div>
-            <strong>{{ center.totalStudents }}</strong>
+            <strong>{{ studentCount() }}</strong>
             <span>HỌC SINH</span>
           </div>
         </div>
-      } @else {
-        <div class="tenantFeature">
-          <span>TT</span>
+      </article>
+
+      <article class="summaryCard topTenant">
+        <header>
+          <h2>Gói Dịch Vụ & Tài Khoản VietQR</h2>
+          <button routerLink="/admin/settings">Cài đặt QR →</button>
+        </header>
+        <div style="padding: 10px 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #475569;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>Gói cước phần mềm:</span>
+            <strong style="color: #2563eb;">{{ currentTenant()?.subscriptionPlan || 'Gói Chuyên nghiệp' }}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Hạn sử dụng:</span>
+            <b>{{ formatDate(currentTenant()?.subscriptionEndsAt) }}</b>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span>Tài khoản nhận tiền:</span>
+            <b>VietinBank · 108876543210</b>
+          </div>
+        </div>
+        <div style="margin-top: auto; padding-top: 8px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+          <small style="color: #64748b;">Mọi phiếu thu các lớp đều tự động nhận về STK trung tâm.</small>
+          <a routerLink="/admin/billing" style="color: #2563eb; font-weight: 600; font-size: 12px; text-decoration: none;">Xem phiếu thu →</a>
+        </div>
+      </article>
+    </section>
+  } @else {
+    <section class="distributionGrid">
+      <!-- Card 1: Cơ cấu Khách hàng Nền tảng -->
+      <article class="summaryCard">
+        <header>
+          <h2>Cơ cấu Khách hàng Nền tảng</h2>
+          <span>{{ tenants().length }} tenant đang hoạt động</span>
+        </header>
+        <div class="stackedBar">
+          <i [style.width.%]="centerPercent()"></i>
+          <b [style.width.%]="tutorPercent()"></b>
+        </div>
+        <div class="legend">
           <div>
-            <b>Chưa có trung tâm nào</b>
-            <small>Bấm 'Tạo Trung tâm' ở góc trên để bắt đầu</small>
+            <span class="centerDot"></span>
+            <p>
+              <b>Trung tâm Đào tạo</b>
+              <small>{{ centerCount() }} cơ sở</small>
+            </p>
+            <strong>{{ centerPercent() }}%</strong>
+          </div>
+          <div>
+            <span class="tutorDot"></span>
+            <p>
+              <b>Gia sư Tự do</b>
+              <small>{{ tutorCount() }} gia sư</small>
+            </p>
+            <strong>{{ tutorPercent() }}%</strong>
           </div>
         </div>
-        <div class="tenantMetrics">
-          <div><strong>0</strong><span>GIÁO VIÊN</span></div>
-          <div><strong>0</strong><span>LỚP HỌC</span></div>
-          <div><strong>0</strong><span>HỌC SINH</span></div>
+      </article>
+
+      <!-- Card 2: Trung tâm Quy mô Lớn nhất -->
+      <article class="summaryCard topTenant">
+        <header>
+          <h2>Trung tâm Quy mô Lớn nhất</h2>
+          <button routerLink="/admin/centers">Xem tất cả →</button>
+        </header>
+        @if (topCenter(); as center) {
+          <div class="tenantFeature">
+            <span>{{ centerInitials(center.name) }}</span>
+            <div>
+              <b>{{ center.name }}</b>
+              <small>Đại diện: {{ center.representativeName || center.phone }}</small>
+            </div>
+          </div>
+          <div class="tenantMetrics">
+            <div>
+              <strong>{{ center.totalTeachers }}</strong>
+              <span>GIÁO VIÊN</span>
+            </div>
+            <div>
+              <strong>{{ center.totalClasses }}</strong>
+              <span>LỚP HỌC</span>
+            </div>
+            <div>
+              <strong>{{ center.totalStudents }}</strong>
+              <span>HỌC SINH</span>
+            </div>
+          </div>
+        } @else {
+          <div class="tenantFeature">
+            <span>TT</span>
+            <div>
+              <b>Chưa có trung tâm nào</b>
+              <small>Bấm 'Tạo Trung tâm' ở góc trên để bắt đầu</small>
+            </div>
+          </div>
+          <div class="tenantMetrics">
+            <div><strong>0</strong><span>GIÁO VIÊN</span></div>
+            <div><strong>0</strong><span>LỚP HỌC</span></div>
+            <div><strong>0</strong><span>HỌC SINH</span></div>
+          </div>
+        }
+      </article>
+    </section>
+  }
+
+  <!-- ─── DIRECTORY SECTION (TENANT TABLE HOẶC CENTER TEACHERS TABLE) ─── -->
+  @if (isCenterAdmin() && !isSuperAdmin()) {
+    <section class="directory">
+      <header class="directoryHeader">
+        <div>
+          <h2>Đội ngũ Giáo viên Trực thuộc Cơ sở</h2>
+          <p>Danh sách các giáo viên, trợ giảng đang giảng dạy tại trung tâm.</p>
         </div>
-      }
-    </article>
-  </section>
-
-  <!-- ─── DIRECTORY SECTION (TENANT TABLE) ─── -->
-  <section class="directory">
-    <header class="directoryHeader">
-      <div>
-        <h2>Danh mục Cơ sở Đào tạo & Gia sư Nền tảng</h2>
-        <p>Quản lý thời hạn sử dụng, gia hạn hợp đồng và trạng thái hoạt động.</p>
-      </div>
-      <span>Cập nhật: {{ todayFormatted() }}</span>
-    </header>
-
-    <div class="toolbar">
-      <div class="filters">
-        <button
-          [class.active]="currentTab() === 'ALL'"
-          (click)="setTab('ALL')"
-        >
-          Tất cả <span>{{ tenants().length }}</span>
+        <button class="primary" routerLink="/admin/users" style="font-size: 12px; padding: 6px 14px; border-radius: 6px; background: #2563eb; color: #fff; border: none; cursor: pointer;">
+          Quản lý toàn bộ nhân sự →
         </button>
-        <button
-          [class.active]="currentTab() === 'CENTER'"
-          (click)="setTab('CENTER')"
-        >
-          Trung tâm <span>{{ centerCount() }}</span>
-        </button>
-        <button
-          [class.active]="currentTab() === 'SOLO_TUTOR'"
-          (click)="setTab('SOLO_TUTOR')"
-        >
-          Gia sư <span>{{ tutorCount() }}</span>
-        </button>
-        <button
-          [class.active]="currentTab() === 'EXPIRED'"
-          (click)="setTab('EXPIRED')"
-        >
-          Hết hạn <span>{{ expiredCount() }}</span>
-        </button>
-      </div>
+      </header>
 
-      <label class="search">
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-4-4" />
-        </svg>
-        <input
-          [ngModel]="searchQuery()"
-          (ngModelChange)="searchQuery.set($event)"
-          placeholder="Tìm tên cơ sở, email, SĐT..."
-        />
-      </label>
-    </div>
+      <div class="tenantTable">
+        <div class="tableHead" style="grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;">
+          <span>GIÁO VIÊN & SĐT</span>
+          <span>EMAIL</span>
+          <span>VAI TRÒ</span>
+          <span>TRẠNG THÁI</span>
+          <span>THAO TÁC</span>
+        </div>
 
-    <div class="tenantTable">
-      <div class="tableHead">
-        <span>CƠ SỞ / GIA SƯ</span>
-        <span>PHÂN LOẠI</span>
-        <span>NGƯỜI ĐẠI DIỆN & SĐT</span>
-        <span>QUY MÔ</span>
-        <span>GÓI DỊCH VỤ</span>
-        <span>HẠN DÙNG</span>
-        <span>TRẠNG THÁI</span>
-        <span>THAO TÁC</span>
-      </div>
-
-      @for (t of filteredTenants(); track t.id) {
-        <div class="tenantRow">
-          <div class="entity">
-            <b>{{ t.name }}</b>
-            <small [class.missing]="!t.email || t.email.startsWith('Chưa')">
-              {{ t.email || 'Chưa cập nhật email' }}
-            </small>
+        @for (u of centerTeachers(); track u.id) {
+          <div class="tenantRow" style="grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;">
+            <div class="entity">
+              <b>{{ u.fullName }}</b>
+              <small>{{ u.phone }}</small>
+            </div>
+            <div style="font-size: 12.5px; color: #475569;">
+              {{ u.email || 'Chưa cập nhật' }}
+            </div>
+            <div>
+              <span class="type" [class.center]="u.roles.includes('CENTER_ADMIN')" [class.tutor]="!u.roles.includes('CENTER_ADMIN')">
+                ● {{ u.roles.includes('CENTER_ADMIN') ? 'Quản lý TT' : 'Giáo viên' }}
+              </span>
+            </div>
+            <div>
+              <span class="activeStatus" [class.suspendedStatus]="u.status !== 'ACTIVE'">
+                ● {{ u.status === 'ACTIVE' ? 'Hoạt động' : 'Tạm khóa' }}
+              </span>
+            </div>
+            <div class="rowActions">
+              <button routerLink="/admin/teacher-policies" title="Phân quyền giảng dạy">Phân quyền</button>
+              <button routerLink="/admin/users" title="Chi tiết người dùng">Chi tiết</button>
+            </div>
           </div>
+        }
 
-          <span
-            class="type"
-            [class.center]="t.tenantType === 'CENTER'"
-            [class.tutor]="t.tenantType !== 'CENTER'"
+        @if (centerTeachers().length === 0) {
+          <div class="empty">Chưa có giáo viên nào trực thuộc cơ sở.</div>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="directory">
+      <header class="directoryHeader">
+        <div>
+          <h2>Danh mục Cơ sở Đào tạo & Gia sư Nền tảng</h2>
+          <p>Quản lý thời hạn sử dụng, gia hạn hợp đồng và trạng thái hoạt động.</p>
+        </div>
+        <span>Cập nhật: {{ todayFormatted() }}</span>
+      </header>
+
+      <div class="toolbar">
+        <div class="filters">
+          <button
+            [class.active]="currentTab() === 'ALL'"
+            (click)="setTab('ALL')"
           >
-            ● {{ t.tenantType === 'CENTER' ? 'Trung tâm' : 'Gia sư tự do' }}
-          </span>
-
-          <div class="representative">
-            <b>{{ t.representativeName || t.name }}</b>
-            <small>{{ t.phone }}</small>
-          </div>
-
-          <span class="scale">
-            {{
-              t.tenantType === 'CENTER'
-                ? t.totalTeachers + ' GV • ' + t.totalClasses + ' lớp'
-                : t.totalClasses + ' lớp • ' + t.totalStudents + ' HS'
-            }}
-          </span>
-
-          <span
-            class="plan"
-            [class.monthly]="(t.subscriptionPlan || '').toUpperCase() === 'MONTHLY'"
-            [class.trial]="(t.subscriptionPlan || '').toUpperCase() !== 'MONTHLY'"
+            Tất cả <span>{{ tenants().length }}</span>
+          </button>
+          <button
+            [class.active]="currentTab() === 'CENTER'"
+            (click)="setTab('CENTER')"
           >
-            {{ t.subscriptionPlan || 'MONTHLY' }}
-          </span>
-
-          <span class="expiry">{{ formatDate(t.subscriptionEndsAt) }}</span>
-
-          <span
-            class="activeStatus"
-            [class.suspendedStatus]="t.subscriptionStatus === 'SUSPENDED'"
-            [class.expiredStatus]="t.isExpired"
+            Trung tâm <span>{{ centerCount() }}</span>
+          </button>
+          <button
+            [class.active]="currentTab() === 'SOLO_TUTOR'"
+            (click)="setTab('SOLO_TUTOR')"
           >
-            ● {{ t.subscriptionStatus === 'SUSPENDED' ? 'Tạm khóa' : (t.isExpired ? 'Hết hạn' : 'Hoạt động') }}
-          </span>
+            Gia sư <span>{{ tutorCount() }}</span>
+          </button>
+          <button
+            [class.active]="currentTab() === 'EXPIRED'"
+            (click)="setTab('EXPIRED')"
+          >
+            Hết hạn <span>{{ expiredCount() }}</span>
+          </button>
+        </div>
 
-          <div class="rowActions">
-            <button (click)="openExtendModal(t)">Gia hạn</button>
-            <button
-              aria-label="Thao tác trạng thái"
-              (click)="openStatusModal(t)"
-              title="Đổi trạng thái Hoạt động / Tạm khóa"
+        <label class="search">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-4-4" />
+          </svg>
+          <input
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            placeholder="Tìm tên cơ sở, email, SĐT..."
+          />
+        </label>
+      </div>
+
+      <div class="tenantTable">
+        <div class="tableHead">
+          <span>CƠ SỞ / GIA SƯ</span>
+          <span>PHÂN LOẠI</span>
+          <span>NGƯỜI ĐẠI DIỆN & SĐT</span>
+          <span>QUY MÔ</span>
+          <span>GÓI DỊCH VỤ</span>
+          <span>HẠN DÙNG</span>
+          <span>TRẠNG THÁI</span>
+          <span>THAO TÁC</span>
+        </div>
+
+        @for (t of filteredTenants(); track t.id) {
+          <div class="tenantRow">
+            <div class="entity">
+              <b>{{ t.name }}</b>
+              <small [class.missing]="!t.email || t.email.startsWith('Chưa')">
+                {{ t.email || 'Chưa cập nhật email' }}
+              </small>
+            </div>
+
+            <span
+              class="type"
+              [class.center]="t.tenantType === 'CENTER'"
+              [class.tutor]="t.tenantType !== 'CENTER'"
             >
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="5" cy="12" r="1" />
-                <circle cx="12" cy="12" r="1" />
-                <circle cx="19" cy="12" r="1" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      }
+              ● {{ t.tenantType === 'CENTER' ? 'Trung tâm' : 'Gia sư tự do' }}
+            </span>
 
-      @if (filteredTenants().length === 0) {
-        <div class="empty">Không tìm thấy cơ sở hoặc gia sư phù hợp với bộ lọc.</div>
-      }
-    </div>
-  </section>
+            <div class="representative">
+              <b>{{ t.representativeName || t.name }}</b>
+              <small>{{ t.phone }}</small>
+            </div>
+
+            <span class="scale">
+              {{
+                t.tenantType === 'CENTER'
+                  ? t.totalTeachers + ' GV • ' + t.totalClasses + ' lớp'
+                  : t.totalClasses + ' lớp • ' + t.totalStudents + ' HS'
+              }}
+            </span>
+
+            <span
+              class="plan"
+              [class.monthly]="(t.subscriptionPlan || '').toUpperCase() === 'MONTHLY'"
+              [class.trial]="(t.subscriptionPlan || '').toUpperCase() !== 'MONTHLY'"
+            >
+              {{ t.subscriptionPlan || 'MONTHLY' }}
+            </span>
+
+            <span class="expiry">{{ formatDate(t.subscriptionEndsAt) }}</span>
+
+            <span
+              class="activeStatus"
+              [class.suspendedStatus]="t.subscriptionStatus === 'SUSPENDED'"
+              [class.expiredStatus]="t.isExpired"
+            >
+              ● {{ t.subscriptionStatus === 'SUSPENDED' ? 'Tạm khóa' : (t.isExpired ? 'Hết hạn' : 'Hoạt động') }}
+            </span>
+
+            <div class="rowActions">
+              <button (click)="openExtendModal(t)">Gia hạn</button>
+              <button
+                aria-label="Thao tác trạng thái"
+                (click)="openStatusModal(t)"
+                title="Đổi trạng thái Hoạt động / Tạm khóa"
+              >
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1" />
+                  <circle cx="12" cy="12" r="1" />
+                  <circle cx="19" cy="12" r="1" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (filteredTenants().length === 0) {
+          <div class="empty">Không tìm thấy cơ sở hoặc gia sư phù hợp với bộ lọc.</div>
+        }
+      </div>
+    </section>
+  }
 </main>
 
 <!-- ─── MODAL GIA HẠN DỊCH VỤ ─── -->

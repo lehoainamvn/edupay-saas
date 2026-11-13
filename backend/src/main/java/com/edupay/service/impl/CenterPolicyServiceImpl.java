@@ -1,5 +1,6 @@
 package com.edupay.service.impl;
 
+import com.edupay.config.TenantContext;
 import com.edupay.dto.request.UpdateTenantTeacherPolicyRequest;
 import com.edupay.dto.response.TenantTeacherPolicyDto;
 import com.edupay.entity.TenantTeacherPolicy;
@@ -9,6 +10,8 @@ import com.edupay.repository.TenantTeacherPolicyRepository;
 import com.edupay.service.CenterPolicyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,44 @@ public class CenterPolicyServiceImpl implements CenterPolicyService {
 
     private final TenantTeacherPolicyRepository policyRepository;
     private final TenantRepository tenantRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public TenantTeacherPolicyDto getMyPolicy() {
+        UUID tenantId = TenantContext.getTenantId();
+        if (tenantId == null) {
+            return TenantTeacherPolicyDto.builder()
+                    .canCreateClass(true)
+                    .canCreateStudent(true)
+                    .canEditStudentFee(true)
+                    .canViewBilling(true)
+                    .build();
+        }
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isPrivileged = false;
+        if (auth != null) {
+            isPrivileged = auth.getAuthorities().stream().anyMatch(a ->
+                    a.getAuthority().contains("SUPER_ADMIN") ||
+                    a.getAuthority().contains("CENTER_ADMIN") ||
+                    a.getAuthority().contains("OWNER"));
+        }
+
+        var tenantOpt = tenantRepository.findById(tenantId);
+        boolean isCenter = tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType());
+
+        if (!isCenter || isPrivileged) {
+            return TenantTeacherPolicyDto.builder()
+                    .tenantId(tenantId)
+                    .canCreateClass(true)
+                    .canCreateStudent(true)
+                    .canEditStudentFee(true)
+                    .canViewBilling(true)
+                    .build();
+        }
+
+        return getTenantPolicy(tenantId);
+    }
 
     @Override
     @Transactional

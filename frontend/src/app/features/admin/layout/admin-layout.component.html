@@ -9,13 +9,13 @@
       </span>
       <div>
         <b>EduPay</b>
-        <small>PLATFORM CONSOLE</small>
+        <small>{{ brandKicker() }}</small>
       </div>
     </div>
 
     <!-- Navigation Groups -->
     <nav class="sideNav">
-      @for (group of navGroups; track group.label) {
+      @for (group of navGroups(); track group.label) {
         <div class="navGroup">
           <span>{{ group.label }}</span>
           @for (item of group.items; track item.route) {
@@ -75,7 +75,7 @@
         <span>{{ userInitials() }}</span>
         <div>
           <b>{{ userInfo?.fullName || 'Lê Hoài Nam' }}</b>
-          <small>SUPER_ADMIN</small>
+          <small>{{ roleLabel() }}</small>
         </div>
         <button class="logoutBtn" (click)="logout()" title="Đăng xuất">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -91,14 +91,14 @@
     <!-- Top Utility Bar (height 56px, sticky) -->
     <header class="utilityBar">
       <div class="breadcrumbBox">
-        <span>Cổng Quản trị SuperAdmin</span>
+        <span>{{ portalTitle() }}</span>
         <i>/</i>
         <b>{{ currentTitle() }}</b>
       </div>
       <div class="utilityActions">
-        <span class="platformLive"><i></i> Platform Live</span>
+        <span class="platformLive"><i></i> {{ liveBadge() }}</span>
         <button (click)="goToTeacherPortal()" title="Chuyển sang Bàn làm việc Giáo viên">
-          Trang Dạy học
+          {{ switchBtnText() }}
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M14 4h6v6M20 4l-9 9" />
             <path d="M18 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h6" />

@@ -1,5 +1,6 @@
 package com.edupay.service.impl;
 
+import com.edupay.config.TenantContext;
 import com.edupay.dto.request.CreateUserRequest;
 import com.edupay.dto.request.ResetPasswordRequest;
 import com.edupay.dto.request.UpdateUserRequest;
@@ -42,10 +43,19 @@ public class AdminUserServiceImpl implements AdminUserService {
     private static final String SUPER_ADMIN_PHONE = "0937712338";
     private static final UUID DEFAULT_TENANT_ID = UUID.fromString("a0000000-0000-0000-0000-000000000001");
 
+    private boolean isSuperAdmin() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("SUPER_ADMIN"));
+    }
+
     @Override
     @Transactional(readOnly = true)
     public PageResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, String status, UUID tenantId) {
         try {
+            UUID currentTenantId = TenantContext.getTenantId();
+            final UUID effectiveTenantId = (!isSuperAdmin() && currentTenantId != null) ? currentTenantId : tenantId;
+
             List<User> allUsers = userRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
 
             Map<UUID, String> tenantMap = new HashMap<>();
@@ -58,7 +68,7 @@ public class AdminUserServiceImpl implements AdminUserService {
             List<AdminUserResponse> filtered = allUsers.stream()
                     .filter(u -> matchesSearch(u, search))
                     .filter(u -> matchesStatus(u, status))
-                    .filter(u -> tenantId == null || tenantId.equals(u.getTenantId()))
+                    .filter(u -> effectiveTenantId == null || effectiveTenantId.equals(u.getTenantId()))
                     .map(u -> toAdminUserResponse(u, tenantMap))
                     .filter(u -> matchesRole(u, role))
                     .collect(Collectors.toList());
@@ -83,6 +93,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
 
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null && !currentTenantId.equals(user.getTenantId())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền truy cập người dùng này");
+        }
+
         Map<UUID, String> tenantMap = tenantRepository.findAll().stream()
                 .collect(Collectors.toMap(Tenant::getId, Tenant::getName, (a, b) -> a));
         return toAdminUserResponse(user, tenantMap);
@@ -92,6 +107,14 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public AdminUserResponse createUser(CreateUserRequest request) {
         UUID targetTenantId = request.getTenantId();
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null) {
+            targetTenantId = currentTenantId; // Ép phạm vi về trung tâm của CenterAdmin
+            if ("SUPER_ADMIN".equalsIgnoreCase(request.getRoleCode())) {
+                request.setRoleCode("TEACHER");
+            }
+        }
+
         if (targetTenantId == null) {
             targetTenantId = tenantRepository.findById(DEFAULT_TENANT_ID)
                     .map(Tenant::getId)
@@ -148,6 +171,15 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
 
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null && !currentTenantId.equals(user.getTenantId())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền cập nhật người dùng ngoài trung tâm của mình");
+        }
+
+        if (!isSuperAdmin() && request.getRoles() != null) {
+            request.getRoles().removeIf(r -> "SUPER_ADMIN".equalsIgnoreCase(r));
+        }
+
         user.setFullName(request.getFullName().trim());
         if (request.getEmail() != null) {
             user.setEmail(request.getEmail().trim().isEmpty() ? null : request.getEmail().trim());
@@ -191,6 +223,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
 
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null && !currentTenantId.equals(user.getTenantId())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền thay đổi trạng thái người dùng ngoài trung tâm của mình");
+        }
+
         String upperStatus = status.trim().toUpperCase();
         if (!List.of("ACTIVE", "SUSPENDED").contains(upperStatus)) {
             throw new BusinessException("INVALID_STATUS", "Trạng thái không hợp lệ. Chỉ chấp nhận ACTIVE hoặc SUSPENDED.");
@@ -220,6 +257,11 @@ public class AdminUserServiceImpl implements AdminUserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
 
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null && !currentTenantId.equals(user.getTenantId())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền đổi mật khẩu người dùng ngoài trung tâm của mình");
+        }
+
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword().trim()));
         user.setFailedLoginAttempts(0);
         user.setLockedUntil(null);
@@ -233,6 +275,15 @@ public class AdminUserServiceImpl implements AdminUserService {
     public void deleteUser(UUID id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("USER_NOT_FOUND", "Không tìm thấy người dùng với ID: " + id));
+
+        UUID currentTenantId = TenantContext.getTenantId();
+        if (!isSuperAdmin() && currentTenantId != null && !currentTenantId.equals(user.getTenantId())) {
+            throw new BusinessException("FORBIDDEN", "Bạn không có quyền xóa người dùng ngoài trung tâm của mình");
+        }
+
+        if (Boolean.TRUE.equals(user.getIsOwner())) {
+            throw new BusinessException("CANNOT_DELETE_OWNER", "Không thể xóa tài khoản chủ trung tâm");
+        }
 
         if (SUPER_ADMIN_PHONE.equals(user.getPhone())) {
             throw new BusinessException("CANNOT_DELETE_SUPERADMIN", "Không thể xóa tài khoản Quản trị viên tối cao của hệ thống");

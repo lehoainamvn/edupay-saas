@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { AdminService, AdminUserItem, CreateUserPayload, UpdateUserPayload, TenantAdminItem } from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -14,6 +16,17 @@ import { ToastService } from '../../../core/services/toast.service';
 export class AdminUsersComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
+  readonly isCenterAdmin = computed(() => this.authService.isCenterAdmin());
+  readonly currentCenterName = computed(() => {
+    if (this.tenants().length > 0 && this.tenants()[0]?.name) {
+      return this.tenants()[0].name;
+    }
+    return this.authService.currentUser()?.fullName || 'Trung tâm Bồi dưỡng Văn hóa Ánh Dương';
+  });
 
   // ─── STATE SIGNALS ────────────────────────────────────────────────────────
   loading = signal<boolean>(false);
@@ -60,6 +73,10 @@ export class AdminUsersComponent implements OnInit {
   ngOnInit(): void {
     this.loadUsers();
     this.loadTenants();
+
+    if (this.route.snapshot.queryParamMap.get('action') === 'create') {
+      setTimeout(() => this.openCreateModal(), 200);
+    }
   }
 
   loadUsers(): void {
@@ -118,13 +135,16 @@ export class AdminUsersComponent implements OnInit {
 
   // ─── CREATE USER ──────────────────────────────────────────────────────────
   openCreateModal(): void {
+    const userTenantId = this.authService.currentUser()?.tenantId;
+    const defaultTenantId = userTenantId || (this.tenants().length > 0 ? this.tenants()[0].id : '');
+
     this.createForm = {
       phone: '',
       fullName: '',
       email: '',
       password: '',
       roleCode: 'TEACHER',
-      tenantId: this.tenants().length > 0 ? this.tenants()[0].id : ''
+      tenantId: defaultTenantId
     };
     this.showCreateModal.set(true);
   }

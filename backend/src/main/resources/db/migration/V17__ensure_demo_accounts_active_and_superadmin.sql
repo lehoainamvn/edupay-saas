@@ -30,3 +30,4 @@ SET status = 'ACTIVE',
     locked_until = NULL,
     password_hash = '$2a$10$p79GckpyaL0UClYJwheEEOFEPbb6pvM0EBEqkTzFQOkJR8e66bkpy'
 WHERE phone = '0937712338';
+

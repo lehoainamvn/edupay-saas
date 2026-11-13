@@ -14,6 +14,8 @@ import com.edupay.security.annotation.AuditAction;
 import com.edupay.service.BillingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,12 +50,17 @@ public class BillingServiceImpl implements BillingService {
     private final StudentRepository studentRepository;
     private final AttendanceRepository attendanceRepository;
     private final PaymentSettingRepository paymentSettingRepository;
-    private final com.edupay.repository.PaymentTransactionRepository paymentTransactionRepository;
+    private final PaymentTransactionRepository paymentTransactionRepository;
+    private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
+    private final TenantTeacherPolicyRepository policyRepository;
     private final com.edupay.service.VietQRService vietQrService;
+    private final com.edupay.service.SystemParameterService systemParameterService;
 
     @Override
     public BillingPreviewResponse getBillingPreview(UUID classId, String billingMonth) {
         UUID tenantId = TenantContext.getTenantId();
+        verifyBillingAccess(tenantId);
         validateMonthFormat(billingMonth);
 
         ClassEntity classEntity = findClassOrThrow(classId, tenantId);
@@ -173,6 +180,7 @@ public class BillingServiceImpl implements BillingService {
     @AuditAction(action = "INVOICE_GENERATED", resourceType = "INVOICE")
     public List<InvoiceResponse> generateInvoices(InvoiceBatchGenerateRequest request) {
         UUID tenantId = TenantContext.getTenantId();
+        verifyBillingAccess(tenantId);
         validateMonthFormat(request.getBillingMonth());
 
         ClassEntity classEntity = findClassOrThrow(request.getClassId(), tenantId);
@@ -259,6 +267,7 @@ public class BillingServiceImpl implements BillingService {
     @Override
     public List<InvoiceResponse> getInvoices(UUID classId, String billingMonth, InvoiceStatus status) {
         UUID tenantId = TenantContext.getTenantId();
+        verifyBillingAccess(tenantId);
         PaymentSetting paymentSetting = paymentSettingRepository.findByTenantId(tenantId)
                 .orElse(createDefaultPaymentSetting(tenantId));
 
@@ -300,6 +309,7 @@ public class BillingServiceImpl implements BillingService {
     @Override
     public InvoiceResponse getInvoiceById(UUID invoiceId) {
         UUID tenantId = TenantContext.getTenantId();
+        verifyBillingAccess(tenantId);
         Invoice invoice = invoiceRepository.findByIdAndTenantId(invoiceId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("INVOICE_NOT_FOUND", "Không tìm thấy phiếu thu với ID: " + invoiceId));
 
@@ -501,7 +511,8 @@ public class BillingServiceImpl implements BillingService {
     }
 
     private String generateUniqueTransferCode(String prefix, String className, Student student, String monthSuffix) {
-        String cleanPrefix = (prefix != null && !prefix.isBlank()) ? removeDiacritics(prefix).toUpperCase() : "HP";
+        String defaultPrefix = systemParameterService.getStringValue("DEFAULT_TRANSFER_PREFIX", "EDUPAY");
+        String cleanPrefix = (prefix != null && !prefix.isBlank()) ? removeDiacritics(prefix).toUpperCase() : defaultPrefix;
         String cleanClass = removeDiacritics(className).replaceAll("[^A-Za-z0-9]", "").toUpperCase();
         if (cleanClass.length() > 6) {
             cleanClass = cleanClass.substring(0, 6);
@@ -556,6 +567,36 @@ public class BillingServiceImpl implements BillingService {
         if (month == null || !MONTH_PATTERN.matcher(month).matches()) {
             throw new BusinessException("INVALID_MONTH_FORMAT", "Định dạng tháng không hợp lệ (Bắt buộc là YYYY-MM, ví dụ 2026-10)");
         }
+    }
+
+    private void verifyBillingAccess(UUID tenantId) {
+        UUID currentUserId = getCurrentUserId();
+        if (isTeacherOnly(currentUserId)) {
+            var tenantOpt = tenantRepository.findById(tenantId);
+            if (tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType())) {
+                var policyOpt = policyRepository.findByTenantId(tenantId);
+                if (policyOpt.isPresent() && Boolean.FALSE.equals(policyOpt.get().getCanViewBilling())) {
+                    throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền truy cập thông tin học phí và phiếu thu theo quy định của trung tâm.");
+                }
+            }
+        }
+    }
+
+    private UUID getCurrentUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                return UUID.fromString(auth.getName());
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private boolean isTeacherOnly(UUID userId) {
+        if (userId == null) return false;
+        return userRepository.findById(userId)
+                .map(u -> !Boolean.TRUE.equals(u.getIsOwner()))
+                .orElse(false);
     }
 }
 

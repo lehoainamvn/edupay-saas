@@ -154,6 +154,41 @@ export const routes: Routes = [
             (m) => m.SystemConfigComponent
           ),
       },
+      {
+        path: 'classes',
+        loadComponent: () =>
+          import('./features/admin/classes/admin-classes.component').then(
+            (m) => m.AdminClassesComponent
+          ),
+      },
+      {
+        path: 'students',
+        loadComponent: () =>
+          import('./features/admin/students/admin-students.component').then(
+            (m) => m.AdminStudentsComponent
+          ),
+      },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./features/admin/billing/admin-billing.component').then(
+            (m) => m.AdminBillingComponent
+          ),
+      },
+      {
+        path: 'teacher-policies',
+        loadComponent: () =>
+          import('./features/admin/policies/admin-policies.component').then(
+            (m) => m.AdminPoliciesComponent
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/admin/settings/admin-settings.component').then(
+            (m) => m.AdminSettingsComponent
+          ),
+      },
     ],
   },
   {

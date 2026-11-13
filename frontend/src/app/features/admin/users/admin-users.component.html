@@ -2,10 +2,17 @@
   <!-- ─── PAGE HEADER ─── -->
   <header class="page-header">
     <div class="header-info">
-      <h1 class="page-title">Quản lý Người dùng Toàn Hệ Thống</h1>
-      <p class="page-desc">
-        Quản trị toàn diện danh sách tài khoản, thông tin định danh, trạng thái kích hoạt và phân quyền người dùng trong nền tảng.
-      </p>
+      @if (isCenterAdmin() && !isSuperAdmin()) {
+        <h1 class="page-title">Quản lý Giáo viên & Nhân sự Cơ sở</h1>
+        <p class="page-desc">
+          Quản lý danh sách giáo viên, trợ giảng trực thuộc cơ sở {{ currentCenterName() }}. Cấp tài khoản và quản lý trạng thái.
+        </p>
+      } @else {
+        <h1 class="page-title">Quản lý Người dùng Toàn Hệ Thống</h1>
+        <p class="page-desc">
+          Quản trị toàn diện danh sách tài khoản, thông tin định danh, trạng thái kích hoạt và phân quyền người dùng trong nền tảng.
+        </p>
+      }
     </div>
 
     <div class="header-actions">
@@ -13,7 +20,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
-        <span>Thêm người dùng</span>
+        <span>{{ (isCenterAdmin() && !isSuperAdmin()) ? 'Thêm giáo viên' : 'Thêm người dùng' }}</span>
       </button>
     </div>
   </header>
@@ -45,11 +52,16 @@
         (ngModelChange)="selectedRole.set($event); onSearch()"
       >
         <option value="ALL">Tất cả vai trò</option>
-        <option value="SUPER_ADMIN">Quản trị viên nền tảng (SUPER_ADMIN)</option>
-        <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
-        <option value="OWNER">Chủ cơ sở (OWNER)</option>
-        <option value="SOLO_TUTOR">Gia sư tự do (SOLO_TUTOR)</option>
-        <option value="TEACHER">Giáo viên trực thuộc (TEACHER)</option>
+        @if (isCenterAdmin() && !isSuperAdmin()) {
+          <option value="TEACHER">Giáo viên (TEACHER)</option>
+          <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
+        } @else {
+          <option value="SUPER_ADMIN">Quản trị viên nền tảng (SUPER_ADMIN)</option>
+          <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
+          <option value="OWNER">Chủ cơ sở (OWNER)</option>
+          <option value="SOLO_TUTOR">Gia sư tự do (SOLO_TUTOR)</option>
+          <option value="TEACHER">Giáo viên trực thuộc (TEACHER)</option>
+        }
       </select>
     </div>
 
@@ -234,19 +246,21 @@
   <div class="modal-backdrop" (click)="closeCreateModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
       <div class="modal-header">
-        <h3 class="modal-title">Tạo Tài Khoản Mới</h3>
+        <h3 class="modal-title">{{ (isCenterAdmin() && !isSuperAdmin()) ? 'Cấp Tài Khoản Giáo Viên Mới' : 'Tạo Tài Khoản Mới' }}</h3>
         <button class="close-btn" (click)="closeCreateModal()">✕</button>
       </div>
 
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label required">Cơ sở / Trung tâm</label>
-          <select class="form-input" [(ngModel)]="createForm.tenantId">
-            @for (t of tenants(); track t.id) {
-              <option [value]="t.id">{{ t.name }} ({{ t.tenantType === 'CENTER' ? 'Trung tâm' : 'Gia sư' }})</option>
-            }
-          </select>
-        </div>
+        @if (!isCenterAdmin() || isSuperAdmin()) {
+          <div class="form-group">
+            <label class="form-label required">Cơ sở / Trung tâm</label>
+            <select class="form-input" [(ngModel)]="createForm.tenantId">
+              @for (t of tenants(); track t.id) {
+                <option [value]="t.id">{{ t.name }} ({{ t.tenantType === 'CENTER' ? 'Trung tâm' : 'Gia sư' }})</option>
+              }
+            </select>
+          </div>
+        }
 
         <div class="form-group">
           <label class="form-label required">Họ và tên</label>
@@ -271,10 +285,15 @@
         <div class="form-group">
           <label class="form-label required">Vai trò (Role)</label>
           <select class="form-input" [(ngModel)]="createForm.roleCode">
-            <option value="TEACHER">Giáo viên trực thuộc (TEACHER)</option>
-            <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
-            <option value="OWNER">Chủ cơ sở (OWNER)</option>
-            <option value="SUPER_ADMIN">Quản trị viên nền tảng (SUPER_ADMIN)</option>
+            @if (isCenterAdmin() && !isSuperAdmin()) {
+              <option value="TEACHER">Giáo viên trực thuộc (TEACHER)</option>
+              <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
+            } @else {
+              <option value="TEACHER">Giáo viên trực thuộc (TEACHER)</option>
+              <option value="CENTER_ADMIN">Quản lý trung tâm (CENTER_ADMIN)</option>
+              <option value="OWNER">Chủ cơ sở (OWNER)</option>
+              <option value="SUPER_ADMIN">Quản trị viên nền tảng (SUPER_ADMIN)</option>
+            }
           </select>
         </div>
       </div>

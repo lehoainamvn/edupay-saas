@@ -504,12 +504,13 @@ export class LoginComponent implements OnInit {
       next: () => {
         let returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
-        if (this.authService.isSuperAdmin()) {
-          // Tài khoản SuperAdmin: Chuyển thẳng vào Cổng Quản trị SuperAdmin
+        if (this.authService.isSuperAdmin() || this.authService.isCenterAdmin()) {
+          // Tài khoản SuperAdmin hoặc Quản lý Trung tâm: Chuyển thẳng vào Cổng Quản trị Admin
           if (!returnUrl || returnUrl === '/dashboard' || returnUrl === '/home' || returnUrl === '/') {
             returnUrl = '/admin/platform';
           }
         } else {
+          // Gia sư tự do và Giáo viên: Chuyển vào Bàn làm việc Dạy học
           if (!returnUrl) {
             returnUrl = '/dashboard';
           }

@@ -37,6 +37,14 @@ public class SystemParameterController {
         return ResponseEntity.ok(ApiResponse.ok(result, "Lấy chi tiết tham số thành công"));
     }
 
+    @PostMapping
+    @Operation(summary = "Tạo tham số cấu hình mới", description = "Thêm tham số tùy biến vào hệ thống và nạp ngay vào In-memory Cache")
+    public ResponseEntity<ApiResponse<SystemParameterResponse>> createParameter(
+            @Valid @RequestBody com.edupay.dto.request.CreateSystemParameterRequest request) {
+        SystemParameterResponse result = systemParameterService.createParameter(request);
+        return ResponseEntity.ok(ApiResponse.ok(result, "Tạo tham số cấu hình thành công"));
+    }
+
     @PutMapping("/{key}")
     @Operation(summary = "Cập nhật giá trị tham số cấu hình", description = "Cập nhật và tự động Hot-reload In-memory Cache tức thì (không cần restart server)")
     public ResponseEntity<ApiResponse<SystemParameterResponse>> updateParameter(
@@ -44,6 +52,13 @@ public class SystemParameterController {
             @Valid @RequestBody UpdateSystemParameterRequest request) {
         SystemParameterResponse result = systemParameterService.updateParameter(key, request);
         return ResponseEntity.ok(ApiResponse.ok(result, "Cập nhật tham số thành công"));
+    }
+
+    @DeleteMapping("/{key}")
+    @Operation(summary = "Xóa tham số cấu hình tùy biến", description = "Chỉ cho phép xóa tham số do người dùng tạo thêm (không thể xóa tham số hệ thống isSystem)")
+    public ResponseEntity<ApiResponse<Void>> deleteParameter(@PathVariable String key) {
+        systemParameterService.deleteParameter(key);
+        return ResponseEntity.ok(ApiResponse.ok(null, "Xóa tham số cấu hình thành công"));
     }
 
     @PostMapping("/reload-cache")

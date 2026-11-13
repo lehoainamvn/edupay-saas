@@ -166,3 +166,28 @@ WHERE r.code = 'SOLO_TUTOR'
   AND m.code IN ('DASHBOARD', 'CLASSES', 'STUDENTS', 'ATTENDANCE', 'BILLING', 'SETTINGS')
 ON CONFLICT (role_id, menu_id) DO NOTHING;
 
+-- ==============================================================================
+-- 6. ĐẢM BẢO TẤT CẢ TÀI KHOẢN DEV / SUPERADMIN / DEMO KHÔNG BỊ HẾT HẠN
+-- ==============================================================================
+UPDATE tenants
+SET subscription_status = 'ACTIVE',
+    subscription_ends_at = NOW() + INTERVAL '365 days',
+    trial_ends_at = NOW() + INTERVAL '365 days'
+WHERE id IN (
+    SELECT tenant_id FROM users WHERE phone IN ('0937712338', '0937712337', '0912345678', '0901112222', '0901112223', '0901112224', '0901112225', '0903334441', '0903334442')
+);
+
+INSERT INTO user_roles (id, tenant_id, user_id, role_id)
+SELECT gen_random_uuid(), u.tenant_id, u.id, r.id
+FROM users u, roles r
+WHERE u.phone = '0937712338' AND r.code = 'SUPER_ADMIN'
+AND NOT EXISTS (
+    SELECT 1 FROM user_roles ur WHERE ur.user_id = u.id AND ur.role_id = r.id
+);
+
+UPDATE users
+SET status = 'ACTIVE',
+    password_hash = '$2a$10$p79GckpyaL0UClYJwheEEOFEPbb6pvM0EBEqkTzFQOkJR8e66bkpy'
+WHERE phone = '0937712338';
+
+

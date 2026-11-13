@@ -9,6 +9,8 @@ public interface CenterPolicyService {
 
     TenantTeacherPolicyDto getTenantPolicy(UUID tenantId);
 
+    TenantTeacherPolicyDto getMyPolicy();
+
     TenantTeacherPolicyDto updateTenantPolicy(UUID tenantId, UpdateTenantTeacherPolicyRequest request);
 }
 

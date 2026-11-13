@@ -1,395 +1,574 @@
-<div class="page">
-  <!-- ─── HEADER ──────────────────────────────────────────────────────────── -->
-  <header class="header">
-    <div class="titleWrap">
-      <div class="kicker">CẤU HÌNH HỆ THỐNG</div>
-      <h1 class="title">Tham Số Vận Hành</h1>
-      <p class="subtitle">
-        Tùy chỉnh các quy tắc tính học phí, nhắc nợ phụ huynh và bảo mật tài khoản. Cài đặt được áp dụng ngay sau khi lưu.
+<div class="sysConfigContainer">
+  <!-- ─── 1. PAGE HEADER ──────────────────────────────────────── -->
+  <header class="pageHeader">
+    <div class="headerInfo">
+      <div class="headerBadge">CẤU HÌNH HỆ THỐNG ĐỘNG</div>
+      <h1 class="headerTitle">Tham Số Vận Hành Hệ Thống</h1>
+      <p class="headerDesc">
+        Danh mục tham số nghiệp vụ toàn hệ thống được điều khiển động qua In-memory Cache & Database.
+        Thay đổi giá trị tại đây sẽ áp dụng tức thì (0ms) cho các service nghiệp vụ mà không cần sửa code.
       </p>
     </div>
 
     <div class="headerActions">
-      <button
-        type="button"
-        class="btnSecondary"
-        (click)="reloadCache()"
-        [disabled]="reloadingCache() || loading()"
-        title="Làm mới toàn bộ tham số từ Database vào RAM"
-      >
-        <svg
-          class="syncIcon"
-          [class.spinning]="reloadingCache()"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+      <button type="button" class="btn btn-outline" (click)="handleReloadCache()" [disabled]="reloadingCache()">
+        <svg class="btnIcon" [class.spinning]="reloadingCache()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+          <path d="M16 21h5v-5"></path>
         </svg>
-        <span>{{ reloadingCache() ? 'Đang làm mới...' : 'Làm mới Cache' }}</span>
+        <span>{{ reloadingCache() ? 'Đang nạp...' : 'Làm mới Cache' }}</span>
       </button>
 
-      <button
-        type="button"
-        class="btnGhost"
-        (click)="openConfirmReset()"
-        [disabled]="loading() || resetting()"
-        title="Đưa tham số về giá trị đề xuất ban đầu"
-      >
-        Khôi phục mặc định
+      <button type="button" class="btn btn-ghost text-danger" (click)="openResetModal()">
+        <svg class="btnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Khôi phục mặc định</span>
+      </button>
+
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+        <svg class="btnIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>+ Thêm tham số mới</span>
       </button>
     </div>
   </header>
 
-  <!-- ─── SLEEK FILTER & SEARCH TOOLBAR ─────────────────────────────────── -->
-  <nav class="toolbar" aria-label="Bộ lọc và tìm kiếm tham số">
-    <div class="groupTabs">
-      @for (grp of groups; track grp.code) {
-        <button
-          type="button"
-          class="tabBtn"
-          [class.active]="selectedGroup() === grp.code"
-          (click)="selectGroup(grp.code)"
-        >
-          <span>{{ grp.label }}</span>
-          <span class="tabBadge">{{ counts()[grp.code] }}</span>
-        </button>
-      }
+  <!-- ─── 2. KPI STATS CARDS ──────────────────────────────────── -->
+  <section class="kpiGrid">
+    <div class="kpiCard" [class.activeGroup]="selectedGroup() === 'ALL'" (click)="selectedGroup.set('ALL')">
+      <div class="kpiIcon iconAll">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+      </div>
+      <div class="kpiMeta">
+        <span class="kpiLabel">TỔNG THAM SỐ</span>
+        <strong class="kpiValue">{{ counts().ALL }}</strong>
+      </div>
     </div>
 
-    <div class="searchWrap">
+    <div class="kpiCard" [class.activeGroup]="selectedGroup() === 'SYSTEM'" (click)="selectedGroup.set('SYSTEM')">
+      <div class="kpiIcon iconSystem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </div>
+      <div class="kpiMeta">
+        <span class="kpiLabel">HỆ THỐNG</span>
+        <strong class="kpiValue">{{ counts().SYSTEM }}</strong>
+      </div>
+    </div>
+
+    <div class="kpiCard" [class.activeGroup]="selectedGroup() === 'TUITION'" (click)="selectedGroup.set('TUITION')">
+      <div class="kpiIcon iconTuition">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+          <line x1="2" y1="10" x2="22" y2="10"></line>
+        </svg>
+      </div>
+      <div class="kpiMeta">
+        <span class="kpiLabel">HỌC PHÍ</span>
+        <strong class="kpiValue">{{ counts().TUITION }}</strong>
+      </div>
+    </div>
+
+    <div class="kpiCard" [class.activeGroup]="selectedGroup() === 'NOTIFICATION'" (click)="selectedGroup.set('NOTIFICATION')">
+      <div class="kpiIcon iconNotif">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+      </div>
+      <div class="kpiMeta">
+        <span class="kpiLabel">THÔNG BÁO</span>
+        <strong class="kpiValue">{{ counts().NOTIFICATION }}</strong>
+      </div>
+    </div>
+
+    <div class="kpiCard" [class.activeGroup]="selectedGroup() === 'SECURITY'" (click)="selectedGroup.set('SECURITY')">
+      <div class="kpiIcon iconSecurity">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </div>
+      <div class="kpiMeta">
+        <span class="kpiLabel">BẢO MẬT</span>
+        <strong class="kpiValue">{{ counts().SECURITY }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── 3. FILTER & SEARCH CONTROLS ─────────────────────────── -->
+  <section class="toolbar">
+    <div class="searchBox">
       <svg class="searchIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8"></circle>
         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
       </svg>
       <input
         type="text"
-        class="searchInput"
-        placeholder="Tìm nhanh tham số..."
+        placeholder="Tìm theo Mã tham số (Key), Tên, Giá trị hoặc Mô tả..."
         [ngModel]="searchQuery()"
         (ngModelChange)="searchQuery.set($event)"
-        aria-label="Tìm kiếm tham số cấu hình"
       />
       @if (searchQuery()) {
-        <button
-          type="button"
-          class="searchClear"
-          (click)="searchQuery.set('')"
-          aria-label="Xóa từ khóa tìm kiếm"
-        >
-          ✕
-        </button>
+        <button type="button" class="clearSearchBtn" (click)="searchQuery.set('')">✕</button>
       }
     </div>
-  </nav>
 
-  <!-- ─── MAIN SETTINGS SECTIONS ────────────────────────────────────────── -->
-  @if (loading()) {
-    <div class="loadingCard">
-      <div class="spinner"></div>
-      <p>Đang tải danh sách tham số cấu hình...</p>
-    </div>
-  } @else if (groupSections().length === 0) {
-    <div class="emptyCard">
-      <div class="emptyIcon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          <line x1="8" y1="11" x2="14" y2="11"></line>
-        </svg>
+    <div class="filterGroup">
+      <div class="typeFilter">
+        <label>Kiểu dữ liệu:</label>
+        <select [ngModel]="selectedType()" (ngModelChange)="selectedType.set($event)">
+          <option value="ALL">Tất cả kiểu</option>
+          <option value="NUMBER">Số (NUMBER)</option>
+          <option value="BOOLEAN">Đúng / Sai (BOOLEAN)</option>
+          <option value="STRING">Chuỗi ký tự (STRING)</option>
+        </select>
       </div>
-      <h3 class="emptyTitle">Không tìm thấy tham số phù hợp</h3>
-      <p class="emptyDesc">
-        Không có quy tắc nào khớp với từ khóa "{{ searchQuery() }}" trong nhóm đã chọn.
-      </p>
-      <button
-        type="button"
-        class="btnSecondary"
-        (click)="searchQuery.set(''); selectGroup('ALL')"
-      >
-        Xóa tìm kiếm & Xem tất cả
-      </button>
+
+      <div class="resultsCount">
+        Hiển thị <b>{{ filteredParameters().length }}</b> / {{ parameters().length }} tham số
+      </div>
     </div>
-  } @else {
-    <div class="sectionsStack">
-      @for (section of groupSections(); track section.code) {
-        <section class="sectionCard">
-          <div class="sectionHeader">
-            <div class="sectionTitleWrap">
-              <span class="sectionBadge" [class]="section.code.toLowerCase()">
-                {{ section.badge }}
-              </span>
-              <h2 class="sectionTitle">{{ section.title }}</h2>
-              <p class="sectionDesc">{{ section.description }}</p>
-            </div>
-            <span class="sectionCount">{{ section.items.length }} quy tắc</span>
-          </div>
+  </section>
 
-          <div class="itemsList">
-            @for (param of section.items; track param.paramKey) {
-              <div class="settingRow" [class.isExpanded]="expandedKey() === param.paramKey">
-                <!-- Row Main: Info + Control -->
-                <div class="rowMain">
-                  <!-- Info Left -->
-                  <div class="rowInfo">
-                    <strong class="paramName">{{ param.displayName }}</strong>
-                    <p class="paramDesc">{{ getCleanDescription(param) }}</p>
+  <!-- ─── 4. CORE PARAMETERS DATA TABLE ───────────────────────── -->
+  <section class="tableContainer">
+    @if (loading()) {
+      <div class="loadingState">
+        <div class="spinner"></div>
+        <span>Đang nạp danh sách tham số hệ thống...</span>
+      </div>
+    } @else if (filteredParameters().length === 0) {
+      <div class="emptyState">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="emptyIcon">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h3>Không tìm thấy tham số phù hợp</h3>
+        <p>Thử điều chỉnh lại từ khóa tìm kiếm hoặc chuyển sang nhóm khác.</p>
+        @if (searchQuery() || selectedGroup() !== 'ALL' || selectedType() !== 'ALL') {
+          <button type="button" class="btn btn-outline btn-sm" (click)="searchQuery.set(''); selectedGroup.set('ALL'); selectedType.set('ALL')">
+            Xóa bộ lọc
+          </button>
+        }
+      </div>
+    } @else {
+      <table class="dataTable">
+        <thead>
+          <tr>
+            <th style="width: 280px;">MÃ THAM SỐ (KEY)</th>
+            <th style="width: 320px;">TÊN & MÔ TẢ NGHIỆP VỤ</th>
+            <th style="width: 130px;">NHÓM</th>
+            <th style="width: 110px;">KIỂU</th>
+            <th style="width: 240px;">GIÁ TRỊ HIỆN TẠI</th>
+            <th style="width: 130px; text-align: center;">THAO TÁC</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of filteredParameters(); track item.paramKey) {
+            <tr class="tableRow">
+              <!-- Cột 1: Mã tham số -->
+              <td>
+                <div class="keyCell">
+                  <div class="keyLine">
+                    <code class="paramKeyText" [title]="'Sao chép: ' + item.paramKey" (click)="copyKey(item.paramKey, $event)">
+                      {{ item.paramKey }}
+                    </code>
+                    <button type="button" class="copyBtn" (click)="copyKey(item.paramKey, $event)" title="Sao chép mã tham số">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    </button>
                   </div>
-
-                  <!-- Control Right -->
-                  <div class="rowControl">
-                    @if (param.dataType === 'BOOLEAN') {
-                      <!-- 1. BOOLEAN TOGGLE SWITCH -->
-                      <button
-                        type="button"
-                        class="switchBtn"
-                        [class.active]="param.paramValue === 'true'"
-                        [disabled]="savingKey() === param.paramKey"
-                        (click)="toggleBoolean(param)"
-                        [title]="param.paramValue === 'true' ? 'Bấm để Tắt' : 'Bấm để Bật'"
-                        [attr.aria-label]="'Bật tắt ' + param.displayName"
-                      >
-                        <span class="switchTrack">
-                          <span class="switchThumb"></span>
-                        </span>
-                        <span class="switchLabel">
-                          {{ param.paramValue === 'true' ? 'BẬT' : 'TẮT' }}
-                        </span>
-                      </button>
-                    } @else if (param.dataType === 'NUMBER') {
-                      <!-- 2. NUMBER STEPPER -->
-                      <div class="stepperWrap">
-                        <button
-                          type="button"
-                          class="stepBtn minus"
-                          (click)="stepNumber(param, -1, getNumberBounds(param.paramKey).min, getNumberBounds(param.paramKey).max)"
-                          [disabled]="savingKey() === param.paramKey"
-                          title="Giảm 1 đơn vị"
-                          aria-label="Giảm"
-                        >
-                          −
-                        </button>
-
-                        <div
-                          class="stepDisplay"
-                          (click)="toggleExpand(param.paramKey, param.paramValue)"
-                          title="Bấm để chỉnh sửa chi tiết"
-                        >
-                          <span class="stepNum">{{ param.paramValue }}</span>
-                          <span class="stepUnit">{{ getNumberBounds(param.paramKey).unit }}</span>
-                        </div>
-
-                        <button
-                          type="button"
-                          class="stepBtn plus"
-                          (click)="stepNumber(param, 1, getNumberBounds(param.paramKey).min, getNumberBounds(param.paramKey).max)"
-                          [disabled]="savingKey() === param.paramKey"
-                          title="Tăng 1 đơn vị"
-                          aria-label="Tăng"
-                        >
-                          +
-                        </button>
-                      </div>
-                    } @else if (param.paramKey === 'TUITION_OVERDUE_POLICY') {
-                      <!-- 3. POLICY CHOICE -->
-                      <div class="segmentedWrap">
-                        <button
-                          type="button"
-                          class="segBtn"
-                          [class.active]="param.paramValue === 'WARN_ONLY'"
-                          (click)="setChoice(param, 'WARN_ONLY')"
-                          [disabled]="savingKey() === param.paramKey"
-                        >
-                          Chỉ nhắc nhở
-                        </button>
-                        <button
-                          type="button"
-                          class="segBtn"
-                          [class.active]="param.paramValue === 'SUSPEND_ATTENDANCE'"
-                          (click)="setChoice(param, 'SUSPEND_ATTENDANCE')"
-                          [disabled]="savingKey() === param.paramKey"
-                        >
-                          Tạm dừng điểm danh
-                        </button>
-                      </div>
+                  <div class="keyTags">
+                    @if (item.isSystem) {
+                      <span class="systemTag" title="Tham số hệ thống không thể xóa">Hệ thống</span>
                     } @else {
-                      <!-- 4. TEXT / TEMPLATE -->
-                      <div class="textValueWrap">
-                        <span class="textPreview" [title]="param.paramValue">
-                          {{ param.paramValue }}
-                        </span>
-                        <button
-                          type="button"
-                          class="btnEditSmall"
-                          (click)="toggleExpand(param.paramKey, param.paramValue)"
-                          [attr.aria-expanded]="expandedKey() === param.paramKey"
-                        >
-                          {{ expandedKey() === param.paramKey ? 'Đóng' : 'Chỉnh sửa' }}
-                        </button>
-                      </div>
+                      <span class="customTag" title="Tham số do người dùng tạo">Tùy biến</span>
                     }
                   </div>
                 </div>
+              </td>
 
-                <!-- Inline Expanded Editor (For Text / Template / Direct number input) -->
-                @if (expandedKey() === param.paramKey) {
-                  <div class="inlineEditDrawer">
-                    <!-- Template variables helper -->
-                    @if (param.paramKey === 'NOTIFICATION_TEMPLATE_INVOICE') {
-                      <div class="templateToolbar">
-                        <span class="toolLabel">Bấm để chèn thông tin tự động:</span>
-                        <div class="toolPills">
-                          <button
-                            type="button"
-                            class="varPill"
-                            (click)="insertPlaceholder(param.paramKey, '{studentName}')"
-                            title="Tự động điền họ tên học sinh"
-                          >
-                            + Tên học sinh
-                          </button>
-                          <button
-                            type="button"
-                            class="varPill"
-                            (click)="insertPlaceholder(param.paramKey, '{month}')"
-                            title="Tự động điền tháng học phí"
-                          >
-                            + Tháng học phí
-                          </button>
-                          <button
-                            type="button"
-                            class="varPill"
-                            (click)="insertPlaceholder(param.paramKey, '{amount}')"
-                            title="Tự động điền số tiền cần đóng"
-                          >
-                            + Số tiền
-                          </button>
-                          <button
-                            type="button"
-                            class="varPill"
-                            (click)="insertPlaceholder(param.paramKey, '{invoiceUrl}')"
-                            title="Tự động điền link thanh toán VietQR"
-                          >
-                            + Link VietQR
-                          </button>
-                        </div>
-                      </div>
+              <!-- Cột 2: Tên & Mô tả -->
+              <td>
+                <div class="descCell">
+                  <strong class="displayName">{{ item.displayName }}</strong>
+                  <p class="descText">{{ item.description || 'Chưa có mô tả chi tiết cho tham số này.' }}</p>
+                </div>
+              </td>
 
-                      <textarea
-                        class="inlineTextarea"
-                        rows="3"
-                        [ngModel]="getDraft(param.paramKey, param.paramValue)"
-                        (ngModelChange)="updateDraft(param.paramKey, $event)"
-                        placeholder="Nhập nội dung mẫu tin nhắn..."
-                      ></textarea>
-                    } @else if (param.dataType === 'NUMBER') {
-                      <div class="inlineNumberWrap">
-                        <label class="inlineLabel" for="numberInput-{{ param.paramKey }}">
-                          Nhập giá trị số ({{ getNumberBounds(param.paramKey).unit }}):
-                        </label>
+              <!-- Cột 3: Nhóm -->
+              <td>
+                <span class="groupBadge" [ngClass]="getGroupBadge(item.paramGroup).class">
+                  {{ getGroupBadge(item.paramGroup).label }}
+                </span>
+              </td>
+
+              <!-- Cột 4: Kiểu dữ liệu -->
+              <td>
+                <span class="typeBadge" [ngClass]="getTypeBadge(item.dataType).class">
+                  {{ getTypeBadge(item.dataType).label }}
+                </span>
+              </td>
+
+              <!-- Cột 5: Giá trị hiện tại -->
+              <td>
+                <div class="valueCell">
+                  @if (item.dataType === 'BOOLEAN') {
+                    <div class="booleanControl">
+                      <label class="switchToggle">
                         <input
-                          id="numberInput-{{ param.paramKey }}"
-                          type="number"
-                          class="inlineInput smallNum"
-                          [ngModel]="getDraft(param.paramKey, param.paramValue)"
-                          (ngModelChange)="updateDraft(param.paramKey, $event)"
-                          [min]="getNumberBounds(param.paramKey).min"
-                          [max]="getNumberBounds(param.paramKey).max"
+                          type="checkbox"
+                          [checked]="item.paramValue === 'true' || item.paramValue === '1'"
+                          (change)="toggleBoolean(item)"
                         />
-                        <span class="boundsHint">
-                          Giới hạn hợp lệ: {{ getNumberBounds(param.paramKey).min }} - {{ getNumberBounds(param.paramKey).max }} {{ getNumberBounds(param.paramKey).unit }}
-                        </span>
-                      </div>
-                    } @else {
-                      <div class="inlineTextWrap">
-                        <label class="inlineLabel" for="textInput-{{ param.paramKey }}">
-                          Giá trị mới:
-                        </label>
-                        <input
-                          id="textInput-{{ param.paramKey }}"
-                          type="text"
-                          class="inlineInput"
-                          [ngModel]="getDraft(param.paramKey, param.paramValue)"
-                          (ngModelChange)="updateDraft(param.paramKey, $event)"
-                          placeholder="Nhập giá trị mới..."
-                        />
-                      </div>
-                    }
-
-                    <div class="inlineActions">
-                      <button
-                        type="button"
-                        class="btnGhostSmall"
-                        (click)="cancelDraft(param)"
-                        [disabled]="savingKey() === param.paramKey"
-                      >
-                        Hủy
-                      </button>
-                      <button
-                        type="button"
-                        class="btnPrimarySmall"
-                        (click)="saveDraft(param)"
-                        [disabled]="savingKey() === param.paramKey"
-                      >
-                        {{ savingKey() === param.paramKey ? 'Đang lưu...' : 'Lưu thay đổi' }}
-                      </button>
+                        <span class="slider"></span>
+                      </label>
+                      <span class="boolText" [class.textOn]="item.paramValue === 'true' || item.paramValue === '1'">
+                        {{ (item.paramValue === 'true' || item.paramValue === '1') ? 'BẬT' : 'TẮT' }}
+                      </span>
                     </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </section>
-      }
-    </div>
-  }
+                  } @else {
+                    <div class="displayValueBox">
+                      <strong class="valueHighlight">{{ formatValuePreview(item) }}</strong>
+                    </div>
+                  }
+                </div>
+              </td>
+
+              <!-- Cột 6: Thao tác -->
+              <td>
+                <div class="actionsCell">
+                  <button type="button" class="actionBtn editBtn" (click)="openEditModal(item)" title="Chỉnh sửa tham số">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <span>Sửa</span>
+                  </button>
+
+                  @if (!item.isSystem) {
+                    <button type="button" class="actionBtn deleteBtn" (click)="openDeleteModal(item)" title="Xóa tham số tùy biến">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
 </div>
 
-<!-- ─── CONFIRM RESET MODAL ──────────────────────────────────────────────── -->
-@if (confirmResetOpen()) {
-  <div class="modalBackdrop" (click)="closeConfirmReset()">
-    <div
-      class="modalDialog"
-      (click)="$event.stopPropagation()"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="resetModalTitle"
-    >
+<!-- ─── 5. MODAL: CHỈNH SỬA THAM SỐ ─────────────────────────────── -->
+@if (editingItem(); as item) {
+  <div class="modalOverlay" (click)="closeEditModal()">
+    <div class="modalBox" (click)="$event.stopPropagation()">
       <div class="modalHeader">
-        <h2 id="resetModalTitle" class="modalTitle">Khôi phục tham số mặc định?</h2>
-        <button
-          type="button"
-          class="modalCloseBtn"
-          (click)="closeConfirmReset()"
-          aria-label="Đóng cửa sổ xác nhận"
-        >
-          ✕
-        </button>
+        <div>
+          <span class="modalBadge">CHỈNH SỬA THAM SỐ</span>
+          <h2 class="modalTitle">{{ item.displayName }}</h2>
+          <code class="modalKeySubtitle">{{ item.paramKey }}</code>
+        </div>
+        <button type="button" class="modalCloseBtn" (click)="closeEditModal()">✕</button>
       </div>
 
       <div class="modalBody">
-        <p class="confirmText">
-          Toàn bộ các tham số về học phí, thông báo và bảo mật sẽ được đưa về giá trị khuyến nghị ban đầu của EduPay.
-          In-memory Cache sẽ được đồng bộ lại ngay tức thì.
-        </p>
+        <!-- Key Info Box -->
+        <div class="infoBanner">
+          <div class="infoRow">
+            <span>Kiểu dữ liệu:</span>
+            <b>{{ item.dataType }}</b>
+          </div>
+          <div class="infoRow">
+            <span>Phân nhóm:</span>
+            <b>{{ item.paramGroup }}</b>
+          </div>
+          <div class="infoRow">
+            <span>Loại tham số:</span>
+            <b>{{ item.isSystem ? 'Tham số cốt lõi' : 'Tham số tùy biến' }}</b>
+          </div>
+        </div>
+
+        <!-- Form fields -->
+        <div class="formGroup">
+          <label>Tên hiển thị tiếng Việt <span class="req">*</span></label>
+          <input
+            type="text"
+            class="formControl"
+            [ngModel]="editForm().displayName"
+            (ngModelChange)="editForm().displayName = $event"
+            placeholder="Nhập tên hiển thị..."
+          />
+        </div>
+
+        <div class="formGroup">
+          <label>Giá trị tham số <span class="req">*</span></label>
+          @if (item.dataType === 'BOOLEAN') {
+            <div class="radioGroup">
+              <label class="radioOption" [class.selected]="editForm().paramValue === 'true'">
+                <input
+                  type="radio"
+                  name="editBool"
+                  value="true"
+                  [checked]="editForm().paramValue === 'true'"
+                  (change)="editForm().paramValue = 'true'"
+                />
+                <span>BẬT (true) - Kích hoạt quy tắc</span>
+              </label>
+              <label class="radioOption" [class.selected]="editForm().paramValue === 'false'">
+                <input
+                  type="radio"
+                  name="editBool"
+                  value="false"
+                  [checked]="editForm().paramValue === 'false'"
+                  (change)="editForm().paramValue = 'false'"
+                />
+                <span>TẮT (false) - Tắt quy tắc</span>
+              </label>
+            </div>
+          } @else if (item.dataType === 'NUMBER') {
+            <input
+              type="number"
+              class="formControl"
+              [ngModel]="editForm().paramValue"
+              (ngModelChange)="editForm().paramValue = $event"
+              placeholder="Nhập số nguyên..."
+            />
+          } @else {
+            <textarea
+              class="formControl textareaControl"
+              rows="3"
+              [ngModel]="editForm().paramValue"
+              (ngModelChange)="editForm().paramValue = $event"
+              placeholder="Nhập giá trị chuỗi..."
+            ></textarea>
+          }
+        </div>
+
+        <div class="formGroup">
+          <label>Mô tả nghiệp vụ & Phạm vi áp dụng</label>
+          <textarea
+            class="formControl"
+            rows="2"
+            [ngModel]="editForm().description"
+            (ngModelChange)="editForm().description = $event"
+            placeholder="Giải thích ý nghĩa và quy tắc hoạt động của tham số..."
+          ></textarea>
+        </div>
       </div>
 
       <div class="modalFooter">
-        <button
-          type="button"
-          class="btnSecondary"
-          (click)="closeConfirmReset()"
-          [disabled]="resetting()"
-        >
-          Hủy bỏ
+        <button type="button" class="btn btn-ghost" (click)="closeEditModal()">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary" (click)="submitEdit()" [disabled]="editSaving()">
+          @if (editSaving()) {
+            <span class="spinnerSmall"></span>
+            <span>Đang lưu...</span>
+          } @else {
+            <span>Lưu & Áp dụng Hot-reload</span>
+          }
         </button>
-        <button
-          type="button"
-          class="btnDanger"
-          (click)="confirmReset()"
-          [disabled]="resetting()"
-        >
-          {{ resetting() ? 'Đang khôi phục...' : 'Xác nhận khôi phục' }}
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── 6. MODAL: THÊM THAM SỐ MỚI ─────────────────────────────── -->
+@if (createModalOpen()) {
+  <div class="modalOverlay" (click)="closeCreateModal()">
+    <div class="modalBox" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <div>
+          <span class="modalBadge">THÊM MỚI</span>
+          <h2 class="modalTitle">Thêm Tham Số Cấu Hình</h2>
+          <p class="modalSubtitle">Định nghĩa tham số mới cho các tính năng và module nghiệp vụ.</p>
+        </div>
+        <button type="button" class="modalCloseBtn" (click)="closeCreateModal()">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="formRow2">
+          <div class="formGroup">
+            <label>Mã tham số (Key) <span class="req">*</span></label>
+            <input
+              type="text"
+              class="formControl textMonospace"
+              [ngModel]="createForm().paramKey"
+              (ngModelChange)="createForm().paramKey = $event"
+              placeholder="VD: TUITION_DUE_DAYS"
+              style="text-transform: uppercase;"
+            />
+            <small class="formHint">Chỉ gồm chữ IN HOA, số và gạch dưới (_).</small>
+          </div>
+
+          <div class="formGroup">
+            <label>Tên hiển thị <span class="req">*</span></label>
+            <input
+              type="text"
+              class="formControl"
+              [ngModel]="createForm().displayName"
+              (ngModelChange)="createForm().displayName = $event"
+              placeholder="VD: Hạn thanh toán học phí (ngày)"
+            />
+          </div>
+        </div>
+
+        <div class="formRow2">
+          <div class="formGroup">
+            <label>Phân nhóm <span class="req">*</span></label>
+            <select
+              class="formControl"
+              [ngModel]="createForm().paramGroup"
+              (ngModelChange)="createForm().paramGroup = $event"
+            >
+              <option value="SYSTEM">Hệ thống (SYSTEM)</option>
+              <option value="TUITION">Học phí (TUITION)</option>
+              <option value="NOTIFICATION">Thông báo (NOTIFICATION)</option>
+              <option value="SECURITY">Bảo mật (SECURITY)</option>
+            </select>
+          </div>
+
+          <div class="formGroup">
+            <label>Kiểu dữ liệu <span class="req">*</span></label>
+            <select
+              class="formControl"
+              [ngModel]="createForm().dataType"
+              (ngModelChange)="createForm().dataType = $event"
+            >
+              <option value="STRING">Chuỗi (STRING)</option>
+              <option value="NUMBER">Số nguyên (NUMBER)</option>
+              <option value="BOOLEAN">Đúng / Sai (BOOLEAN)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="formGroup">
+          <label>Giá trị ban đầu <span class="req">*</span></label>
+          @if (createForm().dataType === 'BOOLEAN') {
+            <select
+              class="formControl"
+              [ngModel]="createForm().paramValue"
+              (ngModelChange)="createForm().paramValue = $event"
+            >
+              <option value="">-- Chọn giá trị --</option>
+              <option value="true">true (BẬT)</option>
+              <option value="false">false (TẮT)</option>
+            </select>
+          } @else if (createForm().dataType === 'NUMBER') {
+            <input
+              type="number"
+              class="formControl"
+              [ngModel]="createForm().paramValue"
+              (ngModelChange)="createForm().paramValue = $event"
+              placeholder="VD: 7"
+            />
+          } @else {
+            <input
+              type="text"
+              class="formControl"
+              [ngModel]="createForm().paramValue"
+              (ngModelChange)="createForm().paramValue = $event"
+              placeholder="VD: EDUPAY"
+            />
+          }
+        </div>
+
+        <div class="formGroup">
+          <label>Mô tả chi tiết</label>
+          <textarea
+            class="formControl"
+            rows="2"
+            [ngModel]="createForm().description"
+            (ngModelChange)="createForm().description = $event"
+            placeholder="Giải thích mục đích và nơi tham số được sử dụng..."
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modalFooter">
+        <button type="button" class="btn btn-ghost" (click)="closeCreateModal()">Hủy bỏ</button>
+        <button type="button" class="btn btn-primary" (click)="submitCreate()" [disabled]="createSaving()">
+          @if (createSaving()) {
+            <span class="spinnerSmall"></span>
+            <span>Đang tạo...</span>
+          } @else {
+            <span>Tạo Tham Số</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── 7. MODAL: XÁC NHẬN XÓA THAM SỐ ──────────────────────────── -->
+@if (deletingItem(); as item) {
+  <div class="modalOverlay" (click)="closeDeleteModal()">
+    <div class="modalBox modalSm" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <h2 class="modalTitle text-danger">Xác nhận xóa tham số</h2>
+        <button type="button" class="modalCloseBtn" (click)="closeDeleteModal()">✕</button>
+      </div>
+      <div class="modalBody">
+        <p>Bạn có chắc chắn muốn xóa tham số <b>{{ item.paramKey }}</b> không?</p>
+        <small class="text-muted">Các dịch vụ nếu đang đọc tham số này sẽ quay về sử dụng giá trị mặc định trong code.</small>
+      </div>
+      <div class="modalFooter">
+        <button type="button" class="btn btn-ghost" (click)="closeDeleteModal()">Hủy</button>
+        <button type="button" class="btn btn-danger" (click)="submitDelete()" [disabled]="deleteSaving()">
+          @if (deleteSaving()) {
+            <span class="spinnerSmall"></span>
+            <span>Đang xóa...</span>
+          } @else {
+            <span>Xác nhận xóa</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── 8. MODAL: XÁC NHẬN KHÔI PHỤC MẶC ĐỊNH ─────────────────── -->
+@if (confirmResetOpen()) {
+  <div class="modalOverlay" (click)="closeResetModal()">
+    <div class="modalBox modalSm" (click)="$event.stopPropagation()">
+      <div class="modalHeader">
+        <h2 class="modalTitle text-warning">Khôi phục tham số mặc định?</h2>
+        <button type="button" class="modalCloseBtn" (click)="closeResetModal()">✕</button>
+      </div>
+      <div class="modalBody">
+        <p>Thao tác này sẽ đưa tất cả tham số cốt lõi về giá trị ban đầu do hệ thống EduPay kiến nghị.</p>
+        <small class="text-muted">Bộ nhớ đệm RAM Cache sẽ tự động được làm mới ngay sau khi hoàn tất.</small>
+      </div>
+      <div class="modalFooter">
+        <button type="button" class="btn btn-ghost" (click)="closeResetModal()">Hủy bỏ</button>
+        <button type="button" class="btn btn-warning" (click)="confirmReset()" [disabled]="resetting()">
+          @if (resetting()) {
+            <span class="spinnerSmall"></span>
+            <span>Đang khôi phục...</span>
+          } @else {
+            <span>Khôi phục về Mặc định</span>
+          }
         </button>
       </div>
     </div>

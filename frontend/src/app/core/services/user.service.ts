@@ -115,7 +115,8 @@ export class UserService {
       isOwner: profile.isOwner !== undefined ? profile.isOwner : cur?.isOwner,
       roles: profile.roles || cur?.roles || ['ROLE_TEACHER'],
       subscriptionPlan: profile.subscriptionPlan || cur?.subscriptionPlan || 'TRIAL',
-      subscriptionStatus: profile.subscriptionStatus || cur?.subscriptionStatus || 'ACTIVE'
+      subscriptionStatus: profile.subscriptionStatus || cur?.subscriptionStatus || 'ACTIVE',
+      tenantType: cur?.tenantType || (profile.roles?.some((r) => r.toUpperCase().includes('CENTER')) ? 'CENTER' : 'SOLO_TUTOR'),
     };
 
     this.tokenService.setUserInfo(updatedUser);

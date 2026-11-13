@@ -9,6 +9,8 @@ import com.edupay.exception.DuplicateResourceException;
 import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.mapper.ClassMapper;
 import com.edupay.repository.ClassRepository;
+import com.edupay.repository.TenantRepository;
+import com.edupay.repository.TenantTeacherPolicyRepository;
 import com.edupay.repository.UserRepository;
 import com.edupay.service.ClassService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,8 @@ public class ClassServiceImpl implements ClassService {
 
     private final ClassRepository classRepository;
     private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
+    private final TenantTeacherPolicyRepository policyRepository;
     private final ClassMapper classMapper;
 
     @Override
@@ -74,6 +78,18 @@ public class ClassServiceImpl implements ClassService {
     @Transactional
     public ClassResponse createClass(ClassRequest request) {
         UUID tenantId = requireTenantId();
+        UUID currentUserId = getCurrentUserId();
+
+        if (isTeacherOnly(currentUserId)) {
+            var tenantOpt = tenantRepository.findById(tenantId);
+            if (tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType())) {
+                var policyOpt = policyRepository.findByTenantId(tenantId);
+                if (policyOpt.isPresent() && Boolean.FALSE.equals(policyOpt.get().getCanCreateClass())) {
+                    throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền tự mở lớp học theo quy định của trung tâm. Vui lòng liên hệ Quản lý Trung tâm.");
+                }
+            }
+        }
+
         String trimmedName = request.getName().trim();
 
         if (classRepository.existsByTenantIdAndNameIgnoreCaseAndIsActiveTrue(tenantId, trimmedName)) {

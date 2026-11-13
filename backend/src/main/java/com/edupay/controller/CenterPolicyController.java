@@ -22,6 +22,13 @@ public class CenterPolicyController {
 
     private final CenterPolicyService centerPolicyService;
 
+    @GetMapping("/my-policy")
+    @Operation(summary = "Lấy chính sách quyền hạn áp dụng cho tài khoản người dùng hiện tại")
+    public ResponseEntity<ApiResponse<TenantTeacherPolicyDto>> getMyPolicy() {
+        TenantTeacherPolicyDto data = centerPolicyService.getMyPolicy();
+        return ResponseEntity.ok(ApiResponse.ok(data, "Lấy chính sách quyền hạn người dùng thành công"));
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('OWNER', 'CENTER_ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Lấy chính sách phân quyền giáo viên hiện tại của trung tâm")

@@ -3,10 +3,14 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../shared/models/api-response.model';
-import { SystemParameterItem, UpdateSystemParameterRequest } from '../models/system-parameter.models';
+import {
+  CreateSystemParameterRequest,
+  SystemParameterItem,
+  UpdateSystemParameterRequest,
+} from '../models/system-parameter.models';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SystemParameterService {
   private readonly http = inject(HttpClient);
@@ -27,9 +31,21 @@ export class SystemParameterService {
     return this.http.get<ApiResponse<SystemParameterItem>>(`${this.apiUrl}/${key}`);
   }
 
-  updateParameter(key: string, paramValue: string): Observable<ApiResponse<SystemParameterItem>> {
-    const payload: UpdateSystemParameterRequest = { paramValue };
-    return this.http.put<ApiResponse<SystemParameterItem>>(`${this.apiUrl}/${key}`, payload);
+  createParameter(payload: CreateSystemParameterRequest): Observable<ApiResponse<SystemParameterItem>> {
+    return this.http.post<ApiResponse<SystemParameterItem>>(this.apiUrl, payload);
+  }
+
+  updateParameter(
+    key: string,
+    payload: string | UpdateSystemParameterRequest
+  ): Observable<ApiResponse<SystemParameterItem>> {
+    const body: UpdateSystemParameterRequest =
+      typeof payload === 'string' ? { paramValue: payload } : payload;
+    return this.http.put<ApiResponse<SystemParameterItem>>(`${this.apiUrl}/${key}`, body);
+  }
+
+  deleteParameter(key: string): Observable<ApiResponse<void>> {
+    return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${key}`);
   }
 
   reloadCache(): Observable<ApiResponse<void>> {
@@ -40,4 +56,3 @@ export class SystemParameterService {
     return this.http.post<ApiResponse<void>>(`${this.apiUrl}/reset-defaults`, {});
   }
 }
-

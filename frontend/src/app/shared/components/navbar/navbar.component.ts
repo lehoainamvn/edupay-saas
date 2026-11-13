@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { RbacService } from '../../../core/services/rbac.service';
+import { TeacherPolicyService } from '../../../core/services/teacher-policy.service';
 
 @Component({
   selector: 'app-navbar',
@@ -89,48 +90,6 @@ import { RbacService } from '../../../core/services/rbac.service';
               </div>
             </div>
 
-            <!-- 2.5 Quản lý Trung tâm (Chỉ hiển thị cho Quản lý Trung tâm: Center Admin) -->
-            @if (isCenterAdmin()) {
-              <div class="navDropdown" (mouseenter)="setDropdown('center')" (mouseleave)="scheduleClose()">
-                <button
-                  type="button"
-                  class="dropdownTrigger"
-                  [class.active]="isCenterActive() || openDropdown() === 'center'"
-                  (click)="toggleDropdown('center', $event)"
-                >
-                  <span>Quản lý Trung tâm</span>
-                  <svg class="chevron" [class.rotated]="openDropdown() === 'center'" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                  </svg>
-                </button>
-
-                <div class="dropdownMenu" [class.show]="openDropdown() === 'center'" (mouseenter)="cancelClose()" (mouseleave)="scheduleClose()">
-                  <a routerLink="/center/teachers" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
-                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <div class="itemText">
-                      <strong class="itemTitle">Đội ngũ giáo viên</strong>
-                      <small class="itemDesc">Thêm, sửa & phân quyền nhân sự</small>
-                    </div>
-                  </a>
-                  <a routerLink="/classes" routerLinkActive="active" (click)="closeAll()" class="dropdownItem">
-                    <svg class="itemSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                    <div class="itemText">
-                      <strong class="itemTitle">Phân công giảng dạy</strong>
-                      <small class="itemDesc">Gán giáo viên phụ trách các lớp</small>
-                    </div>
-                  </a>
-                </div>
-              </div>
-            }
-
             <!-- 3. Tài chính VietQR (Dropdown - Chỉ hiển thị cho Quản lý / Gia sư tự do, ẩn với Giáo viên phụ) -->
             @if (canAccessFinance()) {
               <div class="navDropdown" (mouseenter)="setDropdown('finance')" (mouseleave)="scheduleClose()">
@@ -171,16 +130,6 @@ import { RbacService } from '../../../core/services/rbac.service';
                   </a>
                 </div>
               </div>
-            }
-
-            <!-- 4. SuperAdmin (Chỉ hiển thị cho người dùng có quyền Quản trị tối cao) -->
-            @if (isSuperAdmin()) {
-              <a routerLink="/admin/platform" routerLinkActive="active" (click)="closeAll()" class="superAdminBtn">
-                <svg class="adminSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-                <span>Cổng Quản trị SuperAdmin</span>
-              </a>
             }
           }
         </div>
@@ -256,6 +205,16 @@ import { RbacService } from '../../../core/services/rbac.service';
                     <div class="menuText">
                       <span class="menuTitle">Quản trị nền tảng SaaS</span>
                       <small class="menuDesc">Cấu hình hệ thống & khách hàng</small>
+                    </div>
+                  </a>
+                } @else if (isCenterAdmin()) {
+                  <a routerLink="/admin/platform" (click)="closeAll()" class="userMenuItem">
+                    <svg class="menuIcon adminIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #2563eb;">
+                      <path d="M4 21V4h11v17M15 9h5v12M8 8h3M8 12h3M8 16h3M18 13v2M18 18v1M2 21h20"></path>
+                    </svg>
+                    <div class="menuText">
+                      <span class="menuTitle">Cổng Quản trị Trung tâm</span>
+                      <small class="menuDesc">Điều hành cơ sở, giáo viên & học phí</small>
                     </div>
                   </a>
                 }
@@ -904,6 +863,7 @@ import { RbacService } from '../../../core/services/rbac.service';
 export class NavbarComponent implements OnInit {
   private authService = inject(AuthService);
   private rbacService = inject(RbacService);
+  private teacherPolicyService = inject(TeacherPolicyService);
   private router = inject(Router);
 
   @Input() mode: 'public' | 'app' = 'app';
@@ -916,7 +876,7 @@ export class NavbarComponent implements OnInit {
   ngOnInit(): void {
     if (this.mode === 'app' && !this.rbacService.isLoaded()) {
       this.rbacService.loadNavigation().subscribe({
-        error: () => {}
+        error: () => { }
       });
     }
   }
@@ -954,19 +914,11 @@ export class NavbarComponent implements OnInit {
   };
 
   readonly isSuperAdmin = computed(() => {
-    const user = this.authService.currentUser();
-    if (!user?.roles) return false;
-    return user.roles.some(r => {
-      const up = r.toUpperCase();
-      return up.includes('ADMIN') || up.includes('SUPER_ADMIN');
-    });
+    return this.authService.isSuperAdmin();
   });
 
   readonly isCenterAdmin = computed(() => {
-    const user = this.authService.currentUser();
-    const type = user?.tenantType || this.rbacService.tenantType();
-    const isOwner = Boolean(user?.isOwner ?? this.rbacService.isOwner());
-    return isOwner && type === 'CENTER';
+    return this.authService.isCenterAdmin();
   });
 
   readonly isCenterTeacher = computed(() => {
@@ -977,7 +929,10 @@ export class NavbarComponent implements OnInit {
   });
 
   readonly canAccessFinance = computed(() => {
-    return !this.isCenterTeacher();
+    // Nếu là chủ trung tâm hoặc gia sư tự do: luôn truy cập được
+    if (!this.isCenterTeacher()) return true;
+    // Nếu là giáo viên trực thuộc: kiểm tra chính sách phân quyền của trung tâm
+    return this.teacherPolicyService.canViewBilling();
   });
 
   readonly userRoleBadge = computed(() => {
@@ -993,10 +948,6 @@ export class NavbarComponent implements OnInit {
     if (this.isCenterTeacher()) return 'Giáo Viên Trực Thuộc Trung Tâm';
     return 'Gia Sư Dạy Kèm Tự Do';
   });
-
-  isCenterActive(): boolean {
-    return this.router.url.startsWith('/center');
-  }
 
   isTeachingActive(): boolean {
     const url = this.router.url;

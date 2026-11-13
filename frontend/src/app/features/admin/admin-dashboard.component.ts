@@ -16,8 +16,10 @@ import {
   TenantAdminItem,
   PlatformStats,
   TenantExtendPayload,
+  AdminUserItem,
 } from '../../core/services/admin.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -30,8 +32,21 @@ import { ToastService } from '../../core/services/toast.service';
 export class AdminDashboardComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
+  readonly isCenterAdmin = computed(() => this.authService.isCenterAdmin());
+  readonly currentTenant = computed(() => this.tenants().length > 0 ? this.tenants()[0] : null);
+
+  readonly centerName = computed(() => {
+    const list = this.tenants();
+    if (list.length > 0 && list[0]?.name) {
+      return list[0].name;
+    }
+    return this.authService.currentUser()?.fullName || 'Trung tâm Đào tạo Ánh Dương';
+  });
 
   loading = signal<boolean>(true);
   refreshed = signal<boolean>(false);
@@ -41,6 +56,7 @@ export class AdminDashboardComponent implements OnInit {
   // Stats & List
   stats = signal<PlatformStats | null>(null);
   tenants = signal<TenantAdminItem[]>([]);
+  centerTeachers = signal<AdminUserItem[]>([]);
 
   // Filter & Search
   currentTab = signal<'ALL' | 'CENTER' | 'SOLO_TUTOR' | 'EXPIRED'>('ALL');
@@ -178,6 +194,18 @@ export class AdminDashboardComponent implements OnInit {
             err?.error?.message || 'Không thể tải danh sách tài khoản cơ sở.'
           );
         },
+      });
+
+    this.adminService
+      .getUsers({ page: 0, size: 10 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data?.content) {
+            this.centerTeachers.set(res.data.content);
+          }
+        },
+        error: () => {},
       });
   }
 

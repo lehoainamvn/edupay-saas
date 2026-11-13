@@ -12,6 +12,8 @@ import com.edupay.repository.StudentRepository;
 import com.edupay.repository.TenantRepository;
 import com.edupay.repository.UserRepository;
 import com.edupay.service.SuperAdminService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
@@ -34,14 +37,32 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     private final StudentRepository studentRepository;
     private final UserRepository userRepository;
 
+    @PersistenceContext
+    private final EntityManager entityManager;
+
     private static final BigDecimal MONTHLY_PRICE = new BigDecimal("59000");
     private static final BigDecimal ANNUAL_MONTHLY_EQUIVALENT = new BigDecimal("499000").divide(new BigDecimal("12"), 2, RoundingMode.HALF_UP);
+
+    private boolean isSuperAdmin() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().contains("SUPER_ADMIN"));
+    }
 
     @Override
     @Transactional(readOnly = true)
     public List<TenantAdminResponse> getAllTenants(String status, String search) {
-        List<Tenant> tenants = tenantRepository.findAllByOrderByCreatedAtDesc();
+        UUID currentTenantId = com.edupay.config.TenantContext.getTenantId();
         Instant now = Instant.now();
+
+        if (!isSuperAdmin() && currentTenantId != null) {
+            // Khi gọi bởi CenterAdmin: chỉ trả về cơ sở trung tâm của chính họ
+            return tenantRepository.findById(currentTenantId)
+                    .map(t -> List.of(toTenantAdminResponse(t, now)))
+                    .orElse(List.of());
+        }
+
+        List<Tenant> tenants = tenantRepository.findAllByOrderByCreatedAtDesc();
 
         return tenants.stream()
                 .filter(t -> status == null || status.isBlank() || "ALL".equalsIgnoreCase(status) || t.getSubscriptionStatus().equalsIgnoreCase(status))
@@ -99,6 +120,65 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     @Override
     @Transactional(readOnly = true)
     public PlatformStatsResponse getPlatformStats() {
+        UUID currentTenantId = com.edupay.config.TenantContext.getTenantId();
+
+        if (!isSuperAdmin() && currentTenantId != null) {
+            // Thống kê dành riêng cho Giám đốc / Quản lý Trung tâm
+            long centerTeachers = userRepository.countByTenantIdAndIsOwnerFalse(currentTenantId);
+            long centerClasses = classRepository.findAllByTenantIdOrderByIsActiveDescCreatedAtDesc(currentTenantId).size();
+            long centerStudents = studentRepository.findAllByTenantIdOrderByCreatedAtDesc(currentTenantId).size();
+
+            BigDecimal centerRevenue = BigDecimal.ZERO;
+            BigDecimal centerExpected = BigDecimal.ZERO;
+            try {
+                String currentMonth = YearMonth.now().toString();
+                Object paidRes = entityManager.createNativeQuery(
+                                "SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = :tenantId AND billing_month = :currentMonth AND status = 'PAID'")
+                        .setParameter("tenantId", currentTenantId)
+                        .setParameter("currentMonth", currentMonth)
+                        .getSingleResult();
+                if (paidRes != null) {
+                    centerRevenue = new BigDecimal(paidRes.toString());
+                }
+
+                Object totalRes = entityManager.createNativeQuery(
+                                "SELECT COALESCE(SUM(total_amount), 0) FROM invoices WHERE tenant_id = :tenantId AND billing_month = :currentMonth")
+                        .setParameter("tenantId", currentTenantId)
+                        .setParameter("currentMonth", currentMonth)
+                        .getSingleResult();
+                if (totalRes != null && new BigDecimal(totalRes.toString()).compareTo(BigDecimal.ZERO) > 0) {
+                    centerExpected = new BigDecimal(totalRes.toString());
+                } else {
+                    Object classRes = entityManager.createNativeQuery(
+                                    "SELECT COALESCE(SUM(c.default_fee * (SELECT COUNT(*) FROM students s WHERE s.class_id = c.id AND s.status = 'STUDYING')), 0) " +
+                                    "FROM classes c WHERE c.tenant_id = :tenantId AND c.is_active = true")
+                            .setParameter("tenantId", currentTenantId)
+                            .getSingleResult();
+                    if (classRes != null) {
+                        centerExpected = new BigDecimal(classRes.toString());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Không thể tính doanh thu học phí cơ sở: {}", e.getMessage());
+            }
+
+            return PlatformStatsResponse.builder()
+                    .mrr(centerRevenue)
+                    .arr(centerExpected)
+                    .renewalRate(100.0)
+                    .totalTenants(1)
+                    .totalCenters(1)
+                    .totalTutors(0)
+                    .totalTeachers(centerTeachers)
+                    .totalStudents(centerStudents)
+                    .totalClasses(centerClasses)
+                    .activeTenants(1)
+                    .suspendedTenants(0)
+                    .trialTenants(0)
+                    .newTeachersThisMonth(centerTeachers)
+                    .build();
+        }
+
         long totalTenants = tenantRepository.count();
         long activeTenants = tenantRepository.countBySubscriptionStatus("ACTIVE");
         long suspendedTenants = tenantRepository.countBySubscriptionStatus("SUSPENDED");

@@ -19,18 +19,28 @@
         </div>
 
         <div class="headerButtons">
-          <button type="button" class="importBtn" (click)="openImportModal()">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Import Excel / Mẫu tải về
-          </button>
+          @if (policyService.canCreateStudent()) {
+            <button type="button" class="importBtn" (click)="openImportModal()">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Import Excel / Mẫu tải về
+            </button>
 
-          <button type="button" class="create" (click)="openCreateModal()">
-            <span>＋</span> Thêm học sinh mới
-          </button>
+            <button type="button" class="create" (click)="openCreateModal()">
+              <span>＋</span> Thêm học sinh mới
+            </button>
+          } @else {
+            <div class="policyRestrictedNotice" title="Quyền tiếp nhận học sinh do Quản lý Trung tâm phụ trách">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Trung tâm tiếp nhận & xếp lớp</span>
+            </div>
+          }
         </div>
       </div>
     </header>
@@ -287,9 +297,11 @@
     </section>
   </main>
 
-  <button type="button" class="mobileCreate" (click)="openCreateModal()">
-    ＋ Thêm học sinh mới
-  </button>
+  @if (policyService.canCreateStudent()) {
+    <button type="button" class="mobileCreate" (click)="openCreateModal()">
+      ＋ Thêm học sinh mới
+    </button>
+  }
 
   <!-- ===================================================================== -->
   <!-- MODAL 1: THÊM MỚI / CHỈNH SỬA HỌC SINH                                -->
@@ -408,11 +420,14 @@
                 class="radioCard"
                 [class.selected]="useCustomFee()"
                 [class.monthly]="useCustomFee()"
+                [class.disabledCard]="!policyService.canEditStudentFee()"
+                [disabled]="!policyService.canEditStudentFee()"
+                [title]="!policyService.canEditStudentFee() ? 'Trung tâm không cấp quyền tùy chỉnh học phí riêng' : ''"
                 (click)="toggleCustomFeeMode(true)">
                 <i>{{ useCustomFee() ? '●' : '' }}</i>
                 <span>
                   <strong>Học phí riêng / Học bổng</strong>
-                  <small>Tùy chỉnh đơn giá riêng cho học sinh</small>
+                  <small>{{ policyService.canEditStudentFee() ? 'Tùy chỉnh đơn giá riêng cho học sinh' : 'Đã bị khóa theo quy định của trung tâm' }}</small>
                 </span>
               </button>
             </div>

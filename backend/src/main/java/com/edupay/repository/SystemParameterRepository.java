@@ -19,6 +19,8 @@ public interface SystemParameterRepository extends JpaRepository<SystemParameter
 
     boolean existsByTenantIdAndParamKey(UUID tenantId, String paramKey);
 
+    void deleteByTenantIdAndParamKey(UUID tenantId, String paramKey);
+
     long countByTenantId(UUID tenantId);
 }
 

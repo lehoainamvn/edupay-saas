@@ -1122,3 +1122,22 @@ fieldset legend {
   margin-top: 4px;
   line-height: 1.4;
 }
+
+.policyRestrictedNotice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  user-select: none;
+}
+.policyRestrictedNotice svg {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}

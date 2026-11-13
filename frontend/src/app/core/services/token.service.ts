@@ -50,6 +50,28 @@ export class TokenService {
     localStorage.setItem(this.USER_INFO_KEY, JSON.stringify(info));
   }
 
+  // ─── Token Decoders ──────────────────────────────────────────────────────
+  getRolesFromToken(): string[] {
+    const token = this.getToken();
+    if (!token) return [];
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) return [];
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const parsed = JSON.parse(jsonPayload);
+      return Array.isArray(parsed.roles) ? parsed.roles : [];
+    } catch {
+      return [];
+    }
+  }
+
   // ─── Clear All ────────────────────────────────────────────────────────────
   clear(): void {
     localStorage.removeItem(this.ACCESS_TOKEN_KEY);
