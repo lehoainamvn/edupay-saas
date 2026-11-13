@@ -1,0 +1,324 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Quản lý Menu Động & Phân quyền Menu</h1>
+      <p class="page-subtitle">
+        Cấu hình danh mục menu tính năng toàn hệ thống và cấp phát quyền hiển thị menu cho từng nhóm vai trò người dùng.
+      </p>
+    </div>
+    @if (activeTab() === 'CATALOG') {
+      <div class="header-right">
+        <button class="btn-primary" (click)="openCreateModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Thêm Menu mới</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="nav-tabs-wrapper">
+    <button class="nav-tab-btn" [class.active]="activeTab() === 'CATALOG'" (click)="activeTab.set('CATALOG')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+      <span>1. Danh mục Menu Hệ thống</span>
+    </button>
+    <button class="nav-tab-btn" [class.active]="activeTab() === 'MATRIX'" (click)="activeTab.set('MATRIX')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+      </svg>
+      <span>2. Ma trận Phân quyền Menu theo Vai trò</span>
+    </button>
+  </div>
+
+  <!-- ─── TAB 1: MENU CATALOG ─── -->
+  @if (activeTab() === 'CATALOG') {
+    <div class="table-card">
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Đang tải danh mục Menu...</p>
+        </div>
+      } @else if (menus().length === 0) {
+        <div class="empty-state">
+          <p>Chưa có menu nào trong hệ thống.</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Mã Menu (Code)</th>
+                <th>Tên Menu hiển thị</th>
+                <th>Đường dẫn (Route)</th>
+                <th>Biểu tượng Icon</th>
+                <th>Thứ tự (Sort)</th>
+                <th>Trạng thái</th>
+                <th class="text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (menu of menus(); track menu.id) {
+                <tr>
+                  <td>
+                    <span class="code-badge">{{ menu.code }}</span>
+                  </td>
+                  <td>
+                    <span class="menu-name">{{ menu.name }}</span>
+                  </td>
+                  <td>
+                    <span class="route-link">{{ menu.route }}</span>
+                  </td>
+                  <td>
+                    <span class="badge-subtle">{{ menu.icon || 'folder' }}</span>
+                  </td>
+                  <td>
+                    <span class="sort-number">{{ menu.sortOrder }}</span>
+                  </td>
+                  <td>
+                    <button class="btn-toggle-badge" (click)="toggleActive(menu)" [title]="menu.isActive ? 'Nhấn để ẩn menu' : 'Nhấn để kích hoạt'">
+                      @if (menu.isActive) {
+                        <span class="status-badge status-active">Kích hoạt</span>
+                      } @else {
+                        <span class="status-badge status-suspended">Đang ẩn</span>
+                      }
+                    </button>
+                  </td>
+                  <td class="text-right">
+                    <div class="actions-group">
+                      <button class="btn-action edit" (click)="openEditModal(menu)" title="Sửa thông tin menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                      </button>
+                      <button class="btn-action delete" (click)="openDeleteModal(menu)" title="Xóa menu">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ─── TAB 2: MENU RBAC MATRIX ─── -->
+  @if (activeTab() === 'MATRIX') {
+    <div class="matrix-layout">
+      <!-- Left sidebar: Roles List -->
+      <div class="roles-sidebar">
+        <div class="roles-header">
+          <h3>Chọn Vai Trò</h3>
+          <p>Chọn nhóm người dùng cần phân bổ Menu</p>
+        </div>
+        <div class="roles-list">
+          @for (role of roles(); track role.id) {
+            <button
+              class="role-item-btn"
+              [class.active]="selectedRole()?.id === role.id"
+              (click)="selectRole(role)"
+            >
+              <div class="role-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <div class="role-meta">
+                <span class="role-title">{{ role.name }}</span>
+                <span class="role-code">{{ role.code }}</span>
+              </div>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Right Content: Menu Checklist -->
+      <div class="matrix-content">
+        @if (selectedRole()) {
+          <div class="matrix-header">
+            <div>
+              <h3>Phân quyền Menu cho: <strong>{{ selectedRole()?.name }}</strong></h3>
+              <p class="text-subtle">
+                Tích chọn các Menu được phép hiển thị trên thanh điều hướng khi tài khoản thuộc vai trò này đăng nhập.
+              </p>
+            </div>
+            <button class="btn-primary" (click)="saveRoleMenus()" [disabled]="savingMatrix()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span>{{ savingMatrix() ? 'Đang lưu...' : 'Lưu Phân Quyền Menu' }}</span>
+            </button>
+          </div>
+
+          <div class="checklist-card">
+            <div class="checklist-grid">
+              @for (menu of menus(); track menu.id) {
+                <label class="menu-checkbox-item" [class.selected]="isMenuChecked(menu.id)">
+                  <input
+                    type="checkbox"
+                    [checked]="isMenuChecked(menu.id)"
+                    (change)="toggleMenuChecked(menu.id)"
+                  />
+                  <div class="menu-check-info">
+                    <span class="m-title">{{ menu.name }}</span>
+                    <span class="m-meta">{{ menu.code }} • {{ menu.route }}</span>
+                  </div>
+                </label>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: THÊM MENU MỚI ─── -->
+  @if (createModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Thêm Menu Tính Năng Mới</h3>
+            <p class="modal-subtitle">Tạo menu điều hướng động cho hệ thống EduPay</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Mã Menu (Code) <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="createForm.code" name="code" placeholder="VD: EXERCISES" required />
+              </div>
+              <div class="form-group">
+                <label>Thứ tự hiển thị</label>
+                <input type="number" [(ngModel)]="createForm.sortOrder" name="sortOrder" min="1" max="100" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tên Menu Tiếng Việt <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="createForm.name" name="name" placeholder="VD: Kho Bài Tập & Tài Liệu" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Đường dẫn Route <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="createForm.route" name="route" placeholder="VD: /exercises" required />
+              </div>
+              <div class="form-group">
+                <label>Tên Biểu tượng (Icon)</label>
+                <input type="text" [(ngModel)]="createForm.icon" name="icon" placeholder="VD: book-open, academic-cap..." />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="createForm.isActive" name="isActive" />
+                <span>Kích hoạt hiển thị ngay sau khi tạo</span>
+              </label>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeCreateModal()">Hủy bỏ</button>
+          <button class="btn-primary" (click)="submitCreate()" [disabled]="actionLoading() === 'create'">
+            <span>{{ actionLoading() === 'create' ? 'Đang thêm...' : 'Tạo Menu' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: SỬA MENU ─── -->
+  @if (editModalOpen()) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Chỉnh Sửa Menu</h3>
+            <p class="modal-subtitle">Mã: <strong>{{ editingMenu()?.code }}</strong></p>
+          </div>
+          <button class="btn-close" (click)="closeEditModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Tên Menu Hiển thị <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="editForm.name" name="editName" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Đường dẫn Route <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="editForm.route" name="editRoute" required />
+              </div>
+              <div class="form-group">
+                <label>Thứ tự hiển thị</label>
+                <input type="number" [(ngModel)]="editForm.sortOrder" name="editSort" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tên Biểu tượng (Icon)</label>
+              <input type="text" [(ngModel)]="editForm.icon" name="editIcon" />
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="editForm.isActive" name="editActive" />
+                <span>Kích hoạt Menu này</span>
+              </label>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeEditModal()">Hủy</button>
+          <button class="btn-primary" (click)="submitEdit()" [disabled]="actionLoading() === editingMenu()?.id">
+            <span>{{ actionLoading() === editingMenu()?.id ? 'Đang lưu...' : 'Lưu Thay Đổi' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: XÓA MENU ─── -->
+  @if (deleteModalOpen()) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title text-danger">Xóa Menu</h3>
+          <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Bạn có chắc muốn xóa menu <strong>{{ deletingMenu()?.name }}</strong> ({{ deletingMenu()?.code }})?
+          </p>
+          <p class="text-subtle text-sm">
+            Tất cả quyền gán vai trò của menu này sẽ bị hủy bỏ.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeDeleteModal()">Hủy</button>
+          <button class="btn-danger" (click)="confirmDelete()" [disabled]="actionLoading() === deletingMenu()?.id">
+            <span>{{ actionLoading() === deletingMenu()?.id ? 'Đang xóa...' : 'Xóa Menu' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

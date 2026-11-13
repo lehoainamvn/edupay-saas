@@ -40,17 +40,27 @@ public class SystemParameterServiceImpl implements SystemParameterService {
             new DefaultParamSpec("SYSTEM_CENTER_NAME", "SYSTEM", "STRING", "Trung tâm Dạy kèm EduPay",
                     "Tên trung tâm / Lớp học", "Tên hiển thị trên biên nhận học phí và cổng tra cứu công khai của phụ huynh", true),
             new DefaultParamSpec("SYSTEM_AUTO_LOGOUT_HOURS", "SYSTEM", "NUMBER", "8",
-                    "Thời gian tự động đăng xuất (giờ)", "Thời lượng phiên làm việc của tài khoản trước khi cần đăng nhập lại (1 - 72 giờ)", false),
+                    "Thời gian tự động đăng xuất (giờ)", "Thời lượng phiên làm việc của tài khoản trước khi cần đăng nhập lại (1 - 72 giờ)", true),
             new DefaultParamSpec("SYSTEM_ALLOW_TEACHER_EDIT_FEE", "SYSTEM", "BOOLEAN", "true",
                     "Cho phép giáo viên sửa mức học phí", "Cho phép tài khoản vai trò giáo viên điều chỉnh mức học phí buổi khi điểm danh", false),
+            new DefaultParamSpec("DEFAULT_TRANSFER_PREFIX", "SYSTEM", "STRING", "EDUPAY",
+                    "Tiền tố chuyển khoản VietQR", "Tiền tố mặc định của nội dung chuyển khoản khi tự động sinh mã QR học phí", true),
+            new DefaultParamSpec("MAX_STUDENTS_PER_CLASS", "SYSTEM", "NUMBER", "50",
+                    "Sĩ số tối đa mỗi lớp", "Sĩ số học sinh tối đa cho phép trong một lớp học", false),
 
             // TUITION
             new DefaultParamSpec("TUITION_DUE_DAYS", "TUITION", "NUMBER", "7",
-                    "Hạn thanh toán học phí (ngày)", "Số ngày phụ huynh được phép thanh toán kể từ ngày phát hành phiếu thu", false),
+                    "Hạn thanh toán học phí (ngày)", "Số ngày phụ huynh được phép thanh toán kể từ ngày phát hành phiếu thu", true),
             new DefaultParamSpec("TUITION_AUTO_CREATE_DAY", "TUITION", "NUMBER", "28",
                     "Ngày tự động chốt học phí trong tháng", "Ngày hệ thống tự động tổng hợp số buổi điểm danh và sinh phiếu thu hàng tháng (1 - 31)", false),
             new DefaultParamSpec("TUITION_OVERDUE_POLICY", "TUITION", "STRING", "WARN_ONLY",
                     "Chính sách xử lý khi quá hạn học phí", "Quy định hình thức xử lý khi học sinh chưa đóng học phí đúng hạn", false),
+
+            // SECURITY
+            new DefaultParamSpec("SECURITY_MAX_LOGIN_ATTEMPTS", "SECURITY", "NUMBER", "5",
+                    "Số lần đăng nhập sai tối đa", "Số lần đăng nhập thất bại tối đa trước khi tài khoản bị tạm khóa (1 - 10 lần)", true),
+            new DefaultParamSpec("SECURITY_LOCKOUT_MINUTES", "SECURITY", "NUMBER", "15",
+                    "Thời gian tạm khóa tài khoản (phút)", "Thời gian tài khoản bị tạm khóa sau khi nhập sai mật khẩu quá số lần quy định", true),
 
             // NOTIFICATION
             new DefaultParamSpec("NOTIFICATION_AUTO_REMINDER", "NOTIFICATION", "BOOLEAN", "true",
@@ -117,6 +127,14 @@ public class SystemParameterServiceImpl implements SystemParameterService {
 
         String oldValue = entity.getParamValue();
         entity.setParamValue(rawValue);
+
+        if (request.getDisplayName() != null && !request.getDisplayName().isBlank()) {
+            entity.setDisplayName(request.getDisplayName().trim());
+        }
+        if (request.getDescription() != null) {
+            entity.setDescription(request.getDescription().trim());
+        }
+
         SystemParameter updated = systemParameterRepository.save(entity);
 
         SystemParameterResponse response = toResponse(updated);
@@ -133,6 +151,82 @@ public class SystemParameterServiceImpl implements SystemParameterService {
                 paramKey, oldValue, rawValue, "INFO", null, null);
 
         return response;
+    }
+
+    @Override
+    @Transactional
+    public SystemParameterResponse createParameter(com.edupay.dto.request.CreateSystemParameterRequest request) {
+        UUID tenantId = TenantContext.getTenantId();
+        String paramKey = request.getParamKey().trim().toUpperCase();
+
+        if (systemParameterRepository.existsByTenantIdAndParamKey(tenantId, paramKey)) {
+            throw new BusinessException("PARAM_ALREADY_EXISTS", "Mã tham số '" + paramKey + "' đã tồn tại trong hệ thống.");
+        }
+
+        String rawValue = request.getParamValue() != null ? request.getParamValue().trim() : "";
+        String dataType = request.getDataType() != null ? request.getDataType().trim().toUpperCase() : "STRING";
+
+        if ("NUMBER".equalsIgnoreCase(dataType)) {
+            try {
+                Long.parseLong(rawValue);
+            } catch (NumberFormatException e) {
+                throw new BusinessException("INVALID_PARAMETER_VALUE", "Giá trị tham số phải là số nguyên hợp lệ.");
+            }
+        } else if ("BOOLEAN".equalsIgnoreCase(dataType)) {
+            if (!"true".equalsIgnoreCase(rawValue) && !"false".equalsIgnoreCase(rawValue)) {
+                throw new BusinessException("INVALID_PARAMETER_VALUE", "Giá trị tham số chỉ nhận true hoặc false.");
+            }
+            rawValue = rawValue.toLowerCase();
+        }
+
+        SystemParameter param = SystemParameter.builder()
+                .paramKey(paramKey)
+                .paramValue(rawValue)
+                .paramGroup(request.getParamGroup().trim().toUpperCase())
+                .dataType(dataType)
+                .displayName(request.getDisplayName().trim())
+                .description(request.getDescription() != null ? request.getDescription().trim() : null)
+                .isSystem(false)
+                .build();
+        param.setTenantId(tenantId);
+
+        SystemParameter saved = systemParameterRepository.save(param);
+        SystemParameterResponse response = toResponse(saved);
+
+        ConcurrentHashMap<String, SystemParameterResponse> map = tenantCache.computeIfAbsent(tenantId, k -> new ConcurrentHashMap<>());
+        map.put(paramKey, response);
+
+        log.info("Đã tạo tham số mới: tenantId={}, key={}, value={}", tenantId, paramKey, rawValue);
+        UUID actorUserId = getUserIdFromContext();
+        auditLogService.logAction(tenantId, actorUserId, "CREATE_SYSTEM_PARAM", "SYSTEM_PARAMETER",
+                paramKey, null, rawValue, "INFO", null, null);
+
+        return response;
+    }
+
+    @Override
+    @Transactional
+    public void deleteParameter(String paramKey) {
+        UUID tenantId = TenantContext.getTenantId();
+        SystemParameter param = systemParameterRepository.findByTenantIdAndParamKey(tenantId, paramKey)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy tham số: " + paramKey));
+
+        if (Boolean.TRUE.equals(param.getIsSystem())) {
+            throw new BusinessException("CANNOT_DELETE_SYSTEM_PARAM",
+                    "Tham số '" + paramKey + "' là tham số cốt lõi của hệ thống, không được phép xóa.");
+        }
+
+        systemParameterRepository.deleteByTenantIdAndParamKey(tenantId, paramKey);
+
+        ConcurrentHashMap<String, SystemParameterResponse> map = tenantCache.get(tenantId);
+        if (map != null) {
+            map.remove(paramKey);
+        }
+
+        log.info("Đã xóa tham số: tenantId={}, key={}", tenantId, paramKey);
+        UUID actorUserId = getUserIdFromContext();
+        auditLogService.logAction(tenantId, actorUserId, "DELETE_SYSTEM_PARAM", "SYSTEM_PARAMETER",
+                paramKey, param.getParamValue(), null, "INFO", null, null);
     }
 
     @Override

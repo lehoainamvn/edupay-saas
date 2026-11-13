@@ -37,6 +37,8 @@ public class RbacServiceImpl implements RbacService {
     private final UserFeatureFlagRepository userFeatureFlagRepository;
     private final TenantRepository tenantRepository;
     private final AuditLogService auditLogService;
+    private final com.edupay.repository.RoleMenuRepository roleMenuRepository;
+    private final com.edupay.repository.TenantTeacherPolicyRepository policyRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -230,11 +232,60 @@ public class RbacServiceImpl implements RbacService {
             menuPermissionsMap.computeIfAbsent(menuId, k -> new HashSet<>()).add(permCode);
         }
 
-        boolean isOwner = roles.contains("OWNER");
+        boolean isSuperAdmin = roles.contains("SUPER_ADMIN");
+        boolean isOwner = roles.contains("OWNER") || roles.contains("CENTER_ADMIN");
+
+        // Lấy danh sách menuIds được gán trực tiếp qua role_menus
+        List<UUID> assignedMenuIds = roleMenuRepository.findMenuIdsByRoleCodes(roles);
+        boolean hasRoleMenuConfig = assignedMenuIds != null && !assignedMenuIds.isEmpty();
+
+        // Kiểm tra loại tenant (CENTER vs SOLO_TUTOR)
+        String tenantType = "SOLO_TUTOR";
+        var tenantOpt = tenantRepository.findById(tenantId);
+        if (tenantOpt.isPresent() && tenantOpt.get().getTenantType() != null) {
+            tenantType = tenantOpt.get().getTenantType();
+        }
+
+        // Lấy chính sách giáo viên nội bộ nếu là GV trực thuộc
+        boolean isSubTeacher = !isOwner && !isSuperAdmin;
+        boolean canViewBilling = false;
+        if (isSubTeacher) {
+            var policyOpt = policyRepository.findByTenantId(tenantId);
+            canViewBilling = policyOpt.map(p -> Boolean.TRUE.equals(p.getCanViewBilling())).orElse(false);
+        }
+
         List<MenuItemResponse> result = new ArrayList<>();
 
         for (Menu m : allMenus) {
-            // 1. Kiểm tra Feature Flag (nếu menu liên kết với feature)
+            // A. Đối với người dùng không phải SUPER_ADMIN: ẩn tất cả menu quản trị Admin
+            boolean isAdminMenu = m.getCode().startsWith("ADMIN_") || "SYSTEM_CONFIG".equalsIgnoreCase(m.getCode());
+            if (isAdminMenu && !isSuperAdmin) {
+                continue;
+            }
+
+            // B. Nếu là gia sư tự do (SOLO_TUTOR): không hiển thị menu quản lý giáo viên trung tâm
+            if ("CENTER_TEACHERS".equalsIgnoreCase(m.getCode()) && "SOLO_TUTOR".equalsIgnoreCase(tenantType)) {
+                continue;
+            }
+
+            // C. Nếu là giáo viên trực thuộc (TEACHER): chặn menu quản lý giáo viên & kiểm tra quyền xem học phí
+            if (isSubTeacher) {
+                if ("CENTER_TEACHERS".equalsIgnoreCase(m.getCode())) {
+                    continue;
+                }
+                if ("BILLING".equalsIgnoreCase(m.getCode()) && !canViewBilling) {
+                    continue;
+                }
+            }
+
+            // D. Kiểm tra bảng phân quyền Menu động (role_menus)
+            if (hasRoleMenuConfig && !isSuperAdmin) {
+                if (!assignedMenuIds.contains(m.getId())) {
+                    continue; // Menu này không được cấp quyền cho bất kỳ role nào của user
+                }
+            }
+
+            // E. Kiểm tra Feature Flag (nếu menu liên kết với feature)
             if (m.getFeatureId() != null && !m.getFeatureId().isBlank()) {
                 boolean featureEnabled = Boolean.TRUE.equals(features.get(m.getFeatureId()));
                 if (!featureEnabled) {
@@ -242,12 +293,12 @@ public class RbacServiceImpl implements RbacService {
                 }
             }
 
-            // 2. Kiểm tra Quyền (Permissions)
+            // F. Kiểm tra Quyền (Permissions) nếu có ràng buộc
             Set<String> requiredPerms = menuPermissionsMap.get(m.getId());
-            if (requiredPerms != null && !requiredPerms.isEmpty() && !isOwner) {
+            if (requiredPerms != null && !requiredPerms.isEmpty() && !isOwner && !isSuperAdmin) {
                 boolean hasAnyPerm = requiredPerms.stream().anyMatch(permissions::contains);
                 if (!hasAnyPerm) {
-                    continue; // Không có quyền -> không hiển thị menu
+                    continue;
                 }
             }
 

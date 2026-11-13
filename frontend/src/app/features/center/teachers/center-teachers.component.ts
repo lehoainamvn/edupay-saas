@@ -17,6 +17,10 @@ import {
   CreateCenterTeacherPayload,
   UpdateCenterTeacherPayload,
 } from '../../../core/services/center-teacher.service';
+import {
+  AdminService,
+  TenantTeacherPolicy,
+} from '../../../core/services/admin.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 
@@ -30,12 +34,27 @@ import { NavbarComponent } from '../../../shared/components/navbar/navbar.compon
 })
 export class CenterTeachersComponent implements OnInit {
   private readonly teacherService = inject(CenterTeacherService);
+  private readonly adminService = inject(AdminService);
   private readonly toastService = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
+
+  activeTab = signal<'LIST' | 'POLICY'>('LIST');
 
   loading = signal<boolean>(true);
   actionLoading = signal<string | null>(null);
   teachers = signal<CenterTeacherItem[]>([]);
+
+  // Policy Signal
+  policy = signal<TenantTeacherPolicy>({
+    id: '',
+    tenantId: '',
+    canEditStudentFee: false,
+    canCreateClass: false,
+    canCreateStudent: false,
+    canViewBilling: false,
+    updatedAt: '',
+  });
+  savingPolicy = signal<boolean>(false);
 
   // Search & Filter
   searchQuery = signal<string>('');
@@ -87,6 +106,51 @@ export class CenterTeachersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadTeachers();
+    this.loadPolicy();
+  }
+
+  loadPolicy(): void {
+    this.adminService
+      .getCenterPolicy()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.success && res.data) {
+            this.policy.set(res.data);
+          }
+        },
+        error: () => {},
+      });
+  }
+
+  updatePolicyField(field: keyof TenantTeacherPolicy, value: boolean): void {
+    this.policy.update((p) => ({ ...p, [field]: value }));
+  }
+
+  savePolicy(): void {
+    this.savingPolicy.set(true);
+    const p = this.policy();
+    this.adminService
+      .updateCenterPolicy({
+        canEditStudentFee: p.canEditStudentFee,
+        canCreateClass: p.canCreateClass,
+        canCreateStudent: p.canCreateStudent,
+        canViewBilling: p.canViewBilling,
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.savingPolicy.set(false);
+          this.toastService.success('Đã lưu cấu hình phân quyền giáo viên nội bộ thành công!');
+          if (res?.data) {
+            this.policy.set(res.data);
+          }
+        },
+        error: (err) => {
+          this.savingPolicy.set(false);
+          this.toastService.error(err?.error?.message || 'Lưu cấu hình phân quyền thất bại');
+        },
+      });
   }
 
   loadTeachers(): void {

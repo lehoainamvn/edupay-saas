@@ -37,7 +37,7 @@ public class PaymentSettingRequest {
     private String accountName;
 
     @Size(max = 20, message = "Tiền tố chuyển khoản tối đa 20 ký tự")
-    @Pattern(regexp = "^[A-Za-z0-9]*$", message = "Tiền tố chuyển khoản chỉ được chứa chữ cái và chữ số không dấu")
+    @Pattern(regexp = "^[A-Za-z0-9_-]*$", message = "Tiền tố chuyển khoản chỉ được chứa chữ cái, chữ số, dấu gạch dưới (_) hoặc gạch ngang (-)")
     @Schema(description = "Tiền tố nội dung chuyển khoản (Mặc định: HP)", example = "HP")
     @Builder.Default
     private String transferPrefix = "HP";

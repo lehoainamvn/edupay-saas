@@ -24,6 +24,16 @@ public interface SystemParameterService {
     SystemParameterResponse updateParameter(String paramKey, UpdateSystemParameterRequest request);
 
     /**
+     * Tạo tham số cấu hình mới trong hệ thống.
+     */
+    SystemParameterResponse createParameter(com.edupay.dto.request.CreateSystemParameterRequest request);
+
+    /**
+     * Xóa tham số cấu hình tùy biến (không cho phép xóa tham số hệ thống isSystem = true).
+     */
+    void deleteParameter(String paramKey);
+
+    /**
      * Tải lại toàn bộ In-memory Cache từ database cho tenant hiện tại.
      */
     void reloadCache();

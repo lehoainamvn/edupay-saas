@@ -91,6 +91,40 @@ export class AuthService {
     return this.tokenService.isAuthenticated();
   }
 
+  isSuperAdmin(): boolean {
+    const info = this.currentUser() || this.tokenService.getUserInfo();
+    const tokenRoles = this.tokenService.getRolesFromToken();
+    const allRoles = [
+      ...(info?.roles || []),
+      ...tokenRoles,
+    ].map((r) => (r || '').toUpperCase());
+
+    return allRoles.some(
+      (upper) =>
+        upper.includes('SUPER_ADMIN') ||
+        upper.includes('SUPERADMIN') ||
+        upper === 'ROLE_SUPER_ADMIN'
+    );
+  }
+
+  isCenterAdmin(): boolean {
+    const info = this.currentUser() || this.tokenService.getUserInfo();
+    const tokenRoles = this.tokenService.getRolesFromToken();
+    const allRoles = [
+      ...(info?.roles || []),
+      ...tokenRoles,
+    ].map((r) => (r || '').toUpperCase());
+
+    const hasCenterRole = allRoles.some(
+      (u) => u.includes('CENTER_ADMIN') || u === 'ROLE_CENTER_ADMIN'
+    );
+
+    const isCenter = (info?.tenantType || '').toUpperCase() === 'CENTER';
+    const isOwner = Boolean(info?.isOwner);
+
+    return hasCenterRole || (isCenter && isOwner);
+  }
+
   private handleAuthSuccess(res: AuthResponse): void {
     if (!res) return;
 

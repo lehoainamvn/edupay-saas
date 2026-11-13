@@ -56,7 +56,7 @@ export class SettingsComponent implements OnInit {
     const cleanPrefix = (this.transferPrefix() || 'HP')
       .trim()
       .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '') || 'HP';
+      .replace(/[^A-Z0-9_-]/g, '') || 'HP';
     return `${cleanPrefix}9A01210`;
   });
 
@@ -64,7 +64,7 @@ export class SettingsComponent implements OnInit {
     const cleanPrefix = (this.transferPrefix() || 'HP')
       .trim()
       .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '') || 'HP';
+      .replace(/[^A-Z0-9_-]/g, '') || 'HP';
     return `${cleanPrefix} + [MÃ LỚP] + [TÊN HS] + [THÁNG]`;
   });
 

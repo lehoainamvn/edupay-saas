@@ -17,11 +17,15 @@ public class TenantAdminResponse {
     private String name;
     private String phone;
     private String email;
+    private String tenantType; // CENTER hoặc SOLO_TUTOR
     private String subscriptionPlan;
     private String subscriptionStatus;
     private Instant subscriptionEndsAt;
     private Instant createdAt;
+    private long totalTeachers;
     private long totalClasses;
     private long totalStudents;
     private boolean isExpired;
+    private String representativeName;
+    private String representativePhone;
 }

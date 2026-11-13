@@ -1,0 +1,129 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-info">
+      <h1 class="page-title">Cài đặt VietQR Trung tâm</h1>
+      <p class="page-desc">
+        Thiết lập tài khoản ngân hàng nhận tiền học phí chung của cơ sở. Mọi phiếu thu của các lớp đều tự động tạo QR đổ tiền về tài khoản này.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="saveSettings()" [disabled]="saving() || loading()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+          <polyline points="17 21 17 13 7 13 7 21"></polyline>
+          <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+        <span>{{ saving() ? 'Đang lưu...' : 'Lưu tài khoản ngân hàng' }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="table-card">
+      <div class="state-container">
+        <div class="spinner"></div>
+        <p>Đang tải cấu hình ngân hàng VietQR...</p>
+      </div>
+    </div>
+  } @else {
+    <div class="settings-grid">
+      <!-- Left Card: Form Config -->
+      <div class="card form-card">
+        <div class="card-header">
+          <div class="header-title-box">
+            <h3>Tài khoản Ngân hàng Nhận Tiền</h3>
+            <p>Hỗ trợ Napas 247 gạch nợ tự động 24/7</p>
+          </div>
+          <span class="badge" [class.badge-active]="currentSetting()?.configured" [class.badge-pending]="!currentSetting()?.configured">
+            {{ currentSetting()?.configured ? '● Đã kích hoạt' : '○ Chưa thiết lập' }}
+          </span>
+        </div>
+
+        <form [formGroup]="form" class="card-body">
+          <div class="form-group">
+            <label class="form-label">Ngân hàng thụ hưởng <span class="required">*</span></label>
+            <select class="form-control" formControlName="bankBin">
+              @for (b of banks(); track b.bin) {
+                <option [value]="b.bin">{{ b.shortName }} - {{ b.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Số tài khoản ngân hàng <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="accountNumber"
+              placeholder="VD: 0123456789"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tên chủ tài khoản (In hoa không dấu) <span class="required">*</span></label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="accountName"
+              (input)="onAccountNameInput($event)"
+              placeholder="VD: TRUNG TAM BOI DUONG VAN HOA ANH DUONG"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tiền tố cú pháp chuyển khoản</label>
+            <input
+              type="text"
+              class="form-control"
+              formControlName="transferPrefix"
+              placeholder="EDUPAY"
+            />
+            <small class="form-hint">Cú pháp tạo trên phiếu thu: <b>{{ form.get('transferPrefix')?.value || 'EDUPAY' }} &lt;MÃ_HỌC_SINH&gt;</b></small>
+          </div>
+
+          <div class="note-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <p>
+              Tài khoản này sẽ áp dụng cho <b>toàn bộ phiếu thu học phí của tất cả các lớp</b> trong cơ sở trung tâm. Phụ huynh quét mã thanh toán sẽ đổ tiền trực tiếp vào tài khoản này.
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Card: Live Preview -->
+      <div class="card preview-card">
+        <div class="card-header">
+          <div class="header-title-box">
+            <h3>Xem trước Mã VietQR Test</h3>
+            <p>Mã QR tự động sinh theo chuẩn Napas247</p>
+          </div>
+        </div>
+
+        <div class="preview-body">
+          <div class="qr-container">
+            <img [src]="previewQrUrl()" alt="Mã VietQR xem trước" class="preview-qr-img" />
+          </div>
+
+          <div class="bank-pill">
+            <b>{{ selectedBank().shortName }}</b>
+            <span>{{ form.get('accountNumber')?.value || 'Chưa nhập STK' }}</span>
+            <small>{{ form.get('accountName')?.value || 'CHƯA NHẬP TÊN CHỦ TK' }}</small>
+          </div>
+
+          <div class="reconcile-status">
+            <div class="status-indicator">
+              <span class="pulse-dot"></span>
+              <b>Hệ thống gạch nợ tự động: Đang trực tuyến</b>
+            </div>
+            <p>Khi phụ huynh chuyển khoản đúng cú pháp, phiếu thu sẽ tự động chuyển sang trạng thái <b>ĐÃ THANH TOÁN</b> trong 3 giây.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

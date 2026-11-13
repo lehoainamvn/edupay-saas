@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -10,58 +10,167 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './admin-layout.component.html',
-  styleUrls: ['./admin-layout.component.css']
+  styleUrls: ['./admin-layout.component.css'],
 })
 export class AdminLayoutComponent {
   private readonly tokenService = inject(TokenService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  isSidebarCollapsed = signal<boolean>(false);
-  isMobileSidebarOpen = signal<boolean>(false);
-  currentTitle = signal<string>('Tổng quan Nền tảng');
-
+  currentTitle = signal<string>('Tổng quan Doanh thu & Nền tảng');
   userInfo = this.tokenService.getUserInfo();
 
-  readonly navItems = [
-    {
-      label: 'Tổng quan Nền tảng',
-      route: '/admin/platform',
-      icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z'
-    },
-    {
-      label: 'Quản lý Người dùng',
-      route: '/admin/users',
-      icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z'
-    },
-    {
-      label: 'Phân quyền RBAC',
-      route: '/admin/roles',
-      icon: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z'
-    },
-    {
-      label: 'Cấu hình Hệ thống',
-      route: '/admin/system-config',
-      icon: 'M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75'
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
+  readonly isCenterAdmin = computed(() => this.authService.isCenterAdmin());
+
+  readonly brandKicker = computed(() =>
+    this.isSuperAdmin() ? 'PLATFORM CONSOLE' : 'CENTER CONSOLE'
+  );
+
+  readonly portalTitle = computed(() =>
+    this.isSuperAdmin() ? 'Cổng Quản trị SuperAdmin' : 'Cổng Quản trị Trung tâm'
+  );
+
+  readonly liveBadge = computed(() =>
+    this.isSuperAdmin() ? 'Platform Live' : 'Trung tâm Live'
+  );
+
+  readonly roleLabel = computed(() =>
+    this.isSuperAdmin() ? 'SUPER_ADMIN' : 'QUẢN LÝ TRUNG TÂM'
+  );
+
+  readonly switchBtnText = computed(() =>
+    this.isSuperAdmin() ? 'Trang Dạy học' : 'Bàn làm việc Lớp học'
+  );
+
+  readonly navGroups = computed(() => {
+    if (this.isCenterAdmin() && !this.isSuperAdmin()) {
+      return [
+        {
+          label: 'QUẢN TRỊ TRUNG TÂM',
+          items: [
+            {
+              icon: 'grid',
+              label: 'Tổng quan Cơ sở',
+              route: '/admin/platform',
+              exact: true,
+            },
+            {
+              icon: 'users',
+              label: 'Đội ngũ Giáo viên',
+              route: '/admin/users',
+              exact: false,
+            },
+            {
+              icon: 'building',
+              label: 'Quản lý Lớp học',
+              route: '/admin/classes',
+              exact: false,
+            },
+            {
+              icon: 'user',
+              label: 'Học sinh & Điểm danh',
+              route: '/admin/students',
+              exact: false,
+            },
+            {
+              icon: 'menu',
+              label: 'Học phí & VietQR',
+              route: '/admin/billing',
+              exact: false,
+            },
+          ],
+        },
+        {
+          label: 'CẤU HÌNH & CHÍNH SÁCH',
+          items: [
+            {
+              icon: 'shield',
+              label: 'Phân quyền Giáo viên',
+              route: '/admin/teacher-policies',
+              exact: false,
+            },
+            {
+              icon: 'settings',
+              label: 'Cài đặt VietQR Trung tâm',
+              route: '/admin/settings',
+              exact: false,
+            },
+          ],
+        },
+      ];
     }
-  ];
+
+    return [
+      {
+        label: 'VẬN HÀNH NỀN TẢNG',
+        items: [
+          {
+            icon: 'grid',
+            label: 'Tổng quan Nền tảng',
+            route: '/admin/platform',
+            exact: true,
+          },
+          {
+            icon: 'building',
+            label: 'Quản lý Trung tâm',
+            route: '/admin/centers',
+            exact: false,
+          },
+          {
+            icon: 'user',
+            label: 'Quản lý Gia sư',
+            route: '/admin/tutors',
+            exact: false,
+          },
+        ],
+      },
+      {
+        label: 'HỆ THỐNG & PHÂN QUYỀN',
+        items: [
+          {
+            icon: 'menu',
+            label: 'Quản lý Menu Động',
+            route: '/admin/menus',
+            exact: false,
+          },
+          {
+            icon: 'shield',
+            label: 'Phân quyền RBAC',
+            route: '/admin/roles',
+            exact: false,
+          },
+          {
+            icon: 'users',
+            label: 'Tất cả Tài khoản',
+            route: '/admin/users',
+            exact: false,
+          },
+          {
+            icon: 'settings',
+            label: 'Cấu hình Hệ thống',
+            route: '/admin/system-config',
+            exact: false,
+          },
+        ],
+      },
+    ];
+  });
 
   constructor() {
     this.updateCurrentTitle(this.router.url);
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.updateCurrentTitle(event.urlAfterRedirects || event.url);
-      this.isMobileSidebarOpen.set(false);
-    });
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        this.updateCurrentTitle(event.urlAfterRedirects || event.url);
+      });
   }
 
-  toggleSidebar(): void {
-    this.isSidebarCollapsed.update(v => !v);
-  }
-
-  toggleMobileSidebar(): void {
-    this.isMobileSidebarOpen.update(v => !v);
+  userInitials(): string {
+    const name = (this.userInfo?.fullName || 'Lê Hoài Nam').trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
 
   goToTeacherPortal(): void {
@@ -74,14 +183,32 @@ export class AdminLayoutComponent {
   }
 
   private updateCurrentTitle(url: string): void {
-    if (url.includes('/admin/users')) {
-      this.currentTitle.set('Quản lý Người dùng Toàn Hệ Thống');
+    const isCenter = this.isCenterAdmin() && !this.isSuperAdmin();
+
+    if (url.includes('/admin/centers')) {
+      this.currentTitle.set('Quản lý Trung tâm Đào tạo');
+    } else if (url.includes('/admin/tutors')) {
+      this.currentTitle.set('Quản lý Gia sư Tự do');
+    } else if (url.includes('/admin/menus')) {
+      this.currentTitle.set('Quản lý Menu Động & Phân quyền Menu');
+    } else if (url.includes('/admin/users')) {
+      this.currentTitle.set(isCenter ? 'Đội ngũ Giáo viên Cơ sở' : 'Quản lý Người dùng Toàn Hệ Thống');
     } else if (url.includes('/admin/roles')) {
       this.currentTitle.set('Quản lý Phân quyền & Vai trò (RBAC)');
     } else if (url.includes('/admin/system-config')) {
-      this.currentTitle.set('Cấu hình Tham số Hệ thống');
+      this.currentTitle.set('Cấu hình Tham số Vận hành Hệ thống');
+    } else if (url.includes('/admin/classes')) {
+      this.currentTitle.set('Quản lý Lớp học Cơ sở');
+    } else if (url.includes('/admin/students')) {
+      this.currentTitle.set('Học sinh & Điểm danh Cơ sở');
+    } else if (url.includes('/admin/billing')) {
+      this.currentTitle.set('Học phí & VietQR Cơ sở');
+    } else if (url.includes('/admin/teacher-policies')) {
+      this.currentTitle.set('Phân quyền Giáo viên Cơ sở');
+    } else if (url.includes('/admin/settings')) {
+      this.currentTitle.set('Cài đặt VietQR Trung tâm');
     } else {
-      this.currentTitle.set('Tổng quan Doanh thu & Nền tảng Platform');
+      this.currentTitle.set(isCenter ? 'Tổng quan Cơ sở Trung tâm' : 'Tổng quan Doanh thu & Nền tảng');
     }
   }
 }

@@ -9,15 +9,17 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AdminService,
   TenantAdminItem,
   PlatformStats,
   TenantExtendPayload,
+  AdminUserItem,
 } from '../../core/services/admin.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -30,20 +32,35 @@ import { ToastService } from '../../core/services/toast.service';
 export class AdminDashboardComponent implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
+  readonly isCenterAdmin = computed(() => this.authService.isCenterAdmin());
+  readonly currentTenant = computed(() => this.tenants().length > 0 ? this.tenants()[0] : null);
+
+  readonly centerName = computed(() => {
+    const list = this.tenants();
+    if (list.length > 0 && list[0]?.name) {
+      return list[0].name;
+    }
+    return this.authService.currentUser()?.fullName || 'Trung tâm Đào tạo Ánh Dương';
+  });
 
   loading = signal<boolean>(true);
-  actionLoading = signal<string | null>(null); // tenant id being modified
+  refreshed = signal<boolean>(false);
+  actionLoading = signal<string | null>(null);
   errorMessage = signal<string | null>(null);
 
   // Stats & List
   stats = signal<PlatformStats | null>(null);
   tenants = signal<TenantAdminItem[]>([]);
+  centerTeachers = signal<AdminUserItem[]>([]);
 
   // Filter & Search
-  currentTab = signal<'ALL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'>('ALL');
+  currentTab = signal<'ALL' | 'CENTER' | 'SOLO_TUTOR' | 'EXPIRED'>('ALL');
   searchQuery = signal<string>('');
-  planFilter = signal<string>('ALL');
 
   // Extend Modal state
   selectedTenantForExtend = signal<TenantAdminItem | null>(null);
@@ -53,17 +70,62 @@ export class AdminDashboardComponent implements OnInit {
   // Status Toggle Modal state
   selectedTenantForToggle = signal<TenantAdminItem | null>(null);
 
-  // Counts computed
-  activeCount = computed(() => {
-    return this.tenants().filter((t) => t.subscriptionStatus === 'ACTIVE' && !t.isExpired).length;
-  });
+  // Computed metrics
+  centerCount = computed(
+    () =>
+      this.stats()?.totalCenters ||
+      this.tenants().filter((t) => t.tenantType === 'CENTER').length
+  );
 
-  suspendedCount = computed(() => {
-    return this.tenants().filter((t) => t.subscriptionStatus === 'SUSPENDED').length;
-  });
+  tutorCount = computed(
+    () =>
+      this.stats()?.totalTutors ||
+      this.tenants().filter((t) => t.tenantType === 'SOLO_TUTOR').length
+  );
+
+  teacherCount = computed(() => this.stats()?.totalTeachers || 0);
+  studentCount = computed(() => this.stats()?.totalStudents || 0);
+  classCount = computed(() => this.stats()?.totalClasses || 0);
 
   expiredCount = computed(() => {
-    return this.tenants().filter((t) => t.isExpired || t.subscriptionStatus === 'EXPIRED').length;
+    return this.tenants().filter(
+      (t) => t.isExpired || t.subscriptionStatus === 'EXPIRED'
+    ).length;
+  });
+
+  centerPercent = computed(() => {
+    const total = this.tenants().length || 1;
+    const c = this.centerCount();
+    return Math.round((c / total) * 1000) / 10;
+  });
+
+  tutorPercent = computed(() => {
+    const total = this.tenants().length || 1;
+    const t = this.tutorCount();
+    return Math.round((t / total) * 1000) / 10;
+  });
+
+  // Top Center
+  topCenter = computed(() => {
+    const centers = this.tenants().filter((t) => t.tenantType === 'CENTER');
+    if (!centers.length) return null;
+    return centers.slice().sort(
+      (a, b) =>
+        (b.totalTeachers || 0) +
+        (b.totalClasses || 0) +
+        (b.totalStudents || 0) -
+        ((a.totalTeachers || 0) + (a.totalClasses || 0) + (a.totalStudents || 0))
+    )[0];
+  });
+
+  todayFormatted = computed(() => {
+    const now = new Date();
+    const d = String(now.getDate()).padStart(2, '0');
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const y = now.getFullYear();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    return `${d}/${m}/${y} · ${hh}:${mm}`;
   });
 
   // Filtered tenants computed
@@ -71,18 +133,15 @@ export class AdminDashboardComponent implements OnInit {
     let list = this.tenants();
     const tab = this.currentTab();
     const query = this.searchQuery().toLowerCase().trim();
-    const plan = this.planFilter();
 
-    if (tab === 'ACTIVE') {
-      list = list.filter((t) => t.subscriptionStatus === 'ACTIVE' && !t.isExpired);
-    } else if (tab === 'SUSPENDED') {
-      list = list.filter((t) => t.subscriptionStatus === 'SUSPENDED');
+    if (tab === 'CENTER') {
+      list = list.filter((t) => t.tenantType === 'CENTER');
+    } else if (tab === 'SOLO_TUTOR') {
+      list = list.filter((t) => t.tenantType === 'SOLO_TUTOR');
     } else if (tab === 'EXPIRED') {
-      list = list.filter((t) => t.isExpired || t.subscriptionStatus === 'EXPIRED');
-    }
-
-    if (plan !== 'ALL') {
-      list = list.filter((t) => (t.subscriptionPlan || '').toUpperCase() === plan);
+      list = list.filter(
+        (t) => t.isExpired || t.subscriptionStatus === 'EXPIRED'
+      );
     }
 
     if (query) {
@@ -90,7 +149,9 @@ export class AdminDashboardComponent implements OnInit {
         (t) =>
           (t.name && t.name.toLowerCase().includes(query)) ||
           (t.phone && t.phone.toLowerCase().includes(query)) ||
-          (t.email && t.email.toLowerCase().includes(query))
+          (t.email && t.email.toLowerCase().includes(query)) ||
+          (t.representativeName &&
+            t.representativeName.toLowerCase().includes(query))
       );
     }
 
@@ -118,7 +179,7 @@ export class AdminDashboardComponent implements OnInit {
       });
 
     this.adminService
-      .getTenants('ALL')
+      .getTenants('ALL', '')
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -129,18 +190,121 @@ export class AdminDashboardComponent implements OnInit {
         },
         error: (err) => {
           this.loading.set(false);
-          this.errorMessage.set('Không thể tải danh sách cơ sở giáo viên. Vui lòng thử lại sau.');
-          this.toastService.error('Không thể tải dữ liệu nền tảng. Vui lòng kiểm tra lại kết nối.');
+          this.errorMessage.set(
+            err?.error?.message || 'Không thể tải danh sách tài khoản cơ sở.'
+          );
+        },
+      });
+
+    this.adminService
+      .getUsers({ page: 0, size: 10 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data?.content) {
+            this.centerTeachers.set(res.data.content);
+          }
+        },
+        error: () => {},
+      });
+  }
+
+  handleRefresh(): void {
+    this.refreshed.set(true);
+    this.loadData();
+    setTimeout(() => this.refreshed.set(false), 1200);
+  }
+
+  setTab(tab: 'ALL' | 'CENTER' | 'SOLO_TUTOR' | 'EXPIRED'): void {
+    this.currentTab.set(tab);
+  }
+
+  navigateCreateCenter(): void {
+    this.router.navigate(['/admin/centers'], { queryParams: { action: 'create' } });
+  }
+
+  navigateCreateTutor(): void {
+    this.router.navigate(['/admin/tutors'], { queryParams: { action: 'create' } });
+  }
+
+  centerInitials(name: string): string {
+    const parts = (name || 'Ánh Dương').trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return (name || 'TT').substring(0, 2).toUpperCase();
+  }
+
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '01/01/2100';
+    try {
+      const d = new Date(dateStr);
+      return `${String(d.getDate()).padStart(2, '0')}/${String(
+        d.getMonth() + 1
+      ).padStart(2, '0')}/${d.getFullYear()}`;
+    } catch {
+      return dateStr;
+    }
+  }
+
+  formatMoney(amount: number | null | undefined): string {
+    if (amount == null) return '0 đ';
+    return (
+      new Intl.NumberFormat('vi-VN', {
+        maximumFractionDigits: 0,
+      }).format(amount) + ' đ'
+    );
+  }
+
+  // ─── EXTEND MODAL ───────────────────────────────────────────────────────────
+  openExtendModal(tenant: TenantAdminItem): void {
+    this.selectedTenantForExtend.set(tenant);
+    this.extendDuration.set('1_MONTH');
+    this.extendNote.set('');
+  }
+
+  closeExtendModal(): void {
+    this.selectedTenantForExtend.set(null);
+  }
+
+  submitExtend(): void {
+    const tenant = this.selectedTenantForExtend();
+    if (!tenant) return;
+
+    this.actionLoading.set(tenant.id);
+
+    const payload: TenantExtendPayload = {
+      duration: this.extendDuration(),
+      note: this.extendNote()?.trim() || undefined,
+    };
+
+    this.adminService
+      .extendSubscription(tenant.id, payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.actionLoading.set(null);
+          this.closeExtendModal();
+          this.toastService.success(
+            `Gia hạn thành công cho cơ sở [${tenant.name}]!`
+          );
+          if (res?.data) {
+            this.tenants.update((list) =>
+              list.map((t) => (t.id === tenant.id ? res.data! : t))
+            );
+          }
+        },
+        error: (err) => {
+          this.actionLoading.set(null);
+          this.toastService.error(
+            err?.error?.message || 'Gia hạn gói dịch vụ thất bại'
+          );
         },
       });
   }
 
-  setTab(tab: 'ALL' | 'ACTIVE' | 'SUSPENDED' | 'EXPIRED'): void {
-    this.currentTab.set(tab);
-  }
-
-  // ─── Status Toggle Modal Handlers ───
-  openToggleModal(tenant: TenantAdminItem): void {
+  // ─── STATUS TOGGLE MODAL ────────────────────────────────────────────────────
+  openStatusModal(tenant: TenantAdminItem): void {
     this.selectedTenantForToggle.set(tenant);
   }
 
@@ -152,176 +316,34 @@ export class AdminDashboardComponent implements OnInit {
     const tenant = this.selectedTenantForToggle();
     if (!tenant) return;
 
-    const nextStatus = tenant.subscriptionStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-    const actionName = nextStatus === 'ACTIVE' ? 'mở khóa' : 'khóa';
+    const newStatus =
+      tenant.subscriptionStatus === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    const actionLabel = newStatus === 'ACTIVE' ? 'mở khóa' : 'tạm khóa';
 
     this.actionLoading.set(tenant.id);
+
     this.adminService
-      .updateTenantStatus(tenant.id, nextStatus)
+      .updateTenantStatus(tenant.id, newStatus)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
           this.actionLoading.set(null);
           this.closeToggleModal();
-          if (res?.success && res.data) {
-            this.updateTenantInList(res.data);
-            this.toastService.success(`Đã ${actionName} tài khoản cơ sở "${tenant.name}" thành công!`);
-            // Refresh stats
-            this.refreshStats();
+          this.toastService.success(
+            `Đã ${actionLabel} cơ sở [${tenant.name}]!`
+          );
+          if (res?.data) {
+            this.tenants.update((list) =>
+              list.map((t) => (t.id === tenant.id ? res.data! : t))
+            );
           }
         },
         error: (err) => {
           this.actionLoading.set(null);
           this.toastService.error(
-            `Lỗi khi ${actionName} tài khoản: ${err?.error?.message || 'Có lỗi xảy ra'}`
+            err?.error?.message || `Không thể ${actionLabel} tài khoản`
           );
         },
       });
-  }
-
-  // ─── Quick Extend ───
-  quickExtend(tenant: TenantAdminItem, duration: '1_MONTH' | '1_YEAR'): void {
-    const label = duration === '1_MONTH' ? '+1 Tháng' : '+1 Năm';
-
-    this.actionLoading.set(tenant.id);
-    const payload: TenantExtendPayload = {
-      duration,
-      note: `Gia hạn nhanh ${label} từ SuperAdmin Dashboard`,
-    };
-
-    this.adminService
-      .extendSubscription(tenant.id, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.actionLoading.set(null);
-          if (res?.success && res.data) {
-            this.updateTenantInList(res.data);
-            this.toastService.success(`Đã gia hạn thành công ${label} cho "${tenant.name}"!`);
-            this.refreshStats();
-          }
-        },
-        error: (err) => {
-          this.actionLoading.set(null);
-          this.toastService.error(`Lỗi gia hạn: ${err?.error?.message || 'Thất bại'}`);
-        },
-      });
-  }
-
-  // ─── Custom Modal Extend ───
-  openExtendModal(tenant: TenantAdminItem): void {
-    this.selectedTenantForExtend.set(tenant);
-    this.extendDuration.set('1_MONTH');
-    this.extendNote.set('');
-  }
-
-  closeExtendModal(): void {
-    this.selectedTenantForExtend.set(null);
-  }
-
-  submitModalExtend(): void {
-    const tenant = this.selectedTenantForExtend();
-    if (!tenant) return;
-
-    this.actionLoading.set(tenant.id);
-    const payload: TenantExtendPayload = {
-      duration: this.extendDuration(),
-      note: this.extendNote(),
-    };
-
-    this.adminService
-      .extendSubscription(tenant.id, payload)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (res) => {
-          this.actionLoading.set(null);
-          this.closeExtendModal();
-          if (res?.success && res.data) {
-            this.updateTenantInList(res.data);
-            this.toastService.success(`Đã gia hạn thành công dịch vụ cho "${tenant.name}"!`);
-            this.refreshStats();
-          }
-        },
-        error: (err) => {
-          this.actionLoading.set(null);
-          this.toastService.error(`Lỗi gia hạn: ${err?.error?.message || 'Thất bại'}`);
-        },
-      });
-  }
-
-  private refreshStats(): void {
-    this.adminService
-      .getPlatformStats()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((s) => {
-        if (s?.data) this.stats.set(s.data);
-      });
-  }
-
-  private updateTenantInList(updated: TenantAdminItem): void {
-    this.tenants.update((list) =>
-      list.map((t) => (t.id === updated.id ? { ...t, ...updated } : t))
-    );
-  }
-
-  formatMoney(amount: number | null | undefined): string {
-    return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' đ';
-  }
-
-  formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  }
-
-  getDaysText(t: TenantAdminItem): string {
-    return this.getDaysRemainingInfo(t.subscriptionEndsAt, t.isExpired).text;
-  }
-
-  isUrgentExpiry(t: TenantAdminItem): boolean {
-    return this.getDaysRemainingInfo(t.subscriptionEndsAt, t.isExpired).isUrgent;
-  }
-
-  getDaysRemainingInfo(dateStr: string | null | undefined, isExpired: boolean): { text: string; isUrgent: boolean } {
-    if (!dateStr) return { text: 'Chưa xác định', isUrgent: false };
-    const end = new Date(dateStr).getTime();
-    const now = new Date().getTime();
-    const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 0 || isExpired) {
-      return { text: 'Đã hết hạn', isUrgent: true };
-    }
-    if (diffDays <= 7) {
-      return { text: `Còn ${diffDays} ngày`, isUrgent: true };
-    }
-    return { text: `Còn ${diffDays} ngày`, isUrgent: false };
-  }
-
-  getInitials(name: string): string {
-    if (!name) return 'CS';
-    const parts = name.trim().split(/\s+/);
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[parts.length - 2][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-
-  getAvatarColor(name: string): string {
-    const colors = [
-      'linear-gradient(135deg, #2563eb, #1d4ed8)',
-      'linear-gradient(135deg, #059669, #047857)',
-      'linear-gradient(135deg, #7c3aed, #6d28d9)',
-      'linear-gradient(135deg, #d97706, #b45309)',
-      'linear-gradient(135deg, #0891b2, #0e7490)',
-      'linear-gradient(135deg, #e11d48, #be123c)',
-    ];
-    let hash = 0;
-    for (let i = 0; i < (name || '').length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
   }
 }

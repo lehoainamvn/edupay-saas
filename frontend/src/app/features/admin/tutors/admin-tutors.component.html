@@ -1,0 +1,286 @@
+<div class="admin-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Quản lý Gia sư Tự do</h1>
+      <p class="page-subtitle">
+        Danh sách các giáo viên dạy kèm độc lập tại nhà, tự chủ lớp học, học sinh và tài khoản VietQR cá nhân.
+      </p>
+    </div>
+    <div class="header-right">
+      <button class="btn-primary" (click)="openCreateModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        <span>Thêm Gia sư mới</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="toolbar-card">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      <input
+        type="text"
+        placeholder="Tìm kiếm họ tên gia sư, số điện thoại, email..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+
+    <div class="filter-group">
+      <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)" class="filter-select">
+        <option value="ALL">Tất cả trạng thái</option>
+        <option value="ACTIVE">Đang hoạt động</option>
+        <option value="SUSPENDED">Tạm khóa</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Tutors Table -->
+  <div class="table-card">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Đang tải danh sách Gia sư tự do...</p>
+      </div>
+    } @else if (filteredTutors().length === 0) {
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-5.25 6.557c0 1.637.355 3.19 1 4.582M12 8.443c1.99.39 3.89 1.02 5.674 1.868M12 8.443V6.75" />
+        </svg>
+        <h3>Chưa có Gia sư nào phù hợp</h3>
+        <p>Hãy thử thay đổi từ khóa tìm kiếm hoặc nhấn "Thêm Gia sư mới".</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Họ và Tên Gia sư</th>
+              <th>Số điện thoại & Email</th>
+              <th>Lớp học</th>
+              <th>Học sinh</th>
+              <th>Gói cước</th>
+              <th>Hạn dùng</th>
+              <th>Trạng thái</th>
+              <th class="text-right">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tutor of filteredTutors(); track tutor.id) {
+              <tr>
+                <td>
+                  <div class="tutor-profile">
+                    <div class="tutor-avatar">{{ tutor.name.substring(0, 2).toUpperCase() }}</div>
+                    <span class="tutor-name">{{ tutor.name }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="contact-meta">
+                    <span class="contact-phone">{{ tutor.phone }}</span>
+                    <span class="contact-email">{{ tutor.email || 'Chưa cập nhật' }}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-subtle">{{ tutor.totalClasses }} lớp</span>
+                </td>
+                <td>
+                  <span class="badge-subtle">{{ tutor.totalStudents }} học sinh</span>
+                </td>
+                <td>
+                  <span class="plan-pill">{{ tutor.subscriptionPlan || 'MONTHLY' }}</span>
+                </td>
+                <td>
+                  <div class="expiry-meta" [class.text-danger]="tutor.isExpired">
+                    <span>{{ tutor.subscriptionEndsAt | date:'dd/MM/yyyy' }}</span>
+                    @if (tutor.isExpired) {
+                      <span class="expired-label">Hết hạn</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  @if (tutor.subscriptionStatus === 'ACTIVE') {
+                    <span class="status-badge status-active">Hoạt động</span>
+                  } @else {
+                    <span class="status-badge status-suspended">Tạm khóa</span>
+                  }
+                </td>
+                <td class="text-right">
+                  <div class="actions-group">
+                    <button class="btn-action edit" (click)="openEditModal(tutor)" title="Chỉnh sửa thông tin">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                    </button>
+                    <button class="btn-action toggle" (click)="toggleStatus(tutor)" [title]="tutor.subscriptionStatus === 'ACTIVE' ? 'Tạm khóa gia sư' : 'Mở khóa gia sư'">
+                      @if (tutor.subscriptionStatus === 'ACTIVE') {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      }
+                    </button>
+                    <button class="btn-action delete" (click)="openDeleteModal(tutor)" title="Xóa tài khoản gia sư">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ─── MODAL: THÊM GIA SƯ MỚI ─── -->
+  @if (createModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Cấp Tài Khoản Gia Sư Tự Do</h3>
+            <p class="modal-subtitle">Tạo tài khoản dạy kèm độc lập với không gian quản lý riêng biệt</p>
+          </div>
+          <button class="btn-close" (click)="closeCreateModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Họ và tên gia sư <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="createForm.fullName" name="fullName" placeholder="VD: Cô Lê Thu Hằng" required />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Số điện thoại đăng nhập <span class="required">*</span></label>
+                <input type="text" [(ngModel)]="createForm.phone" name="phone" placeholder="VD: 0987654321" required />
+              </div>
+              <div class="form-group">
+                <label>Email liên hệ</label>
+                <input type="email" [(ngModel)]="createForm.email" name="email" placeholder="VD: thuhang.tutor@gmail.com" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Gói phần mềm</label>
+                <select [(ngModel)]="createForm.subscriptionPlan" name="plan">
+                  <option value="MONTHLY">Gói Tháng (59.000đ/tháng)</option>
+                  <option value="ANNUAL">Gói Năm (499.000đ/năm)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Thời hạn sử dụng (Tháng)</label>
+                <input type="number" [(ngModel)]="createForm.durationMonths" name="duration" min="1" max="36" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Mật khẩu khởi tạo</label>
+              <input type="text" [(ngModel)]="createForm.password" name="password" placeholder="Mặc định: Admin@123" />
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeCreateModal()">Hủy bỏ</button>
+          <button class="btn-primary" (click)="submitCreate()" [disabled]="actionLoading() === 'create'">
+            <span>{{ actionLoading() === 'create' ? 'Đang tạo...' : 'Tạo Tài Khoản' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: SỬA GIA SƯ ─── -->
+  @if (editModalOpen()) {
+    <div class="modal-backdrop" (click)="closeEditModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Cập Nhật Thông Tin Gia Sư</h3>
+            <p class="modal-subtitle">Chỉnh sửa hồ sơ và gói cước tài khoản gia sư</p>
+          </div>
+          <button class="btn-close" (click)="closeEditModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <form class="admin-form">
+            <div class="form-group">
+              <label>Họ và tên gia sư <span class="required">*</span></label>
+              <input type="text" [(ngModel)]="editForm.fullName" name="editName" required />
+            </div>
+
+            <div class="form-group">
+              <label>Email liên hệ</label>
+              <input type="email" [(ngModel)]="editForm.email" name="editEmail" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Gói phần mềm</label>
+                <select [(ngModel)]="editForm.subscriptionPlan" name="editPlan">
+                  <option value="MONTHLY">Gói Tháng</option>
+                  <option value="ANNUAL">Gói Năm</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Trạng thái</label>
+                <select [(ngModel)]="editForm.subscriptionStatus" name="editStatus">
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="SUSPENDED">Tạm khóa</option>
+                  <option value="EXPIRED">Hết hạn</option>
+                </select>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeEditModal()">Hủy</button>
+          <button class="btn-primary" (click)="submitEdit()" [disabled]="actionLoading() === editingTutor()?.id">
+            <span>{{ actionLoading() === editingTutor()?.id ? 'Đang lưu...' : 'Lưu thay đổi' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── MODAL: XÁC NHẬN XÓA ─── -->
+  @if (deleteModalOpen()) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="modal-card modal-sm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 class="modal-title text-danger">Xóa Tài Khoản Gia Sư</h3>
+          <button class="btn-close" (click)="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Bạn có chắc chắn muốn xóa tài khoản gia sư <strong>{{ deletingTutor()?.name }}</strong>?
+          </p>
+          <p class="text-subtle text-sm">
+            Toàn bộ lớp học, học sinh và lịch sử thu phí của gia sư này sẽ bị xóa khỏi hệ thống.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeDeleteModal()">Hủy bỏ</button>
+          <button class="btn-danger" (click)="confirmDelete()" [disabled]="actionLoading() === deletingTutor()?.id">
+            <span>{{ actionLoading() === deletingTutor()?.id ? 'Đang xóa...' : 'Xác nhận Xóa' }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

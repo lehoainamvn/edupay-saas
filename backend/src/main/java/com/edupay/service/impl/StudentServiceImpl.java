@@ -13,11 +13,16 @@ import com.edupay.exception.ResourceNotFoundException;
 import com.edupay.mapper.StudentMapper;
 import com.edupay.repository.ClassRepository;
 import com.edupay.repository.StudentRepository;
+import com.edupay.repository.TenantRepository;
+import com.edupay.repository.TenantTeacherPolicyRepository;
+import com.edupay.repository.UserRepository;
 import com.edupay.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,6 +55,9 @@ public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
     private final ClassRepository classRepository;
+    private final UserRepository userRepository;
+    private final TenantRepository tenantRepository;
+    private final TenantTeacherPolicyRepository policyRepository;
     private final StudentMapper studentMapper;
 
     @Override
@@ -87,6 +95,23 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public StudentResponse createStudent(StudentRequest request) {
         UUID tenantId = requireTenantId();
+        UUID currentUserId = getCurrentUserId();
+
+        if (isTeacherOnly(currentUserId)) {
+            var tenantOpt = tenantRepository.findById(tenantId);
+            if (tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType())) {
+                var policyOpt = policyRepository.findByTenantId(tenantId);
+                if (policyOpt.isPresent()) {
+                    if (Boolean.FALSE.equals(policyOpt.get().getCanCreateStudent())) {
+                        throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền tự thêm học sinh mới theo quy định của trung tâm. Vui lòng liên hệ Quản lý Trung tâm.");
+                    }
+                    if (Boolean.FALSE.equals(policyOpt.get().getCanEditStudentFee()) && request.getCustomFee() != null) {
+                        throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền thiết lập học phí riêng cho học sinh theo quy định của trung tâm.");
+                    }
+                }
+            }
+        }
+
         ClassEntity classEntity = verifyClassOwnership(request.getClassId(), tenantId);
 
         String fullName = request.getFullName().trim();
@@ -118,7 +143,23 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public StudentResponse updateStudent(UUID id, StudentRequest request) {
         UUID tenantId = requireTenantId();
+        UUID currentUserId = getCurrentUserId();
         Student existing = findStudentByIdAndTenant(id, tenantId);
+
+        if (isTeacherOnly(currentUserId)) {
+            var tenantOpt = tenantRepository.findById(tenantId);
+            if (tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType())) {
+                var policyOpt = policyRepository.findByTenantId(tenantId);
+                if (policyOpt.isPresent() && Boolean.FALSE.equals(policyOpt.get().getCanEditStudentFee())) {
+                    boolean feeChanged = (request.getCustomFee() != null && !request.getCustomFee().equals(existing.getCustomFee()))
+                            || (request.getCustomFee() == null && existing.getCustomFee() != null);
+                    if (feeChanged) {
+                        throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền thay đổi học phí riêng của học sinh theo quy định của trung tâm.");
+                    }
+                }
+            }
+        }
+
         ClassEntity targetClass = verifyClassOwnership(request.getClassId(), tenantId);
 
         String fullName = request.getFullName().trim();
@@ -176,6 +217,18 @@ public class StudentServiceImpl implements StudentService {
     @Transactional
     public StudentImportResultResponse importStudentsFromFile(UUID classId, MultipartFile file) {
         UUID tenantId = requireTenantId();
+        UUID currentUserId = getCurrentUserId();
+
+        if (isTeacherOnly(currentUserId)) {
+            var tenantOpt = tenantRepository.findById(tenantId);
+            if (tenantOpt.isPresent() && "CENTER".equalsIgnoreCase(tenantOpt.get().getTenantType())) {
+                var policyOpt = policyRepository.findByTenantId(tenantId);
+                if (policyOpt.isPresent() && Boolean.FALSE.equals(policyOpt.get().getCanCreateStudent())) {
+                    throw new BusinessException("PERMISSION_DENIED", "Bạn không có quyền tự import thêm học sinh theo quy định của trung tâm. Vui lòng liên hệ Quản lý Trung tâm.");
+                }
+            }
+        }
+
         ClassEntity classEntity = verifyClassOwnership(classId, tenantId);
 
         if (file == null || file.isEmpty()) {
@@ -488,6 +541,23 @@ public class StudentServiceImpl implements StudentService {
             throw new BusinessException("TENANT_CONTEXT_MISSING", "Không xác định được thông tin giáo viên (Tenant Context)");
         }
         return tenantId;
+    }
+
+    private UUID getCurrentUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getName() != null) {
+                return UUID.fromString(auth.getName());
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private boolean isTeacherOnly(UUID userId) {
+        if (userId == null) return false;
+        return userRepository.findById(userId)
+                .map(u -> !Boolean.TRUE.equals(u.getIsOwner()))
+                .orElse(false);
     }
 
     private record RawImportRow(

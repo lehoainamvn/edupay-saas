@@ -13,10 +13,16 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class PlatformStatsResponse {
     private BigDecimal mrr;                  // Doanh thu định kỳ hàng tháng (Monthly Recurring Revenue)
-    private long newTeachersThisMonth;       // Số giáo viên mới đăng ký trong tháng
+    private BigDecimal arr;                  // Doanh thu quy năm ước tính (Annual Run Rate)
     private double renewalRate;              // Tỷ lệ gia hạn (%)
-    private long totalTenants;               // Tổng số giáo viên thuê
-    private long activeTenants;              // Số giáo viên đang hoạt động
-    private long suspendedTenants;           // Số giáo viên bị tạm khóa
-    private long trialTenants;               // Số giáo viên đang dùng thử
+    private long totalTenants;               // Tổng số cơ sở/khách hàng thuê
+    private long totalCenters;               // Tổng số Trung tâm đào tạo
+    private long totalTutors;                // Tổng số Gia sư tự do
+    private long totalTeachers;              // Tổng số Giáo viên toàn hệ thống (thuộc các trung tâm + gia sư)
+    private long totalStudents;              // Tổng số Học sinh toàn hệ thống
+    private long totalClasses;               // Tổng số Lớp học toàn hệ thống
+    private long activeTenants;              // Số cơ sở đang hoạt động
+    private long suspendedTenants;           // Số cơ sở bị tạm khóa
+    private long trialTenants;               // Số cơ sở đang dùng thử
+    private long newTeachersThisMonth;       // Số tài khoản mới trong tháng
 }

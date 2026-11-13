@@ -39,6 +39,7 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
     private final PaymentSettingRepository paymentSettingRepository;
     private final com.edupay.repository.UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final com.edupay.service.SystemParameterService systemParameterService;
 
     private static final String VIETQR_BANKS_API = "https://api.vietqr.io/v2/banks";
     private static final long CACHE_TTL_MS = 24 * 60 * 60 * 1000L; // Cache 24 giờ
@@ -53,10 +54,11 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
         Optional<PaymentSetting> opt = paymentSettingRepository.findByTenantId(tenantId);
 
         if (opt.isEmpty()) {
+            String defaultPrefix = systemParameterService.getStringValue("DEFAULT_TRANSFER_PREFIX", "EDUPAY");
             return PaymentSettingResponse.builder()
                     .configured(false)
-                    .transferPrefix("HP")
-                    .sampleTransferContent("HP9A01210")
+                    .transferPrefix(defaultPrefix)
+                    .sampleTransferContent(defaultPrefix + "9A01210")
                     .build();
         }
 
@@ -77,11 +79,12 @@ public class PaymentSettingServiceImpl implements PaymentSettingService {
         String cleanAccNum = request.getAccountNumber().trim().replaceAll("\\s+", "");
         String cleanAccName = removeVietnameseAccents(request.getAccountName().trim()).toUpperCase();
 
+        String defaultPrefix = systemParameterService.getStringValue("DEFAULT_TRANSFER_PREFIX", "EDUPAY");
         String cleanPrefix = (request.getTransferPrefix() != null && !request.getTransferPrefix().isBlank())
-                ? request.getTransferPrefix().trim().toUpperCase().replaceAll("[^A-Z0-9]", "")
-        : "HP";
+                ? request.getTransferPrefix().trim().toUpperCase().replaceAll("[^A-Z0-9_-]", "")
+                : defaultPrefix;
         if (cleanPrefix.isBlank()) {
-            cleanPrefix = "HP";
+            cleanPrefix = defaultPrefix;
         }
 
         // 2. Tìm cấu hình hiện tại để Upsert

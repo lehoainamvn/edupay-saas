@@ -50,8 +50,25 @@
       </div>
     </header>
 
-    <!-- ─── 3 STAT CARDS STRIP ─── -->
-    <section class="stats-grid" aria-label="Thống kê nhân sự trung tâm">
+    <!-- ─── TAB NAVIGATION BAR ─── -->
+    <div class="center-nav-tabs">
+      <button class="center-tab-btn" [class.active]="activeTab() === 'LIST'" (click)="activeTab.set('LIST')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        </svg>
+        <span>1. Đội ngũ Giáo viên & Trợ giảng</span>
+      </button>
+      <button class="center-tab-btn" [class.active]="activeTab() === 'POLICY'" (click)="activeTab.set('POLICY')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+        <span>2. Cấu hình Phân quyền Giáo viên Nội bộ</span>
+      </button>
+    </div>
+
+    @if (activeTab() === 'LIST') {
+      <!-- ─── 3 STAT CARDS STRIP ─── -->
+      <section class="stats-grid" aria-label="Thống kê nhân sự trung tâm">
       <!-- Card 1: Tổng giáo viên -->
       <article class="stat-card">
         <div class="stat-icon-wrap icon-blue">
@@ -277,6 +294,123 @@
         </div>
       }
     </section>
+    }
+
+    <!-- ─── TAB 2: CẤU HÌNH PHÂN QUYỀN NỘI BỘ GIÁO VIÊN ─── -->
+    @if (activeTab() === 'POLICY') {
+      <section class="policy-section">
+        <div class="policy-card">
+          <div class="policy-card-header">
+            <div>
+              <h3 class="policy-title">Quy Định & Quyền Hạn Của Giáo Viên Thuộc Cơ Sở</h3>
+              <p class="policy-subtitle">
+                Thiết lập quyền tự chủ của giáo viên trực thuộc. Mọi thay đổi sẽ có hiệu lực ngay lập tức với toàn bộ giáo viên trong cơ sở của bạn.
+              </p>
+            </div>
+            <button class="btn btn-primary" (click)="savePolicy()" [disabled]="savingPolicy()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span>{{ savingPolicy() ? 'Đang lưu...' : 'Lưu Cấu Hình Quyền' }}</span>
+            </button>
+          </div>
+
+          <div class="policy-list">
+            <!-- Policy 1: Sửa học phí buổi khi điểm danh -->
+            <div class="policy-item">
+              <div class="policy-info">
+                <div class="p-title-wrap">
+                  <span class="p-title">Cho phép Giáo viên điều chỉnh học phí buổi khi điểm danh</span>
+                  <span class="p-badge" [class.enabled]="policy().canEditStudentFee">
+                    {{ policy().canEditStudentFee ? 'Đang cho phép' : 'Đang khóa' }}
+                  </span>
+                </div>
+                <p class="p-desc">
+                  Khi bật, giáo viên có thể tăng/giảm đơn giá buổi học của từng học sinh khi thực hiện điểm danh. Nếu tắt, học phí mỗi buổi được cố định theo cấu hình lớp học do trung tâm quy định.
+                </p>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canEditStudentFee"
+                  (change)="updatePolicyField('canEditStudentFee', !policy().canEditStudentFee)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Policy 2: Tự tạo lớp học mới -->
+            <div class="policy-item">
+              <div class="policy-info">
+                <div class="p-title-wrap">
+                  <span class="p-title">Cho phép Giáo viên tự tạo Lớp học mới</span>
+                  <span class="p-badge" [class.enabled]="policy().canCreateClass">
+                    {{ policy().canCreateClass ? 'Đang cho phép' : 'Đang khóa' }}
+                  </span>
+                </div>
+                <p class="p-desc">
+                  Khi bật, giáo viên có thể tự bấm "Tạo lớp mới". Nếu tắt, chỉ có Quản lý Trung tâm mới được quyền mở lớp và chỉ định phân công giáo viên vào lớp đó.
+                </p>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canCreateClass"
+                  (change)="updatePolicyField('canCreateClass', !policy().canCreateClass)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Policy 3: Tự thêm học sinh mới -->
+            <div class="policy-item">
+              <div class="policy-info">
+                <div class="p-title-wrap">
+                  <span class="p-title">Cho phép Giáo viên tự thêm Học sinh vào lớp</span>
+                  <span class="p-badge" [class.enabled]="policy().canCreateStudent">
+                    {{ policy().canCreateStudent ? 'Đang cho phép' : 'Đang khóa' }}
+                  </span>
+                </div>
+                <p class="p-desc">
+                  Khi bật, giáo viên có thể tự tiếp nhận học sinh mới vào danh sách lớp. Nếu tắt, danh sách học sinh phải do Phòng Giáo vụ trung tâm cập nhật.
+                </p>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canCreateStudent"
+                  (change)="updatePolicyField('canCreateStudent', !policy().canCreateStudent)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Policy 4: Xem báo cáo học phí VietQR -->
+            <div class="policy-item">
+              <div class="policy-info">
+                <div class="p-title-wrap">
+                  <span class="p-title">Cho phép Giáo viên xem Báo cáo Học phí & Phiếu thu VietQR</span>
+                  <span class="p-badge" [class.enabled]="policy().canViewBilling">
+                    {{ policy().canViewBilling ? 'Đang cho phép' : 'Đang khóa' }}
+                  </span>
+                </div>
+                <p class="p-desc">
+                  Quyền xem toàn bộ doanh thu, công nợ và phiếu thu học phí của trung tâm. Khuyến nghị: Giữ tắt để đảm bảo bí mật tài chính nội bộ.
+                </p>
+              </div>
+              <label class="switch-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="policy().canViewBilling"
+                  (change)="updatePolicyField('canViewBilling', !policy().canViewBilling)"
+                />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
   </div>
 
   <!-- ─── MODAL THÊM GIÁO VIÊN MỚI ─── -->

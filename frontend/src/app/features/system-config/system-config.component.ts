@@ -7,23 +7,16 @@ import {
   PARAMETER_GROUPS,
   ParameterGroup,
   ParameterGroupMeta,
-  SystemParameterItem
+  SystemParameterItem,
+  CreateSystemParameterRequest,
 } from '../../core/models/system-parameter.models';
-
-export interface GroupSection {
-  code: 'TUITION' | 'NOTIFICATION' | 'SYSTEM';
-  title: string;
-  badge: string;
-  description: string;
-  items: SystemParameterItem[];
-}
 
 @Component({
   selector: 'app-system-config',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './system-config.component.html',
-  styleUrls: ['./system-config.component.css']
+  styleUrls: ['./system-config.component.css'],
 })
 export class SystemConfigComponent implements OnInit {
   private readonly paramService = inject(SystemParameterService);
@@ -35,85 +28,78 @@ export class SystemConfigComponent implements OnInit {
   readonly parameters = signal<SystemParameterItem[]>([]);
   readonly loading = signal<boolean>(false);
   readonly reloadingCache = signal<boolean>(false);
-  readonly savingKey = signal<string | null>(null);
   readonly resetting = signal<boolean>(false);
 
   readonly selectedGroup = signal<ParameterGroup>('ALL');
+  readonly selectedType = signal<'ALL' | 'NUMBER' | 'BOOLEAN' | 'STRING'>('ALL');
   readonly searchQuery = signal<string>('');
 
-  // Inline edit state
-  readonly expandedKey = signal<string | null>(null);
-  readonly draftValues = signal<Record<string, string>>({});
+  // ─── MODAL STATES ───────────────────────────────────────────────────────────
+  // 1. Edit Modal
+  readonly editingItem = signal<SystemParameterItem | null>(null);
+  readonly editForm = signal<{
+    paramValue: string;
+    displayName: string;
+    description: string;
+  }>({ paramValue: '', displayName: '', description: '' });
+  readonly editSaving = signal<boolean>(false);
+
+  // 2. Create Modal
+  readonly createModalOpen = signal<boolean>(false);
+  readonly createForm = signal<CreateSystemParameterRequest>({
+    paramKey: '',
+    paramValue: '',
+    paramGroup: 'SYSTEM',
+    dataType: 'STRING',
+    displayName: '',
+    description: '',
+  });
+  readonly createSaving = signal<boolean>(false);
+
+  // 3. Delete Confirmation Modal
+  readonly deletingItem = signal<SystemParameterItem | null>(null);
+  readonly deleteSaving = signal<boolean>(false);
+
+  // 4. Reset Confirmation Modal
   readonly confirmResetOpen = signal<boolean>(false);
 
   // ─── COMPUTED SIGNALS ───────────────────────────────────────────────────────
   readonly filteredParameters = computed(() => {
-    const list = this.parameters();
+    let list = this.parameters();
     const group = this.selectedGroup();
+    const type = this.selectedType();
     const query = this.searchQuery().trim().toLowerCase();
 
-    return list.filter((item) => {
-      const matchGroup = group === 'ALL' || item.paramGroup === group;
-      if (!matchGroup) return false;
+    if (group !== 'ALL') {
+      list = list.filter((p) => (p.paramGroup || '').toUpperCase() === group);
+    }
 
-      if (!query) return true;
-      return (
-        item.paramKey.toLowerCase().includes(query) ||
-        item.displayName.toLowerCase().includes(query) ||
-        (item.description && item.description.toLowerCase().includes(query)) ||
-        item.paramValue.toLowerCase().includes(query)
+    if (type !== 'ALL') {
+      list = list.filter((p) => p.dataType === type);
+    }
+
+    if (query) {
+      list = list.filter(
+        (p) =>
+          p.paramKey.toLowerCase().includes(query) ||
+          p.displayName.toLowerCase().includes(query) ||
+          (p.description && p.description.toLowerCase().includes(query)) ||
+          p.paramValue.toLowerCase().includes(query)
       );
-    });
+    }
+
+    return list;
   });
 
   readonly counts = computed(() => {
     const list = this.parameters();
     return {
       ALL: list.length,
-      SYSTEM: list.filter((p) => p.paramGroup === 'SYSTEM').length,
-      TUITION: list.filter((p) => p.paramGroup === 'TUITION').length,
-      NOTIFICATION: list.filter((p) => p.paramGroup === 'NOTIFICATION').length
+      SYSTEM: list.filter((p) => (p.paramGroup || '').toUpperCase() === 'SYSTEM').length,
+      TUITION: list.filter((p) => (p.paramGroup || '').toUpperCase() === 'TUITION').length,
+      NOTIFICATION: list.filter((p) => (p.paramGroup || '').toUpperCase() === 'NOTIFICATION').length,
+      SECURITY: list.filter((p) => (p.paramGroup || '').toUpperCase() === 'SECURITY').length,
     };
-  });
-
-  readonly groupSections = computed<GroupSection[]>(() => {
-    const items = this.filteredParameters();
-    const sections: GroupSection[] = [];
-
-    const tuitionItems = items.filter((p) => p.paramGroup === 'TUITION');
-    if (tuitionItems.length > 0) {
-      sections.push({
-        code: 'TUITION',
-        title: 'Học phí & Đối soát',
-        badge: 'HỌC PHÍ',
-        description: 'Quy định hạn nộp, chu kỳ lập phiếu thu và xử lý quá hạn',
-        items: tuitionItems
-      });
-    }
-
-    const notifItems = items.filter((p) => p.paramGroup === 'NOTIFICATION');
-    if (notifItems.length > 0) {
-      sections.push({
-        code: 'NOTIFICATION',
-        title: 'Thông báo & Nhắc nợ',
-        badge: 'THÔNG BÁO',
-        description: 'Tự động gửi thông báo qua Zalo/SMS và nội dung tin nhắn mẫu',
-        items: notifItems
-      });
-    }
-
-    const systemItems = items.filter((p) => p.paramGroup === 'SYSTEM');
-    if (systemItems.length > 0) {
-      sections.push({
-        code: 'SYSTEM',
-        title: 'Hệ thống & Vận hành',
-        badge: 'HỆ THỐNG',
-        description: 'Tên trung tâm hiển thị, phiên làm việc và quyền giáo viên',
-        items: systemItems
-      });
-    }
-
-    return sections;
   });
 
   // ─── LIFECYCLE ──────────────────────────────────────────────────────────────
@@ -121,234 +107,327 @@ export class SystemConfigComponent implements OnInit {
     this.loadParameters();
   }
 
-  // ─── DATA LOADING ───────────────────────────────────────────────────────────
   loadParameters(): void {
     this.loading.set(true);
     this.paramService.getParameters().subscribe({
       next: (res) => {
+        this.loading.set(false);
         if (res.success && res.data) {
           this.parameters.set(res.data);
-          // Khởi tạo draft map
-          const drafts: Record<string, string> = {};
-          res.data.forEach((p) => {
-            drafts[p.paramKey] = p.paramValue;
-          });
-          this.draftValues.set(drafts);
         }
-        this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.toastService.error(
-          err.error?.message || 'Không thể tải danh sách tham số cấu hình'
+          err?.error?.message || 'Không thể tải danh sách tham số cấu hình.'
         );
-      }
+      },
     });
   }
 
-  reloadCache(): void {
-    if (this.reloadingCache()) return;
+  // ─── QUICK TOGGLE FOR BOOLEAN PARAMETERS ────────────────────────────────────
+  toggleBoolean(item: SystemParameterItem): void {
+    const currentBool = item.paramValue === 'true' || item.paramValue === '1';
+    const nextVal = (!currentBool).toString();
+
+    this.paramService.updateParameter(item.paramKey, nextVal).subscribe({
+      next: (res) => {
+        if (res.success && res.data) {
+          this.parameters.update((list) =>
+            list.map((p) => (p.paramKey === item.paramKey ? res.data : p))
+          );
+          this.toastService.success(
+            `Đã chuyển [${item.displayName}]: ${nextVal === 'true' ? 'BẬT' : 'TẮT'} (Hot-reload 0ms)`
+          );
+        }
+      },
+      error: (err) => {
+        this.toastService.error(
+          err?.error?.message || 'Không thể cập nhật tham số.'
+        );
+      },
+    });
+  }
+
+  // ─── EDIT MODAL ─────────────────────────────────────────────────────────────
+  openEditModal(item: SystemParameterItem): void {
+    this.editingItem.set(item);
+    this.editForm.set({
+      paramValue: item.paramValue,
+      displayName: item.displayName,
+      description: item.description || '',
+    });
+  }
+
+  closeEditModal(): void {
+    this.editingItem.set(null);
+    this.editSaving.set(false);
+  }
+
+  submitEdit(): void {
+    const item = this.editingItem();
+    if (!item) return;
+
+    const form = this.editForm();
+    if (!form.paramValue || !form.paramValue.trim()) {
+      this.toastService.warning('Giá trị tham số không được để trống.');
+      return;
+    }
+
+    this.editSaving.set(true);
+    this.paramService
+      .updateParameter(item.paramKey, {
+        paramValue: form.paramValue.trim(),
+        displayName: form.displayName.trim(),
+        description: form.description.trim(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.editSaving.set(false);
+          this.closeEditModal();
+          if (res.success && res.data) {
+            this.parameters.update((list) =>
+              list.map((p) => (p.paramKey === item.paramKey ? res.data : p))
+            );
+            this.toastService.success(
+              `Đã cập nhật tham số [${item.paramKey}] thành công! Caching đã được Hot-reload.`
+            );
+          }
+        },
+        error: (err) => {
+          this.editSaving.set(false);
+          this.toastService.error(
+            err?.error?.message || 'Có lỗi xảy ra khi lưu tham số.'
+          );
+        },
+      });
+  }
+
+  // ─── CREATE MODAL ───────────────────────────────────────────────────────────
+  openCreateModal(): void {
+    this.createForm.set({
+      paramKey: '',
+      paramValue: '',
+      paramGroup: 'SYSTEM',
+      dataType: 'STRING',
+      displayName: '',
+      description: '',
+    });
+    this.createModalOpen.set(true);
+  }
+
+  closeCreateModal(): void {
+    this.createModalOpen.set(false);
+    this.createSaving.set(false);
+  }
+
+  submitCreate(): void {
+    const form = this.createForm();
+
+    if (!form.paramKey || !form.paramKey.trim()) {
+      this.toastService.warning('Mã tham số không được để trống.');
+      return;
+    }
+
+    const cleanKey = form.paramKey.trim().toUpperCase();
+    if (!/^[A-Z0-9_]{3,100}$/.test(cleanKey)) {
+      this.toastService.warning(
+        'Mã tham số chỉ gồm chữ cái IN HOA, chữ số và gạch dưới (VD: TUITION_DUE_DAYS).'
+      );
+      return;
+    }
+
+    if (!form.displayName || !form.displayName.trim()) {
+      this.toastService.warning('Tên hiển thị không được để trống.');
+      return;
+    }
+
+    if (!form.paramValue || !form.paramValue.trim()) {
+      this.toastService.warning('Giá trị tham số không được để trống.');
+      return;
+    }
+
+    this.createSaving.set(true);
+    this.paramService
+      .createParameter({
+        ...form,
+        paramKey: cleanKey,
+        paramValue: form.paramValue.trim(),
+        displayName: form.displayName.trim(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.createSaving.set(false);
+          this.closeCreateModal();
+          if (res.success && res.data) {
+            this.parameters.update((list) => [...list, res.data]);
+            this.toastService.success(
+              `Đã thêm tham số mới [${cleanKey}] vào hệ thống!`
+            );
+          }
+        },
+        error: (err) => {
+          this.createSaving.set(false);
+          this.toastService.error(
+            err?.error?.message || 'Không thể tạo tham số mới.'
+          );
+        },
+      });
+  }
+
+  // ─── DELETE MODAL ───────────────────────────────────────────────────────────
+  openDeleteModal(item: SystemParameterItem): void {
+    if (item.isSystem) {
+      this.toastService.warning(
+        `Tham số [${item.paramKey}] là tham số cốt lõi của hệ thống, không được phép xóa!`
+      );
+      return;
+    }
+    this.deletingItem.set(item);
+  }
+
+  closeDeleteModal(): void {
+    this.deletingItem.set(null);
+    this.deleteSaving.set(false);
+  }
+
+  submitDelete(): void {
+    const item = this.deletingItem();
+    if (!item) return;
+
+    this.deleteSaving.set(true);
+    this.paramService.deleteParameter(item.paramKey).subscribe({
+      next: (res) => {
+        this.deleteSaving.set(false);
+        this.closeDeleteModal();
+        if (res.success) {
+          this.parameters.update((list) =>
+            list.filter((p) => p.paramKey !== item.paramKey)
+          );
+          this.toastService.success(
+            `Đã xóa tham số [${item.paramKey}] khỏi hệ thống.`
+          );
+        }
+      },
+      error: (err) => {
+        this.deleteSaving.set(false);
+        this.toastService.error(
+          err?.error?.message || 'Không thể xóa tham số cấu hình.'
+        );
+      },
+    });
+  }
+
+  // ─── CACHE HOT-RELOAD & RESET DEFAULTS ───────────────────────────────────────
+  handleReloadCache(): void {
     this.reloadingCache.set(true);
     this.paramService.reloadCache().subscribe({
       next: () => {
         this.reloadingCache.set(false);
         this.toastService.success(
-          'In-memory Cache đã được làm mới đồng bộ từ Database thành công!'
+          `Đã làm mới In-memory Cache thành công! Tất cả ${this.parameters().length} tham số đã đồng bộ vào RAM.`
         );
         this.loadParameters();
       },
       error: (err) => {
         this.reloadingCache.set(false);
         this.toastService.error(
-          err.error?.message || 'Làm mới In-memory Cache thất bại'
+          err?.error?.message || 'Không thể làm mới cache.'
         );
-      }
-    });
-  }
-
-  selectGroup(group: ParameterGroup): void {
-    this.selectedGroup.set(group);
-  }
-
-  // ─── 1-CLICK DIRECT ACTIONS ─────────────────────────────────────────────────
-  toggleBoolean(param: SystemParameterItem): void {
-    if (this.savingKey()) return;
-    const nextVal = param.paramValue === 'true' ? 'false' : 'true';
-    this.saveParam(param.paramKey, nextVal, `Đã chuyển "${param.displayName}" sang: ${nextVal === 'true' ? 'BẬT' : 'TẮT'}`);
-  }
-
-  stepNumber(param: SystemParameterItem, delta: number, min: number, max: number): void {
-    if (this.savingKey()) return;
-    const current = Number(param.paramValue) || min;
-    const next = current + delta;
-    if (next < min || next > max) {
-      this.toastService.warning(`Giá trị phải nằm trong khoảng từ ${min} đến ${max}`);
-      return;
-    }
-    this.saveParam(param.paramKey, String(next), `Đã cập nhật "${param.displayName}" thành ${next}`);
-  }
-
-  setChoice(param: SystemParameterItem, choiceVal: string): void {
-    if (this.savingKey() || param.paramValue === choiceVal) return;
-    this.saveParam(param.paramKey, choiceVal, `Đã cập nhật chính sách "${param.displayName}"`);
-  }
-
-  // ─── INLINE EXPAND EDIT (For Text / Template) ──────────────────────────────
-  toggleExpand(paramKey: string, currentValue: string): void {
-    if (this.expandedKey() === paramKey) {
-      this.expandedKey.set(null);
-    } else {
-      this.expandedKey.set(paramKey);
-      this.draftValues.update((d) => ({ ...d, [paramKey]: currentValue }));
-    }
-  }
-
-  updateDraft(paramKey: string, val: string): void {
-    this.draftValues.update((d) => ({ ...d, [paramKey]: val }));
-  }
-
-  getDraft(paramKey: string, fallback: string = ''): string {
-    return this.draftValues()[paramKey] ?? fallback;
-  }
-
-  saveDraft(param: SystemParameterItem): void {
-    const val = (this.draftValues()[param.paramKey] ?? '').trim();
-    if (!val) {
-      this.toastService.warning('Giá trị không được để trống');
-      return;
-    }
-
-    if (param.dataType === 'NUMBER') {
-      const num = Number(val);
-      if (isNaN(num)) {
-        this.toastService.warning('Giá trị phải là số nguyên hợp lệ');
-        return;
-      }
-      const bounds = this.getNumberBounds(param.paramKey);
-      if (num < bounds.min || num > bounds.max) {
-        this.toastService.warning(`Giá trị phải từ ${bounds.min} đến ${bounds.max}`);
-        return;
-      }
-    }
-
-    this.saveParam(param.paramKey, val, `Đã cập nhật "${param.displayName}"`, () => {
-      this.expandedKey.set(null);
-    });
-  }
-
-  cancelDraft(param: SystemParameterItem): void {
-    this.expandedKey.set(null);
-    this.draftValues.update((d) => ({ ...d, [param.paramKey]: param.paramValue }));
-  }
-
-  insertPlaceholder(paramKey: string, placeholder: string): void {
-    const current = this.getDraft(paramKey, '');
-    this.updateDraft(paramKey, current ? current + ' ' + placeholder : placeholder);
-  }
-
-  // ─── CORE SAVE FUNCTION (Hot-Reload) ────────────────────────────────────────
-  private saveParam(paramKey: string, newVal: string, successMsg?: string, onSuccess?: () => void): void {
-    this.savingKey.set(paramKey);
-
-    this.paramService.updateParameter(paramKey, newVal).subscribe({
-      next: (res) => {
-        this.savingKey.set(null);
-        if (res.success && res.data) {
-          // Optimistic local state update
-          const updatedList = this.parameters().map((item) =>
-            item.paramKey === paramKey ? res.data : item
-          );
-          this.parameters.set(updatedList);
-          this.draftValues.update((d) => ({ ...d, [paramKey]: newVal }));
-
-          if (successMsg) {
-            this.toastService.success(successMsg);
-          }
-          if (onSuccess) onSuccess();
-        }
       },
-      error: (err) => {
-        this.savingKey.set(null);
-        this.toastService.error(
-          err.error?.message || 'Không thể lưu tham số cấu hình'
-        );
-      }
     });
   }
 
-  // ─── RESET DEFAULTS ─────────────────────────────────────────────────────────
-  openConfirmReset(): void {
+  openResetModal(): void {
     this.confirmResetOpen.set(true);
   }
 
-  closeConfirmReset(): void {
+  closeResetModal(): void {
     this.confirmResetOpen.set(false);
+    this.resetting.set(false);
   }
 
   confirmReset(): void {
-    if (this.resetting()) return;
     this.resetting.set(true);
-
     this.paramService.resetDefaults().subscribe({
       next: () => {
         this.resetting.set(false);
-        this.confirmResetOpen.set(false);
+        this.closeResetModal();
         this.toastService.success(
-          'Đã khôi phục toàn bộ tham số về giá trị khuyến nghị ban đầu!'
+          'Đã khôi phục toàn bộ tham số về giá trị mặc định của hệ thống!'
         );
         this.loadParameters();
       },
       error: (err) => {
         this.resetting.set(false);
         this.toastService.error(
-          err.error?.message || 'Khôi phục tham số mặc định thất bại'
+          err?.error?.message || 'Không thể khôi phục tham số mặc định.'
         );
-      }
+      },
     });
   }
 
   // ─── HELPERS ────────────────────────────────────────────────────────────────
-  getNumberBounds(key: string): { min: number; max: number; unit: string } {
-    switch (key) {
-      case 'TUITION_DUE_DAYS':
-        return { min: 1, max: 90, unit: 'ngày' };
-      case 'TUITION_AUTO_CREATE_DAY':
-        return { min: 1, max: 31, unit: 'ngày trong tháng' };
-      case 'NOTIFICATION_REMINDER_BEFORE_DAYS':
-        return { min: 1, max: 10, unit: 'ngày' };
-      case 'SYSTEM_AUTO_LOGOUT_HOURS':
-        return { min: 1, max: 72, unit: 'giờ' };
+  copyKey(key: string, event: MouseEvent): void {
+    event.stopPropagation();
+    navigator.clipboard.writeText(key).then(() => {
+      this.toastService.info(`Đã sao chép mã tham số: ${key}`);
+    });
+  }
+
+  formatValuePreview(item: SystemParameterItem): string {
+    const val = item.paramValue;
+    const key = item.paramKey;
+
+    if (item.dataType === 'BOOLEAN') {
+      return val === 'true' || val === '1' ? 'BẬT (True)' : 'TẮT (False)';
+    }
+
+    if (item.dataType === 'NUMBER') {
+      if (key.includes('HOURS')) return `${val} giờ`;
+      if (key.includes('DAYS')) return `${val} ngày`;
+      if (key.includes('MINUTES')) return `${val} phút`;
+      if (key.includes('ATTEMPTS')) return `${val} lần`;
+      if (key.includes('STUDENTS')) return `${val} học sinh`;
+      return val;
+    }
+
+    if (val.length > 45) {
+      return val.substring(0, 42) + '...';
+    }
+
+    return val;
+  }
+
+  getGroupBadge(group: string): { label: string; class: string } {
+    const u = (group || '').toUpperCase();
+    switch (u) {
+      case 'SYSTEM':
+        return { label: 'HỆ THỐNG', class: 'badge-system' };
+      case 'TUITION':
+        return { label: 'HỌC PHÍ', class: 'badge-tuition' };
+      case 'NOTIFICATION':
+        return { label: 'THÔNG BÁO', class: 'badge-notification' };
+      case 'SECURITY':
+        return { label: 'BẢO MẬT', class: 'badge-security' };
       default:
-        return { min: 1, max: 100, unit: '' };
+        return { label: u, class: 'badge-custom' };
     }
   }
 
-  getPolicyLabel(val: string): string {
-    return val === 'SUSPEND_ATTENDANCE' ? 'Tạm dừng điểm danh' : 'Chỉ nhắc nhở';
-  }
-
-  getCleanDescription(param: SystemParameterItem): string {
-    switch (param.paramKey) {
-      case 'TUITION_OVERDUE_POLICY':
-        return 'Quy định hình thức xử lý khi học sinh chưa đóng học phí đúng hạn';
-      case 'NOTIFICATION_TEMPLATE_INVOICE':
-        return 'Nội dung tin nhắn tự động khi chia sẻ phiếu thu qua Zalo hoặc SMS cho phụ huynh';
-      case 'TUITION_AUTO_CREATE_DAY':
-        return 'Ngày trong tháng hệ thống tự động tổng hợp số buổi học và lập phiếu thu';
-      case 'TUITION_DUE_DAYS':
-        return 'Số ngày phụ huynh được phép thanh toán kể từ ngày phát hành phiếu thu';
-      case 'NOTIFICATION_AUTO_REMINDER':
-        return 'Tự động kích hoạt tin nhắn nhắc nhở phụ huynh khi sắp đến hạn thanh toán';
-      case 'NOTIFICATION_REMINDER_BEFORE_DAYS':
-        return 'Số ngày hệ thống gửi thông báo nhắc nhở trước khi phiếu thu hết hạn';
-      case 'SYSTEM_CENTER_NAME':
-        return 'Tên trung tâm hiển thị trên phiếu thu và thông báo gửi phụ huynh';
-      case 'SYSTEM_ALLOW_TEACHER_EDIT_FEE':
-        return 'Cho phép tài khoản giáo viên điều chỉnh mức học phí buổi khi điểm danh';
-      case 'SYSTEM_AUTO_LOGOUT_HOURS':
-        return 'Thời lượng phiên làm việc trước khi tài khoản tự động đăng xuất';
+  getTypeBadge(type: string): { label: string; class: string } {
+    const u = (type || '').toUpperCase();
+    switch (u) {
+      case 'NUMBER':
+        return { label: 'NUMBER', class: 'type-number' };
+      case 'BOOLEAN':
+        return { label: 'BOOLEAN', class: 'type-boolean' };
+      case 'STRING':
+        return { label: 'STRING', class: 'type-string' };
+      case 'JSON':
+        return { label: 'JSON', class: 'type-json' };
       default:
-        return param.description || '';
+        return { label: u, class: 'type-default' };
     }
   }
 }

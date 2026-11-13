@@ -17,6 +17,21 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     /** Lấy toàn bộ users trong 1 tenant sắp xếp theo ngày tạo mới nhất */
     List<User> findAllByTenantIdOrderByCreatedAtDesc(UUID tenantId);
 
+    /** Lấy giáo viên/nhân viên trực thuộc (không phải owner) trong 1 tenant */
+    List<User> findAllByTenantIdAndIsOwnerFalseOrderByCreatedAtDesc(UUID tenantId);
+
+    /** Đếm giáo viên/nhân viên trực thuộc trong 1 tenant */
+    long countByTenantIdAndIsOwnerFalse(UUID tenantId);
+
+    /** Đếm tổng số user trong 1 tenant */
+    long countByTenantId(UUID tenantId);
+
+    /** Đếm tổng số giáo viên trực thuộc trên toàn hệ thống */
+    long countByIsOwnerFalse();
+
+    /** Lấy tài khoản owner đại diện cho tenant */
+    Optional<User> findFirstByTenantIdAndIsOwnerTrue(UUID tenantId);
+
     /** Tìm user owner theo SĐT (dùng cho Login — phone là unique trong tenants) */
     Optional<User> findByPhoneAndIsOwnerTrue(String phone);
 

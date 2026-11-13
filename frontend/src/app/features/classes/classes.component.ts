@@ -8,6 +8,7 @@ import { ClassService } from '../../core/services/class.service';
 import { ToastService } from '../../core/services/toast.service';
 import { RbacService } from '../../core/services/rbac.service';
 import { CenterTeacherService, CenterTeacherItem } from '../../core/services/center-teacher.service';
+import { TeacherPolicyService } from '../../core/services/teacher-policy.service';
 import { ClassItem, ClassRequestPayload, FeeType } from '../../shared/models/class.model';
 
 export interface ClassCardVm {
@@ -89,6 +90,7 @@ export class ClassesComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly rbacService = inject(RbacService);
   private readonly centerTeacherService = inject(CenterTeacherService);
+  readonly policyService = inject(TeacherPolicyService);
 
   readonly isCenterAdmin = computed(() => this.rbacService.isCenterAdmin());
   readonly teachersList = signal<CenterTeacherItem[]>([]);
@@ -249,6 +251,10 @@ export class ClassesComponent implements OnInit {
   }
 
   openCreateModal(): void {
+    if (!this.policyService.canCreateClass()) {
+      this.toastService.error('Bạn không có quyền tự mở lớp học theo quy định của trung tâm.');
+      return;
+    }
     this.editingItem.set(null);
     this.submitted.set(false);
     this.selectedDays.set(['MONDAY', 'WEDNESDAY', 'FRIDAY']);

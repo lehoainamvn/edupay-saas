@@ -46,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenBlacklist tokenBlacklist;
     private final AuditLogService auditLogService;
+    private final com.edupay.service.SystemParameterService systemParameterService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -185,7 +186,7 @@ public class AuthServiceImpl implements AuthService {
         // 7. Phát hành token
         log.info("Đăng nhập thành công — phone={}, userId={}", request.getPhone(), user.getId());
         auditLogService.logInfo(user.getTenantId(), user.getId(), "LOGIN_SUCCESS", "USER", user.getId().toString(), null, null);
-        List<String> roles = getUserRoles(user);
+        List<String> roles = getUserRoles(user, tenantType);
         return buildAuthResponse(user, user.getTenantId(), roles, subscriptionPlan, subscriptionStatus, tenantType);
     }
 
@@ -219,8 +220,8 @@ public class AuthServiceImpl implements AuthService {
         // 4. Phát hành Access Token + Refresh Token mới
         User user = stored.getUser();
         Object[] tenantInfo = getTenantInfo(stored.getTenantId());
-        List<String> roles = getUserRoles(user);
         String tenantType = tenantInfo.length > 2 && tenantInfo[2] != null ? (String) tenantInfo[2] : "SOLO_TUTOR";
+        List<String> roles = getUserRoles(user, tenantType);
         return buildAuthResponse(user, stored.getTenantId(), roles,
                 (String) tenantInfo[0], (String) tenantInfo[1], tenantType);
     }
@@ -268,29 +269,32 @@ public class AuthServiceImpl implements AuthService {
 
     /**
      * Xử lý đăng nhập thất bại: tăng failedLoginAttempts, thông báo số lượt thử còn lại,
-     * khóa tài khoản nếu vượt ngưỡng 5 lần.
+     * khóa tài khoản nếu vượt ngưỡng cấu hình động (SECURITY_MAX_LOGIN_ATTEMPTS, SECURITY_LOCKOUT_MINUTES).
      */
     private void handleFailedLogin(User user, String phone) {
+        int maxAttempts = systemParameterService.getIntValue("SECURITY_MAX_LOGIN_ATTEMPTS", MAX_FAILED_ATTEMPTS);
+        long lockoutMinutes = systemParameterService.getIntValue("SECURITY_LOCKOUT_MINUTES", (int) LOCKOUT_MINUTES);
+
         int attempts = user.getFailedLoginAttempts() + 1;
         user.setFailedLoginAttempts(attempts);
 
-        if (attempts >= MAX_FAILED_ATTEMPTS) {
-            user.setLockedUntil(Instant.now().plus(LOCKOUT_MINUTES, ChronoUnit.MINUTES));
+        if (attempts >= maxAttempts) {
+            user.setLockedUntil(Instant.now().plus(lockoutMinutes, ChronoUnit.MINUTES));
             userRepository.save(user);
             log.warn("Tài khoản bị khóa do brute-force: phone={}, attempts={}, lockedUntil={}",
                     phone, attempts, user.getLockedUntil());
             auditLogService.logWarn(user.getTenantId(), user.getId(), "ACCOUNT_LOCKED_BRUTE_FORCE", "USER", user.getId().toString(), null, null);
             throw new BusinessException("ACCOUNT_LOCKED",
-                    "Bạn đã nhập sai mật khẩu 5 lần liên tiếp. Tài khoản bị tạm khóa 15 phút để bảo vệ an toàn.");
+                    "Bạn đã nhập sai mật khẩu " + maxAttempts + " lần liên tiếp. Tài khoản bị tạm khóa " + lockoutMinutes + " phút để bảo vệ an toàn.");
         } else {
             userRepository.save(user);
-            int remaining = MAX_FAILED_ATTEMPTS - attempts;
-            log.warn("Đăng nhập sai mật khẩu: phone={}, attempts={}/{}", phone, attempts, MAX_FAILED_ATTEMPTS);
+            int remaining = maxAttempts - attempts;
+            log.warn("Đăng nhập sai mật khẩu: phone={}, attempts={}/{}", phone, attempts, maxAttempts);
             auditLogService.logWarn(user.getTenantId(), user.getId(), "LOGIN_FAILED", "USER", user.getId().toString(), null, null);
 
             String message;
             if (remaining <= 2) {
-                message = "Số điện thoại hoặc mật khẩu không đúng. Cảnh báo: Bạn còn " + remaining + " lần thử trước khi tài khoản bị khóa 15 phút.";
+                message = "Số điện thoại hoặc mật khẩu không đúng. Cảnh báo: Bạn còn " + remaining + " lần thử trước khi tài khoản bị khóa " + lockoutMinutes + " phút.";
             } else {
                 message = "Số điện thoại hoặc mật khẩu không đúng";
             }
@@ -334,14 +338,25 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private List<String> getUserRoles(User user) {
-        List<String> roleCodes = roleRepository.findRoleCodesByUserIdAndTenantId(user.getId(), user.getTenantId());
-        if (roleCodes == null || roleCodes.isEmpty()) {
-            if (Boolean.TRUE.equals(user.getIsOwner())) {
-                return List.of("OWNER");
+    private List<String> getUserRoles(User user, String tenantType) {
+        List<String> rawCodes = roleRepository.findRoleCodesByUserIdAndTenantId(user.getId(), user.getTenantId());
+        List<String> roleCodes = rawCodes != null ? new java.util.ArrayList<>(rawCodes) : new java.util.ArrayList<>();
+
+        if (Boolean.TRUE.equals(user.getIsOwner())) {
+            if (!roleCodes.contains("OWNER")) {
+                roleCodes.add("OWNER");
             }
-            return List.of("VIEWER");
+            if ("CENTER".equalsIgnoreCase(tenantType) && !roleCodes.contains("CENTER_ADMIN")) {
+                roleCodes.add("CENTER_ADMIN");
+            } else if ("SOLO_TUTOR".equalsIgnoreCase(tenantType) && !roleCodes.contains("SOLO_TUTOR")) {
+                roleCodes.add("SOLO_TUTOR");
+            }
         }
+
+        if (roleCodes.isEmpty()) {
+            roleCodes.add("VIEWER");
+        }
+
         return roleCodes;
     }
 

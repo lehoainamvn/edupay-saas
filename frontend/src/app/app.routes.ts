@@ -113,6 +113,27 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'centers',
+        loadComponent: () =>
+          import('./features/admin/centers/admin-centers.component').then(
+            (m) => m.AdminCentersComponent
+          ),
+      },
+      {
+        path: 'tutors',
+        loadComponent: () =>
+          import('./features/admin/tutors/admin-tutors.component').then(
+            (m) => m.AdminTutorsComponent
+          ),
+      },
+      {
+        path: 'menus',
+        loadComponent: () =>
+          import('./features/admin/menus/admin-menus.component').then(
+            (m) => m.AdminMenusComponent
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/admin/users/admin-users.component').then(
@@ -131,6 +152,41 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/system-config/system-config.component').then(
             (m) => m.SystemConfigComponent
+          ),
+      },
+      {
+        path: 'classes',
+        loadComponent: () =>
+          import('./features/admin/classes/admin-classes.component').then(
+            (m) => m.AdminClassesComponent
+          ),
+      },
+      {
+        path: 'students',
+        loadComponent: () =>
+          import('./features/admin/students/admin-students.component').then(
+            (m) => m.AdminStudentsComponent
+          ),
+      },
+      {
+        path: 'billing',
+        loadComponent: () =>
+          import('./features/admin/billing/admin-billing.component').then(
+            (m) => m.AdminBillingComponent
+          ),
+      },
+      {
+        path: 'teacher-policies',
+        loadComponent: () =>
+          import('./features/admin/policies/admin-policies.component').then(
+            (m) => m.AdminPoliciesComponent
+          ),
+      },
+      {
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/admin/settings/admin-settings.component').then(
+            (m) => m.AdminSettingsComponent
           ),
       },
     ],
